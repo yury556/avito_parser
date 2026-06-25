@@ -33,6 +33,7 @@ one_time_start = false
 one_file_for_link = false
 parse_views = false
 save_xlsx = true
+save_to_postgres = true
 use_webdriver = false
 use_bypass_api = true
 cookies_api_key = "sk_live_ZfM6qw2DsnfsCTTk_vINpMwJBHTKbii5NPEXKW9a5BE"
