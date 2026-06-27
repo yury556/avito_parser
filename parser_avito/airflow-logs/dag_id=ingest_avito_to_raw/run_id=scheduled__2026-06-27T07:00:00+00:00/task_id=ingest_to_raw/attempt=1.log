@@ -1,0 +1,135 @@
+[2026-06-27T08:40:32.188+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-06-27T08:40:32.194+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: ingest_avito_to_raw.ingest_to_raw scheduled__2026-06-27T07:00:00+00:00 [queued]>
+[2026-06-27T08:40:32.197+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: ingest_avito_to_raw.ingest_to_raw scheduled__2026-06-27T07:00:00+00:00 [queued]>
+[2026-06-27T08:40:32.197+0000] {taskinstance.py:2867} INFO - Starting attempt 1 of 2
+[2026-06-27T08:40:32.203+0000] {taskinstance.py:2890} INFO - Executing <Task(PythonOperator): ingest_to_raw> on 2026-06-27 07:00:00+00:00
+[2026-06-27T08:40:32.205+0000] {standard_task_runner.py:72} INFO - Started process 4275 to run task
+[2026-06-27T08:40:32.207+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'ingest_avito_to_raw', 'ingest_to_raw', 'scheduled__2026-06-27T07:00:00+00:00', '--job-id', '7', '--raw', '--subdir', 'DAGS_FOLDER/ingest_avito_to_raw.py', '--cfg-path', '/tmp/tmpjlxzn6s5']
+[2026-06-27T08:40:32.208+0000] {standard_task_runner.py:105} INFO - Job 7: Subtask ingest_to_raw
+[2026-06-27T08:40:32.232+0000] {task_command.py:467} INFO - Running <TaskInstance: ingest_avito_to_raw.ingest_to_raw scheduled__2026-06-27T07:00:00+00:00 [running]> on host a53ee8ab3337
+[2026-06-27T08:40:32.273+0000] {taskinstance.py:3134} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='avito' AIRFLOW_CTX_DAG_ID='ingest_avito_to_raw' AIRFLOW_CTX_TASK_ID='ingest_to_raw' AIRFLOW_CTX_EXECUTION_DATE='2026-06-27T07:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-06-27T07:00:00+00:00'
+[2026-06-27T08:40:32.274+0000] {taskinstance.py:732} INFO - ::endgroup::
+[2026-06-27T08:40:32.294+0000] {base.py:84} INFO - Retrieving connection 'raw_dwh'
+[2026-06-27T08:40:32.298+0000] {sql.py:511} INFO - Running statement: 
+        CREATE TABLE IF NOT EXISTS raw.ads (
+            avito_id BIGINT PRIMARY KEY,
+            url TEXT,
+            title TEXT,
+            price INTEGER,
+            category TEXT,
+            seller TEXT,
+            location TEXT,
+            description TEXT,
+            total_views INTEGER,
+            today_views INTEGER,
+            is_promoted BOOLEAN,
+            phone TEXT,
+            first_seen TIMESTAMP,
+            last_seen TIMESTAMP,
+            is_active BOOLEAN,
+            ingested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    , parameters: None
+[2026-06-27T08:40:32.306+0000] {taskinstance.py:3313} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 768, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 734, in _execute_callable
+    return ExecutionCallableRunner(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/baseoperator.py", line 424, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/operators/python.py", line 238, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/operators/python.py", line 256, in execute_callable
+    return runner.run(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/ingest_avito_to_raw.py", line 23, in ingest
+    dst.run("""
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/providers/common/sql/hooks/sql.py", line 467, in run
+    self._run_command(cur, sql_statement, parameters)
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/providers/common/sql/hooks/sql.py", line 516, in _run_command
+    cur.execute(sql_statement)
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "pg_type_typname_nsp_index"
+DETAIL:  Key (typname, typnamespace)=(ads, 24578) already exists.
+
+[2026-06-27T08:40:32.314+0000] {taskinstance.py:1226} INFO - Marking task as UP_FOR_RETRY. dag_id=ingest_avito_to_raw, task_id=ingest_to_raw, run_id=scheduled__2026-06-27T07:00:00+00:00, execution_date=20260627T070000, start_date=20260627T084032, end_date=20260627T084032
+[2026-06-27T08:40:32.324+0000] {taskinstance.py:341} INFO - ::group::Post task execution logs
+[2026-06-27T08:40:32.325+0000] {standard_task_runner.py:124} ERROR - Failed to execute job 7 for task ingest_to_raw (duplicate key value violates unique constraint "pg_type_typname_nsp_index"
+DETAIL:  Key (typname, typnamespace)=(ads, 24578) already exists.
+; 4275)
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/task/task_runner/standard_task_runner.py", line 117, in _start_by_fork
+    ret = args.func(args, dag=self.dag)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/cli/cli_config.py", line 49, in command
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/utils/cli.py", line 116, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/cli/commands/task_command.py", line 483, in task_run
+    task_return_code = _run_task_by_selected_method(args, _dag, ti)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/cli/commands/task_command.py", line 256, in _run_task_by_selected_method
+    return _run_raw_task(args, ti)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/cli/commands/task_command.py", line 341, in _run_raw_task
+    return ti._run_raw_task(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/utils/session.py", line 97, in wrapper
+    return func(*args, session=session, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 3006, in _run_raw_task
+    return _run_raw_task(
+           ^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 274, in _run_raw_task
+    TaskInstance._execute_task_with_callbacks(
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 3161, in _execute_task_with_callbacks
+    result = self._execute_task(context, task_orig)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 3185, in _execute_task
+    return _execute_task(self, context, task_orig)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 768, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/taskinstance.py", line 734, in _execute_callable
+    return ExecutionCallableRunner(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/models/baseoperator.py", line 424, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/operators/python.py", line 238, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/operators/python.py", line 256, in execute_callable
+    return runner.run(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/ingest_avito_to_raw.py", line 23, in ingest
+    dst.run("""
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/providers/common/sql/hooks/sql.py", line 467, in run
+    self._run_command(cur, sql_statement, parameters)
+  File "/home/airflow/.local/lib/python3.11/site-packages/airflow/providers/common/sql/hooks/sql.py", line 516, in _run_command
+    cur.execute(sql_statement)
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "pg_type_typname_nsp_index"
+DETAIL:  Key (typname, typnamespace)=(ads, 24578) already exists.
+
+[2026-06-27T08:40:32.345+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 1
+[2026-06-27T08:40:32.353+0000] {taskinstance.py:3901} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-06-27T08:40:32.354+0000] {local_task_job_runner.py:245} INFO - ::endgroup::
