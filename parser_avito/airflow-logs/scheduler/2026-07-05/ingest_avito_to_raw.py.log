@@ -411,3 +411,283 @@
 [2026-07-05T08:56:01.692+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:56:01.692+0000] {dag.py:3239} INFO - Sync 1 DAGs
 [2026-07-05T08:56:01.702+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:56:01.701+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 08:00:00+00:00, run_after=2026-07-05 09:00:00+00:00
 [2026-07-05T08:56:01.709+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.041 seconds
+[2026-07-05T08:56:32.022+0000] {processor.py:186} INFO - Started process (PID=56140) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:56:32.023+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T08:56:32.024+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:56:32.024+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:56:32.028+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:56:32.047+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:56:32.047+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T08:56:32.058+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:56:32.058+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 08:00:00+00:00, run_after=2026-07-05 09:00:00+00:00
+[2026-07-05T08:56:32.067+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.050 seconds
+[2026-07-05T08:57:02.445+0000] {processor.py:186} INFO - Started process (PID=56150) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:57:02.446+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T08:57:02.448+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:57:02.448+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:57:02.456+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:57:02.477+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:57:02.477+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T08:57:02.490+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:57:02.490+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 08:00:00+00:00, run_after=2026-07-05 09:00:00+00:00
+[2026-07-05T08:57:02.500+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.062 seconds
+[2026-07-05T08:57:32.772+0000] {processor.py:186} INFO - Started process (PID=56160) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:57:32.773+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T08:57:32.774+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:57:32.773+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:57:32.779+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:57:32.798+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:57:32.798+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T08:57:32.812+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:57:32.812+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 08:00:00+00:00, run_after=2026-07-05 09:00:00+00:00
+[2026-07-05T08:57:32.822+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.056 seconds
+[2026-07-05T08:58:03.106+0000] {processor.py:186} INFO - Started process (PID=56170) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:58:03.107+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T08:58:03.108+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:58:03.107+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:58:03.112+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:58:03.131+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:58:03.131+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T08:58:03.145+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:58:03.145+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 08:00:00+00:00, run_after=2026-07-05 09:00:00+00:00
+[2026-07-05T08:58:03.158+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.057 seconds
+[2026-07-05T08:58:33.520+0000] {processor.py:186} INFO - Started process (PID=56180) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:58:33.521+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T08:58:33.522+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:58:33.522+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:58:33.526+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:58:33.542+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:58:33.542+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T08:58:33.553+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:58:33.553+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 08:00:00+00:00, run_after=2026-07-05 09:00:00+00:00
+[2026-07-05T08:58:33.563+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.050 seconds
+[2026-07-05T08:59:03.919+0000] {processor.py:186} INFO - Started process (PID=56190) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:59:03.920+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T08:59:03.921+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:59:03.921+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:59:03.925+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:59:03.942+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:59:03.942+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T08:59:03.953+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:59:03.953+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 08:00:00+00:00, run_after=2026-07-05 09:00:00+00:00
+[2026-07-05T08:59:03.963+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.049 seconds
+[2026-07-05T08:59:34.339+0000] {processor.py:186} INFO - Started process (PID=56200) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:59:34.340+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T08:59:34.341+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:59:34.341+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:59:34.346+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T08:59:34.363+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:59:34.363+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T08:59:34.373+0000] {logging_mixin.py:190} INFO - [2026-07-05T08:59:34.373+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 08:00:00+00:00, run_after=2026-07-05 09:00:00+00:00
+[2026-07-05T08:59:34.384+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.050 seconds
+[2026-07-05T09:01:17.644+0000] {processor.py:186} INFO - Started process (PID=56213) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:01:17.644+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:01:17.645+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:01:17.645+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:01:17.648+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:01:17.667+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:01:17.666+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:01:17.676+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:01:17.676+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:01:17.685+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.045 seconds
+[2026-07-05T09:01:48.024+0000] {processor.py:186} INFO - Started process (PID=56223) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:01:48.025+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:01:48.026+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:01:48.026+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:01:48.031+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:01:48.049+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:01:48.049+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:01:48.061+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:01:48.060+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:01:48.070+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.053 seconds
+[2026-07-05T09:02:18.450+0000] {processor.py:186} INFO - Started process (PID=56233) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:02:18.451+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:02:18.452+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:02:18.451+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:02:18.457+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:02:18.474+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:02:18.474+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:02:18.486+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:02:18.486+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:02:18.494+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.050 seconds
+[2026-07-05T09:02:48.808+0000] {processor.py:186} INFO - Started process (PID=56243) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:02:48.810+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:02:48.811+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:02:48.810+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:02:48.818+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:02:48.840+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:02:48.840+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:02:48.853+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:02:48.853+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:02:48.865+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.065 seconds
+[2026-07-05T09:03:19.155+0000] {processor.py:186} INFO - Started process (PID=56253) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:03:19.155+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:03:19.156+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:03:19.156+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:03:19.160+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:03:19.177+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:03:19.177+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:03:19.189+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:03:19.189+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:03:19.197+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.047 seconds
+[2026-07-05T09:03:49.503+0000] {processor.py:186} INFO - Started process (PID=56263) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:03:49.503+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:03:49.504+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:03:49.504+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:03:49.508+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:03:49.527+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:03:49.527+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:03:49.538+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:03:49.538+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:03:49.549+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.051 seconds
+[2026-07-05T09:04:19.849+0000] {processor.py:186} INFO - Started process (PID=56273) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:04:19.849+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:04:19.850+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:04:19.850+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:04:19.855+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:04:19.874+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:04:19.873+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:04:19.885+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:04:19.885+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:04:19.895+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.053 seconds
+[2026-07-05T09:04:50.188+0000] {processor.py:186} INFO - Started process (PID=56283) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:04:50.188+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:04:50.189+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:04:50.189+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:04:50.196+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:04:50.211+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:04:50.211+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:04:50.221+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:04:50.221+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:04:50.229+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.046 seconds
+[2026-07-05T09:05:20.514+0000] {processor.py:186} INFO - Started process (PID=56293) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:05:20.514+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:05:20.515+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:05:20.515+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:05:20.519+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:05:20.535+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:05:20.535+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:05:20.544+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:05:20.544+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:05:20.552+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.043 seconds
+[2026-07-05T09:05:50.813+0000] {processor.py:186} INFO - Started process (PID=56303) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:05:50.814+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:05:50.815+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:05:50.814+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:05:50.820+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:05:50.840+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:05:50.840+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:05:50.852+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:05:50.851+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:05:50.863+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.055 seconds
+[2026-07-05T09:06:21.201+0000] {processor.py:186} INFO - Started process (PID=56313) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:06:21.202+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:06:21.202+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:06:21.202+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:06:21.206+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:06:21.222+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:06:21.222+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:06:21.233+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:06:21.232+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:06:21.243+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.047 seconds
+[2026-07-05T09:06:51.598+0000] {processor.py:186} INFO - Started process (PID=56323) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:06:51.599+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:06:51.601+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:06:51.600+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:06:51.605+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:06:51.623+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:06:51.623+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:06:51.634+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:06:51.633+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:06:51.644+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.051 seconds
+[2026-07-05T09:07:21.919+0000] {processor.py:186} INFO - Started process (PID=56333) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:07:21.920+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:07:21.921+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:07:21.920+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:07:21.925+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:07:21.945+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:07:21.945+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:07:21.958+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:07:21.958+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:07:21.967+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.055 seconds
+[2026-07-05T09:07:52.263+0000] {processor.py:186} INFO - Started process (PID=56343) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:07:52.264+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:07:52.265+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:07:52.265+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:07:52.269+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:07:52.287+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:07:52.287+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:07:52.299+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:07:52.299+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:07:52.307+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.048 seconds
+[2026-07-05T09:23:13.912+0000] {processor.py:186} INFO - Started process (PID=56353) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:23:13.913+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:23:13.913+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:23:13.913+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:23:13.918+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:23:13.937+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:23:13.937+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:23:13.947+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:23:13.947+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:23:13.956+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.051 seconds
+[2026-07-05T09:23:44.304+0000] {processor.py:186} INFO - Started process (PID=56363) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:23:44.305+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:23:44.306+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:23:44.306+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:23:44.314+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:23:44.337+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:23:44.337+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:23:44.350+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:23:44.350+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:23:44.361+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.065 seconds
+[2026-07-05T09:24:14.649+0000] {processor.py:186} INFO - Started process (PID=56373) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:24:14.650+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:24:14.650+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:24:14.650+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:24:14.654+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:24:14.671+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:24:14.671+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:24:14.682+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:24:14.682+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:24:14.692+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.048 seconds
+[2026-07-05T09:24:45.046+0000] {processor.py:186} INFO - Started process (PID=56383) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:24:45.047+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:24:45.047+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:24:45.047+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:24:45.051+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:24:45.068+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:24:45.068+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:24:45.076+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:24:45.076+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:24:45.084+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.041 seconds
+[2026-07-05T09:25:15.433+0000] {processor.py:186} INFO - Started process (PID=56393) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:25:15.434+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:25:15.435+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:25:15.435+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:25:15.439+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:25:15.456+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:25:15.456+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:25:15.466+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:25:15.466+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:25:15.473+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.046 seconds
+[2026-07-05T09:25:45.828+0000] {processor.py:186} INFO - Started process (PID=56403) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:25:45.829+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:25:45.829+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:25:45.829+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:25:45.834+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:25:45.850+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:25:45.850+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:25:45.862+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:25:45.861+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:25:45.869+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.047 seconds
+[2026-07-05T09:26:16.187+0000] {processor.py:186} INFO - Started process (PID=56413) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:26:16.187+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:26:16.188+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:26:16.188+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:26:16.192+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:26:16.209+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:26:16.209+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:26:16.218+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:26:16.218+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:26:16.225+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.043 seconds
+[2026-07-05T09:26:46.636+0000] {processor.py:186} INFO - Started process (PID=56423) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:26:46.637+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:26:46.638+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:26:46.637+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:26:46.642+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:26:46.660+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:26:46.660+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:26:46.670+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:26:46.670+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:26:46.677+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.046 seconds
+[2026-07-05T09:27:16.995+0000] {processor.py:186} INFO - Started process (PID=56433) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:27:16.996+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:27:16.997+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:27:16.997+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:27:17.001+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:27:17.018+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:27:17.018+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:27:17.033+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:27:17.033+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:27:17.042+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.052 seconds
+[2026-07-05T09:27:47.307+0000] {processor.py:186} INFO - Started process (PID=56443) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:27:47.308+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:27:47.309+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:27:47.309+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:27:47.313+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:27:47.334+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:27:47.334+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:27:47.345+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:27:47.345+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:27:47.354+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.052 seconds
+[2026-07-05T09:28:17.682+0000] {processor.py:186} INFO - Started process (PID=56453) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:28:17.682+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:28:17.683+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:28:17.683+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:28:17.689+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:28:17.706+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:28:17.706+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:28:17.716+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:28:17.716+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:28:17.724+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.047 seconds
+[2026-07-05T09:28:48.121+0000] {processor.py:186} INFO - Started process (PID=56463) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:28:48.122+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:28:48.123+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:28:48.123+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:28:48.130+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:28:48.151+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:28:48.151+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:28:48.163+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:28:48.163+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:28:48.171+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.058 seconds
+[2026-07-05T09:29:18.516+0000] {processor.py:186} INFO - Started process (PID=56473) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:29:18.516+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:29:18.518+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:29:18.518+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:29:18.524+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:29:18.540+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:29:18.540+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:29:18.551+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:29:18.551+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:29:18.560+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.049 seconds
+[2026-07-05T09:29:48.892+0000] {processor.py:186} INFO - Started process (PID=56483) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:29:48.893+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:29:48.894+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:29:48.894+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:29:48.898+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:29:48.913+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:29:48.913+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:29:48.923+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:29:48.922+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:29:48.930+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.043 seconds
+[2026-07-05T09:30:19.262+0000] {processor.py:186} INFO - Started process (PID=56493) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:30:19.263+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:30:19.264+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:30:19.264+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:30:19.269+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:30:19.290+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:30:19.290+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:30:19.299+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:30:19.299+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:30:19.306+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.050 seconds
+[2026-07-05T09:30:49.665+0000] {processor.py:186} INFO - Started process (PID=56503) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:30:49.666+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:30:49.667+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:30:49.666+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:30:49.671+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:30:49.688+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:30:49.688+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:30:49.699+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:30:49.699+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:30:49.707+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.048 seconds
+[2026-07-05T09:31:19.993+0000] {processor.py:186} INFO - Started process (PID=56513) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:31:19.994+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:31:19.994+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:31:19.994+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:31:19.998+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:31:20.016+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:31:20.016+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:31:20.026+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:31:20.026+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:31:20.034+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.047 seconds
+[2026-07-05T09:31:50.289+0000] {processor.py:186} INFO - Started process (PID=56523) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:31:50.290+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:31:50.291+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:31:50.291+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:31:50.296+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:31:50.313+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:31:50.313+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:31:50.323+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:31:50.323+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:31:50.332+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.047 seconds
+[2026-07-05T09:32:20.666+0000] {processor.py:186} INFO - Started process (PID=56533) to work on /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:32:20.667+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/ingest_avito_to_raw.py for tasks to queue
+[2026-07-05T09:32:20.668+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:32:20.667+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:32:20.672+0000] {processor.py:925} INFO - DAG(s) 'ingest_avito_to_raw' retrieved from /opt/airflow/dags/ingest_avito_to_raw.py
+[2026-07-05T09:32:20.690+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:32:20.690+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-07-05T09:32:20.699+0000] {logging_mixin.py:190} INFO - [2026-07-05T09:32:20.699+0000] {dag.py:4180} INFO - Setting next_dagrun for ingest_avito_to_raw to 2026-07-05 09:00:00+00:00, run_after=2026-07-05 10:00:00+00:00
+[2026-07-05T09:32:20.707+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/ingest_avito_to_raw.py took 0.047 seconds
