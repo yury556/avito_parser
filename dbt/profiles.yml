@@ -1,0 +1,13 @@
+avito_parser_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'external-postgres') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
+      user: "{{ env_var('POSTGRES_USER', 'avito') }}"
+      pass: "{{ env_var('POSTGRES_PASSWORD', 'avito123') }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'avito_dwh') }}"
+      schema: public
+      threads: 4
+

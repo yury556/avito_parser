@@ -1,0 +1,110 @@
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: docker/airflow/Dockerfile
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+    AIRFLOW__WEBSERVER__SECRET_KEY: avito-parser-dev-secret
+    PYTHONPATH: /opt/airflow/include
+    POSTGRES_DB: ${POSTGRES_DB:-avito_dwh}
+    POSTGRES_USER: ${POSTGRES_USER:-avito}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-avito123}
+    POSTGRES_HOST: ${POSTGRES_HOST:-external-postgres}
+    POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    AVITO_SEARCH_URLS: ${AVITO_SEARCH_URLS:-https://www.avito.ru/moskva?q=iphone}
+    AVITO_MAX_PAGES: ${AVITO_MAX_PAGES:-1}
+    AVITO_REQUEST_TIMEOUT: ${AVITO_REQUEST_TIMEOUT:-20}
+    AVITO_USER_AGENT: ${AVITO_USER_AGENT:-Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36}
+  user: "${AIRFLOW_UID:-50000}:0"
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./include:/opt/airflow/include
+    - ./dbt:/opt/airflow/dbt
+    - ./airflow-logs:/opt/airflow/logs
+  depends_on:
+    airflow-postgres:
+      condition: service_healthy
+    external-postgres:
+      condition: service_healthy
+
+services:
+  external-postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-avito_dwh}
+      POSTGRES_USER: ${POSTGRES_USER:-avito}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-avito123}
+    ports:
+      - "5433:5432"
+    volumes:
+      - external_pgdata:/var/lib/postgresql/data
+      - ./sql/init_external_postgres.sql:/docker-entrypoint-initdb.d/001_init_external_postgres.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-avito} -d ${POSTGRES_DB:-avito_dwh}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  airflow-postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: airflow
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+    volumes:
+      - airflow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -lc
+      - |
+        airflow db migrate
+        airflow users create \
+          --username airflow \
+          --password airflow \
+          --firstname Airflow \
+          --lastname Admin \
+          --role Admin \
+          --email airflow@example.com || true
+
+  airflow-webserver:
+    <<: *airflow-common
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    command: webserver
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      airflow-postgres:
+        condition: service_healthy
+      external-postgres:
+        condition: service_healthy
+
+  airflow-scheduler:
+    <<: *airflow-common
+    restart: unless-stopped
+    command: scheduler
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      airflow-postgres:
+        condition: service_healthy
+      external-postgres:
+        condition: service_healthy
+
+volumes:
+  external_pgdata:
+  airflow_pgdata:
+

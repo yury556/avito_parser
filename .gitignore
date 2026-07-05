@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+logs/
+airflow-logs/
+dbt/target/
+dbt/dbt_packages/
+dbt/.user.yml
+*.db
