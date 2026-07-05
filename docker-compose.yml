@@ -139,6 +139,31 @@ services:
       external-postgres:
         condition: service_healthy
 
+  dbt:
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
+    restart: unless-stopped
+    working_dir: /opt/airflow/dbt
+    entrypoint: /bin/bash
+    command:
+      - -lc
+      - |
+        dbt --version
+        tail -f /dev/null
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-avito_dwh}
+      POSTGRES_USER: ${POSTGRES_USER:-avito}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-avito123}
+      POSTGRES_HOST: ${POSTGRES_HOST:-external-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    user: "${AIRFLOW_UID:-50000}:0"
+    volumes:
+      - ./dbt:/opt/airflow/dbt
+    depends_on:
+      external-postgres:
+        condition: service_healthy
+
 volumes:
   external_pgdata:
   airflow_pgdata:

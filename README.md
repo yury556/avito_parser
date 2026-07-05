@@ -25,6 +25,7 @@ Airflow работает в режиме `CeleryExecutor`, поэтому у н�
 - `airflow-worker` - забирает задачи из очереди и исполняет Python/dbt шаги.
 - `airflow-init` - одноразовая миграция metadata DB и создание пользователя.
 - `redis` - брокер очередей Celery между scheduler и worker.
+- `dbt` - отдельный сервис для ручных команд `dbt debug/run/test` с тем же проектом `./dbt`.
 - `external-postgres` - отдельный Postgres проекта, не metadata DB Airflow.
 
 ```mermaid
@@ -39,6 +40,7 @@ flowchart LR
         Scheduler["airflow-scheduler"]
         Redis[("redis broker")]
         Worker["airflow-worker"]
+        DbtService["dbt service"]
 
         Init --> MetaDB
         Web --> MetaDB
@@ -56,7 +58,102 @@ flowchart LR
     DAG --> Scheduler
     Worker -->|"parse Avito and write CSV rows"| Raw
     Worker -->|"dbt run and dbt test"| Midraw
+    DbtService -->|"manual dbt debug/run/test"| Midraw
     Raw -->|"dbt model parses CSV"| Midraw
+```
+
+## Как работает Airflow
+
+Airflow в этой сборке не копирует DAG-и внутрь образа при build. Вместо этого локальные папки репозитория примонтированы в контейнеры как bind mounts:
+
+```text
+./dags    -> /opt/airflow/dags
+./include -> /opt/airflow/include
+./dbt     -> /opt/airflow/dbt
+```
+
+Это значит, что изменения в локальных файлах проекта сразу видны внутри контейнеров. Для Python-кода задан `PYTHONPATH=/opt/airflow/include`, поэтому DAG-и могут импортировать общий код так:
+
+```python
+from avito_pipeline.config import postgres_config_from_env
+from avito_pipeline.postgres_io import write_ads_as_raw_csv
+```
+
+Как Airflow подхватывает DAG-и:
+
+1. `airflow-scheduler` регулярно сканирует `/opt/airflow/dags`.
+2. Каждый `.py` файл импортируется как Python-модуль.
+3. Если при импорте создается объект `DAG`, Airflow регистрирует его `dag_id`, schedule, task-и и зависимости.
+4. `airflow-webserver` читает metadata DB и показывает найденные DAG-и в UI.
+5. Когда DAG запускается, `airflow-scheduler` создает task instances в `airflow-metadb`.
+6. При `CeleryExecutor` scheduler кладет задачи в очередь Redis.
+7. `airflow-worker` забирает задачу из Redis, снова импортирует нужный DAG-файл из `/opt/airflow/dags` и выполняет конкретный operator.
+
+В этом проекте основные task-и такие:
+
+- `PythonOperator` запускает парсер или синтетический генератор и пишет CSV-строки в `external-postgres`.
+- `BashOperator` запускает `dbt run` и `dbt test` из папки `/opt/airflow/dbt`.
+
+Если поменять код в `dags/` или `include/`, scheduler увидит изменения после очередного сканирования DAG folder. Для надежной проверки после правок можно выполнить:
+
+```powershell
+docker compose exec airflow-scheduler airflow dags list
+docker compose run --rm airflow-worker airflow dags test synthetic_avito_to_raw_midraw 2026-07-05
+```
+
+## Как работает dbt
+
+dbt-проект лежит в папке `dbt/`:
+
+```text
+dbt/
+  dbt_project.yml
+  profiles.yml
+  macros/
+  models/
+    sources.yml
+    midraw/
+      avito_ads.sql
+      schema.yml
+```
+
+`profiles.yml` берет параметры подключения из env-переменных контейнера:
+
+```text
+POSTGRES_HOST=external-postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=avito_dwh
+POSTGRES_USER=avito
+POSTGRES_PASSWORD=avito123
+```
+
+Внутри Docker-сети dbt подключается к Postgres по имени сервиса `external-postgres:5432`. С хоста этот же Postgres доступен как `localhost:5433`.
+
+Логика dbt в проекте:
+
+1. `sources.yml` объявляет источник `raw.avito_ads_csv`.
+2. `models/midraw/avito_ads.sql` читает raw CSV-строки.
+3. SQL-модель разбирает `csv_row` через `split_part`.
+4. Результат материализуется как таблица `midraw.avito_ads`.
+5. `schema.yml` проверяет обязательные поля и допустимые значения `source_system`.
+
+Есть два способа запускать dbt:
+
+- автоматически из Airflow DAG через task `dbt_build_midraw`;
+- вручную через отдельный `dbt` service.
+
+Ручные команды через `dbt` service:
+
+```powershell
+docker compose exec dbt dbt debug --profiles-dir .
+docker compose exec dbt dbt run --profiles-dir .
+docker compose exec dbt dbt test --profiles-dir .
+```
+
+Если `dbt` service еще не запущен:
+
+```powershell
+docker compose up -d dbt
 ```
 
 ## Запуск
