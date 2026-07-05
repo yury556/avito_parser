@@ -91,6 +91,119 @@ user: avito
 password: avito123
 ```
 
+## Данные в Postgres
+
+В проекте есть два разных Postgres:
+
+- `airflow-metadb` - служебная база Airflow. Там живут DAG runs, task instances, пользователи UI и другая метаинформация Airflow. Для проверки данных парсера ее обычно не трогаем.
+- `external-postgres` - отдельная база проекта. Именно туда Airflow пишет raw-данные и именно оттуда dbt строит слой `midraw`.
+
+Подключение к `external-postgres` с хоста:
+
+```text
+host: localhost
+port: 5433
+database: avito_dwh
+user: avito
+password: avito123
+```
+
+Структура данных:
+
+- `raw.avito_ads_csv` - сырой слой. Одна строка таблицы равна одной CSV-строке объявления.
+- `raw.avito_load_audit` - аудит загрузок: `run_id`, источник, количество строк, статус.
+- `midraw.avito_ads` - типизированный слой dbt. Здесь CSV уже разобран в нормальные поля: `avito_id`, `title`, `price_rub`, `url`, `location`, `seller`, `parsed_at`, `source_system`, `loaded_at`.
+
+Полезные SQL-запросы:
+
+```sql
+-- последние raw-загрузки
+select
+    run_id,
+    row_number,
+    csv_header,
+    csv_row,
+    loaded_at
+from raw.avito_ads_csv
+order by loaded_at desc, row_number
+limit 20;
+
+-- аудит запусков
+select
+    run_id,
+    source_system,
+    source_url_count,
+    row_count,
+    status,
+    loaded_at
+from raw.avito_load_audit
+order by loaded_at desc
+limit 20;
+
+-- результат dbt midraw
+select
+    avito_id,
+    title,
+    price_rub,
+    location,
+    seller,
+    source_system,
+    parsed_at,
+    loaded_at
+from midraw.avito_ads
+order by loaded_at desc
+limit 20;
+```
+
+## Проверка через DBeaver
+
+1. Убедись, что контейнеры запущены:
+
+```powershell
+docker compose ps
+```
+
+2. В DBeaver создай новое подключение: `Database` -> `New Database Connection` -> `PostgreSQL`.
+
+3. Заполни параметры:
+
+```text
+Host: localhost
+Port: 5433
+Database: avito_dwh
+Username: avito
+Password: avito123
+```
+
+4. Нажми `Test Connection`. Если DBeaver попросит скачать PostgreSQL driver, согласись.
+
+5. После подключения открой:
+
+```text
+avito_dwh
+  Schemas
+    raw
+      Tables
+        avito_ads_csv
+        avito_load_audit
+    midraw
+      Tables
+        avito_ads
+```
+
+6. Для быстрой проверки открой SQL Editor в этом подключении и выполни:
+
+```sql
+select count(*) as raw_rows from raw.avito_ads_csv;
+select count(*) as midraw_rows from midraw.avito_ads;
+```
+
+7. Если `raw_rows` больше нуля, а `midraw_rows` равен нулю, значит raw-загрузка прошла, но dbt еще не построил `midraw`. Запусти dbt-шаг через Airflow DAG или вручную:
+
+```powershell
+docker compose exec airflow-worker bash -lc "cd /opt/airflow/dbt && dbt run --profiles-dir . && dbt test --profiles-dir ."
+```
+
 ## Проверка на семпле
 
 Если Avito отвечает нестабильно, запусти синтетический DAG:
