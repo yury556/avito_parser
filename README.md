@@ -15,6 +15,50 @@
 - `sql/init_external_postgres.sql` - схемы и raw-таблица во внешнем Postgres.
 - `tests/` - быстрые unit-тесты для CSV-контракта и синтетических данных.
 
+## Схема сервисов
+
+Airflow работает в режиме `CeleryExecutor`, поэтому у него разделены роли:
+
+- `airflow-webserver` - UI на `http://localhost:8081`.
+- `airflow-metadb` - metadata DB самого Airflow.
+- `airflow-scheduler` - читает DAG-и и ставит задачи в очередь.
+- `airflow-worker` - забирает задачи из очереди и исполняет Python/dbt шаги.
+- `airflow-init` - одноразовая миграция metadata DB и создание пользователя.
+- `redis` - брокер очередей Celery между scheduler и worker.
+- `external-postgres` - отдельный Postgres проекта, не metadata DB Airflow.
+
+```mermaid
+flowchart LR
+    Avito["Avito search page"] --> DAG["Airflow DAG"]
+    Synthetic["Synthetic DAG fallback"] --> DAG
+
+    subgraph Airflow
+        Init["airflow-init"]
+        Web["airflow-webserver"]
+        MetaDB[("airflow-metadb")]
+        Scheduler["airflow-scheduler"]
+        Redis[("redis broker")]
+        Worker["airflow-worker"]
+
+        Init --> MetaDB
+        Web --> MetaDB
+        Scheduler --> MetaDB
+        Scheduler --> Redis
+        Redis --> Worker
+        Worker --> MetaDB
+    end
+
+    subgraph ExternalPostgres["external-postgres"]
+        Raw[("raw.avito_ads_csv")]
+        Midraw[("midraw.avito_ads")]
+    end
+
+    DAG --> Scheduler
+    Worker -->|"parse Avito and write CSV rows"| Raw
+    Worker -->|"dbt run and dbt test"| Midraw
+    Raw -->|"dbt model parses CSV"| Midraw
+```
+
 ## Запуск
 
 Скопируй пример env и подними сервисы:
@@ -26,6 +70,12 @@ docker compose up -d
 ```
 
 Airflow будет доступен на `http://localhost:8081`.
+
+Если нужно несколько воркеров, их можно масштабировать:
+
+```powershell
+docker compose up -d --scale airflow-worker=2
+```
 
 Логин и пароль:
 
@@ -46,7 +96,7 @@ password: avito123
 Если Avito отвечает нестабильно, запусти синтетический DAG:
 
 ```powershell
-docker compose exec airflow-scheduler airflow dags test synthetic_avito_to_raw_midraw 2026-07-05
+docker compose run --rm airflow-worker airflow dags test synthetic_avito_to_raw_midraw 2026-07-05
 ```
 
 Проверить raw CSV-слой:
@@ -64,7 +114,7 @@ docker compose exec external-postgres psql -U avito -d avito_dwh -c "select avit
 Запустить dbt вручную:
 
 ```powershell
-docker compose exec airflow-scheduler bash -lc "cd /opt/airflow/dbt && dbt run --profiles-dir . && dbt test --profiles-dir ."
+docker compose exec airflow-worker bash -lc "cd /opt/airflow/dbt && dbt run --profiles-dir . && dbt test --profiles-dir ."
 ```
 
 ## Как raw хранит CSV
@@ -101,4 +151,3 @@ python -m compileall include dags
 ```
 
 Эти тесты не требуют Docker и не ходят в сеть.
-

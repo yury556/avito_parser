@@ -3,9 +3,11 @@ x-airflow-common: &airflow-common
     context: .
     dockerfile: docker/airflow/Dockerfile
   environment: &airflow-common-env
-    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-metadb:5432/airflow
+    AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@airflow-metadb:5432/airflow
     AIRFLOW__WEBSERVER__SECRET_KEY: avito-parser-dev-secret
     PYTHONPATH: /opt/airflow/include
     POSTGRES_DB: ${POSTGRES_DB:-avito_dwh}
@@ -24,7 +26,9 @@ x-airflow-common: &airflow-common
     - ./dbt:/opt/airflow/dbt
     - ./airflow-logs:/opt/airflow/logs
   depends_on:
-    airflow-postgres:
+    airflow-metadb:
+      condition: service_healthy
+    redis:
       condition: service_healthy
     external-postgres:
       condition: service_healthy
@@ -48,7 +52,7 @@ services:
       timeout: 5s
       retries: 10
 
-  airflow-postgres:
+  airflow-metadb:
     image: postgres:16
     restart: unless-stopped
     environment:
@@ -59,6 +63,15 @@ services:
       - airflow_pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -87,7 +100,9 @@ services:
     depends_on:
       airflow-init:
         condition: service_completed_successfully
-      airflow-postgres:
+      airflow-metadb:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       external-postgres:
         condition: service_healthy
@@ -99,7 +114,27 @@ services:
     depends_on:
       airflow-init:
         condition: service_completed_successfully
-      airflow-postgres:
+      airflow-metadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      external-postgres:
+        condition: service_healthy
+
+  airflow-worker:
+    <<: *airflow-common
+    restart: unless-stopped
+    command: >
+      bash -lc "exec celery --app airflow.providers.celery.executors.celery_executor.app worker
+      --loglevel INFO
+      --pidfile=/tmp/celery-worker.pid
+      --concurrency ${AIRFLOW_WORKER_CONCURRENCY:-2}"
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      airflow-metadb:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       external-postgres:
         condition: service_healthy
@@ -107,4 +142,3 @@ services:
 volumes:
   external_pgdata:
   airflow_pgdata:
-
