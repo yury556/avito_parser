@@ -2,7 +2,6 @@ from dto import AvitoConfig
 from integrations.notifications.base import Notifier
 from integrations.notifications.composite import NullNotifier, CompositeNotifier
 from integrations.notifications.telegram import TelegramNotifier
-from integrations.notifications.vk import VKNotifier
 
 
 def build_notifier(config: AvitoConfig) -> Notifier:
@@ -15,10 +14,6 @@ def build_notifier(config: AvitoConfig) -> Notifier:
                                               proxy=config.proxy_notifier,
                                               only_text=config.tg_only_text
                                               ))
-
-    if config.vk_token:
-        for _user_id in config.vk_user_id:
-            notifiers.append(VKNotifier(vk_token=config.vk_token, user_id=_user_id))
 
     if notifiers:
         return CompositeNotifier(notifiers)
