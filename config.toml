@@ -1,8 +1,4 @@
 [avito]
-tg_token = ""
-tg_chat_id = []
-vk_token = ""
-vk_user_id = []
 urls = [
     "https://www.avito.ru/sankt-peterburg/tovary_dlya_kompyutera/komplektuyuschie/protsessory-ASgBAgICAkTGB~pm7gniZw?context=H4sIAAAAAAAA_0SSUXOiMBSF_wuv-5KI6EKnD22QNBqyBbcIvplEhWxAR4Jgd_a_7wTt9IkhN_c795ybXTAJ_rYBBIEjTpfLXpjq1DhPbeD5s8AhjRGkjpTE-sp1X_3SfSXqrOc4Utusr2jUV9u8tP9dkadnPvEEUWdBDJKAqrT0EQT0PblWYXKVCBKGfEDDtGJoDug8PUocE4Zu-dtHH-NFD-glaRlGgOZJ66MfoAiTjqEpiVcXsHKTbuRd0qPBL4DOLXM69sSrOdWD4AYd7HlnUA_oIWmtXtEeLcdI5ILiPel8HIOC3nVsjarEwAHG4WsZM3QDxVtiJI4IQzM769E8PIyaKunWniDVIEjz2hYbpvkm62R0z6aos5a78l6vUy0muuF6q0XDvrOpvauoYckRLDnObrbX5six7nYus3f4Ho45D3KTfY5su4cmgtt86eWIzHK0PLMbGFgo-nhhHnqslDhruLv01h-pIOo0uXN99djNMrUsVcD4k4AYjR5KUUdGwIeGWrgsLHqWWT_tkOfQtwyJs-mXR7Cc20x-2h2N-Rc0VV8eNhnYYf_PY0aw3QxaYH_0eMigT47Pz_ZxwcC5jd9Z4ADMp-Vsn7Pf0nvp5Np5-vc_AAD__-Zg2HGVAgAA&localPriority=0&q=i7+14700",
     "https://www.avito.ru/sankt-peterburg/tovary_dlya_kompyutera/komplektuyuschie-ASgBAgICAUTGB~pm?context=H4sIAAAAAAAA_0SR0XKjLBzF38UX-IAmTbXzXbRYGFjijmaKhLuArdGoaaNRcWfffceYnb1iGA6_c87_fwhQ8KsNIAg8e75cPmxXnBvvuQ1WaxR4rOksq0mZ0ao31VD8rIbC1nIwlJRaDoUgQ6HVcb5f9yr5MmhtWfllWYcVEGHc-_QFiE2S78L4GtFXIP5L8ggPQIj46mMIBMiBeIhbHOJvlJxsGefbiTf79sdGVAvf0vG4R7LT6RoozB4V5oVOxz6Dd38qp0OaXWUtnUX_cpradyYlrUhJqxWf_7YK8_aQri8WzppuozB3WhGoVXRjf8ChsEpWtqmWHnVyssULYOHWacQtK0bL6uiYUdmYB77evSeWledxG77d2AbNb1VvTtXbzIvK92lbxsPSg7h9Cqe_PlGYT3fNaqugP2syKlcZWfIDvknyDj8BoeI-wyuwF0lJls4mleBA_dN9HpNVr58Z8p2m3OmUXLTiljUw-9yx_-dlwsBzt_Mx8J5cfGxRD42Lk-_rmHvPv_8EAAD__5QxkfgFAgAA&localPriority=0&q=ddr4+32gb+G.Skill",
@@ -31,15 +27,13 @@ ignore_reserv = true
 ignore_promotion = false
 one_time_start = false
 one_file_for_link = false
-parse_views = true
+parse_views = false
 save_xlsx = true
 use_webdriver = false
 use_bypass_api = true
 cookies_api_key = "sk_live_WqJW_NLkymQQQ_2cRQp4dUR02O5Xdx4Eg6s_abva7i4"
 use_own_cookies = false
 parse_phone = false
-proxy_notifier = ""
-tg_only_text = false
 retry_delay = 5
 timeout = 20
 block_threshold = 3
