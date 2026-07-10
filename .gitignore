@@ -1,18 +1,19 @@
-# created by virtualenv automatically
-.secret.txt
-
-# virtual environment
-.venv/
-
-# python cache
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
 
-# runtime artifacts
+# Runtime
 database.db
 logs/
 result/
 storage/
 
-# OS files
+# Secrets
+config.toml
+
+# OS
 .DS_Store
