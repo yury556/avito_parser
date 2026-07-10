@@ -8,7 +8,6 @@ import flet as ft
 from loguru import logger
 
 from dto import AvitoConfig
-from integrations.notifications.factory import build_notifier
 from lang import *
 from load_config import save_avito_config, load_avito_config
 from parser_cls import AvitoParse
@@ -41,10 +40,6 @@ def main(page: ft.Page):
             return
 
         url_input.value = "\n".join(config.urls or [])
-        tg_chat_id.value = "\n".join(config.tg_chat_id or [])
-        tg_token.value = config.tg_token or ""
-        vk_token.value = config.vk_token or ""
-        vk_user_id.value = "\n".join(config.vk_user_id or [])
         count_page.value = str(config.count)
         keys_word_white_list.value = "\n".join(config.keys_word_white_list or [])
         keys_word_black_list.value = "\n".join(config.keys_word_black_list or [])
@@ -69,8 +64,6 @@ def main(page: ft.Page):
         cookies_api_key.value = config.cookies_api_key
         use_own_account.value = config.use_own_cookies
         parse_phone.value = config.parse_phone
-        proxy_notifier.value = config.proxy_notifier
-        tg_only_text.value = config.tg_only_text
         retry_delay.value = config.retry_delay
         timeout.value = config.timeout
         block_threshold.value = config.block_threshold
@@ -85,12 +78,7 @@ def main(page: ft.Page):
 
     def save_config():
         """Сохраняет настройки в TOML"""
-        config = {"avito": {
-            "tg_token": tg_token.value or "",
-            "tg_chat_id": tg_chat_id.value.splitlines() if tg_chat_id.value else [],
-            "vk_token": vk_token.value or "",
-            "vk_user_id": vk_user_id.value.splitlines() if vk_user_id.value else [],
-            "urls": url_input.value.splitlines() if url_input.value else [],
+        config = {"avito": {            "urls": url_input.value.splitlines() if url_input.value else [],
             "count": to_int_safe(count_page.value, 1),
             "keys_word_white_list": keys_word_white_list.value.splitlines() if keys_word_white_list.value else [],
             "keys_word_black_list": keys_word_black_list.value.splitlines() if keys_word_black_list.value else [],
@@ -115,8 +103,6 @@ def main(page: ft.Page):
             "cookies_api_key": cookies_api_key.value,
             "use_own_cookies": use_own_account.value,
             "parse_phone": parse_phone.value,
-            "proxy_notifier": proxy_notifier.value,
-            "tg_only_text": tg_only_text.value,
             "retry_delay": to_int_safe(retry_delay.value, 5),
             "timeout": to_int_safe(timeout.value, 20),
             "block_threshold": to_int_safe(block_threshold.value, 3)
@@ -148,40 +134,6 @@ def main(page: ft.Page):
 
         page.update()
 
-    def telegram_log_test(e):
-        """Тестирование отправки уведомлений"""
-        logger.info("Проверка настроек уведомлений")
-
-        try:
-            config = AvitoConfig(
-                tg_token=tg_token.value,
-                tg_chat_id=tg_chat_id.value.split(),
-                proxy_notifier=proxy_notifier.value,
-                urls=[] # заглушка
-            )
-
-            notifier = build_notifier(config=config)
-            notifier.notify(message="✅ Это тестовое сообщение")
-
-        except Exception as err:
-            logger.error(f"Ошибка при проверке Telegram: {err}")
-
-    def vk_log_test(e):
-        """Тестирование отправки уведомлений VK"""
-        logger.info("Проверка настроек VK")
-
-        try:
-            config = AvitoConfig(
-                vk_token=vk_token.value,
-                vk_user_id=vk_user_id.value.splitlines(),
-                urls=[] # заглушка
-            )
-
-            notifier = build_notifier(config=config)
-            notifier.notify(message="✅ Это тестовое сообщение от парсера Avito")
-
-        except Exception as err:
-            logger.error(f"Ошибка при проверке VK: {err}")
 
     dlg_modal_proxy = ft.AlertDialog(
         modal=True,
@@ -403,22 +355,6 @@ def main(page: ft.Page):
     max_age = ft.TextField(label="Макс. возраст объявления (в сек.)", width=400, text_size=12, height=40, expand=True,
                            tooltip=MAX_AGE_HELP)
 
-    tg_token = ft.TextField(label="Token telegram", width=400, text_size=12, height=50, expand=True,
-                            tooltip=TG_TOKEN_HELP)
-    tg_chat_id = ft.TextField(label="Chat id telegram. Можно несколько через Enter", width=400,
-                              multiline=True, expand=True, text_size=12, height=50, tooltip=TG_CHAT_ID_HELP)
-    proxy_notifier = ft.TextField(label="Прокси для tg", width=400,
-                              multiline=False, expand=True, text_size=12, height=50, tooltip=PROXY_NOTIFIER_HELP)
-    tg_only_text = ft.Checkbox("Присылать только текст без изображений", value=False, tooltip=TG_ONLY_TEXT_HELP)
-    btn_test_tg = ft.ElevatedButton(text="Проверить tg", disabled=False, on_click=telegram_log_test, expand=True,
-                                    tooltip=BTN_TEST_TG_HELP)
-    vk_token = ft.TextField(label="Token VK (сообщества)", width=400, text_size=12, height=50, expand=True,
-                            tooltip="Токен доступа VK API от имени сообщества")
-    vk_user_id = ft.TextField(label="User ID VK. Можно несколько через Enter", width=400,
-                              multiline=True, expand=True, text_size=12, height=50,
-                              tooltip="ID пользователей VK для отправки сообщений")
-    btn_test_vk = ft.ElevatedButton(text="Проверить VK", disabled=False, on_click=vk_log_test, expand=True,
-                                    tooltip="Отправить тестовое сообщение в VK")
     proxy = ft.TextField(label="Прокси в формате username:password@mproxy.site:port", width=400, expand=True,
                          tooltip=PROXY_HELP,
                          password=True,
@@ -569,21 +505,6 @@ def main(page: ft.Page):
                 ]
             ),
 
-            panel(
-                "📨 Уведомления",
-                [
-                    ft.Text("Telegram", weight=ft.FontWeight.BOLD),
-                    ft.Row([tg_token, tg_chat_id]),
-                    ft.Row([proxy_notifier, ]),
-                    ft.Row([btn_test_tg, tg_only_text]),
-
-                    ft.Divider(),
-
-                    ft.Text("VK", weight=ft.FontWeight.BOLD),
-                    ft.Row([vk_token, vk_user_id]),
-                    btn_test_vk
-                ]
-            ),
 
             panel(
                 "🌐 Прокси и обход блокировок",

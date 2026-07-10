@@ -13,7 +13,6 @@ from db_service import SQLiteDBHandler
 from dto import Proxy, AvitoConfig
 from filters.ads_filter import AdsFilter
 from hide_private_data import log_config
-from integrations.notifications.factory import build_notifier
 from load_config import load_avito_config
 from models import ItemsResponse, Item
 from parser.cookies.factory import build_cookies_provider
@@ -38,7 +37,6 @@ class AvitoParse:
         self.proxy = build_proxy(self.config)
         self.cookies_provider = build_cookies_provider(config=config)
         self.db_handler = SQLiteDBHandler()
-        self.notifier = build_notifier(config=config)
         self.result_storage = None
         self.stop_event = stop_event
         self.headers = HEADERS
@@ -168,8 +166,6 @@ class AvitoParse:
 
                 filter_ads = self.filter_ads(ads=ads)
 
-                self.notifier.notify_many(ads=filter_ads)
-
                 # Просмотры
                 filter_ads = self.parse_views(ads=filter_ads)
 
@@ -189,7 +185,6 @@ class AvitoParse:
         logger.info(f"Хорошие запросы: {self.good_request_count}шт, плохие: {self.bad_request_count}шт")
 
         if self.config.one_time_start:
-            self.notifier.notify(message="Парсинг Авито завершён. Все ссылки обработаны")
             self.stop_event = True
 
     @staticmethod

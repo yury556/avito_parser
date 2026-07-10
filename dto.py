@@ -26,10 +26,6 @@ class AvitoConfig:
     keys_word_black_list: List[str] = field(default_factory=list)
     seller_black_list: List[str] = field(default_factory=list)
     count: int = 1
-    tg_token: Optional[str] = None
-    tg_chat_id: List[str] = None
-    vk_token: Optional[str] = None
-    vk_user_id: List[str] = None
     max_price: int = 999_999_999
     min_price: int = 0
     geo: Optional[str] = None
@@ -50,8 +46,6 @@ class AvitoConfig:
     output_dir: Path = Path("result")
     use_own_cookies: bool = False
     parse_phone: bool = False
-    proxy_notifier: str = None
-    tg_only_text: bool = False
     retry_delay: int = 5
     timeout: int = 20
     block_threshold: int = 3
