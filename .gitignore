@@ -1,2 +1,18 @@
 # created by virtualenv automatically
 .secret.txt
+
+# virtual environment
+.venv/
+
+# python cache
+__pycache__/
+*.pyc
+
+# runtime artifacts
+database.db
+logs/
+result/
+storage/
+
+# OS files
+.DS_Store
