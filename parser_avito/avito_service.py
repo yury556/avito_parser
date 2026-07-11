@@ -1,5 +1,7 @@
 import os
 import sys
+from contextlib import contextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
@@ -34,8 +36,9 @@ def _build_config(body: dict) -> AvitoConfig:
         one_time_start=body.get("one_time_start", True),
         one_file_for_link=body.get("one_file_for_link", False),
         parse_views=body.get("parse_views", False),
-        save_xlsx=body.get("save_xlsx", False),
-        use_webdriver=body.get("use_webdriver", False),
+        save_xlsx=False,
+        save_json=body.get("save_json", True),
+        use_webdriver=False,
         use_bypass_api=body.get("use_bypass_api", False),
         cookies_api_key=body.get("cookies_api_key"),
         output_dir=Path(body.get("output_dir", "result")),
@@ -63,8 +66,79 @@ def _item_to_dict(item) -> dict:
         "is_promotion": item.isPromotion if item.isPromotion is not None else False,
         "total_views": item.total_views,
         "today_views": item.today_views,
-        "parsed_at": None,
     }
+
+
+def _get_postgres_config(body: dict) -> dict | None:
+    pg = body.get("postgres", {})
+    if not pg.get("host") and not os.environ.get("POSTGRES_HOST"):
+        return None
+    return {
+        "host": pg.get("host", os.environ.get("POSTGRES_HOST", "external-postgres")),
+        "port": pg.get("port", int(os.environ.get("POSTGRES_PORT", 5432))),
+        "dbname": pg.get("dbname", os.environ.get("POSTGRES_DB", "avito_dwh")),
+        "user": pg.get("user", os.environ.get("POSTGRES_USER", "avito")),
+        "password": pg.get("password", os.environ.get("POSTGRES_PASSWORD", "avito123")),
+    }
+
+
+@contextmanager
+def _postgres_conn(pg_config: dict):
+    import psycopg2
+    conn = psycopg2.connect(**pg_config)
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str], ads: list[dict]) -> int:
+    with _postgres_conn(pg_config) as conn:
+        with conn.cursor() as cur:
+            if ads:
+                from psycopg2.extras import execute_values
+                execute_values(
+                    cur,
+                    """
+                    INSERT INTO avito_original.ads
+                        (avito_id, title, price_rub, url, location, seller,
+                         is_reserved, is_promotion, total_views, today_views, parsed_at)
+                    VALUES %s
+                    ON CONFLICT (avito_id) DO UPDATE SET
+                        title = EXCLUDED.title,
+                        price_rub = EXCLUDED.price_rub,
+                        url = EXCLUDED.url,
+                        location = EXCLUDED.location,
+                        seller = EXCLUDED.seller,
+                        is_reserved = EXCLUDED.is_reserved,
+                        is_promotion = EXCLUDED.is_promotion,
+                        total_views = EXCLUDED.total_views,
+                        today_views = EXCLUDED.today_views,
+                        parsed_at = EXCLUDED.parsed_at
+                    """,
+                    [
+                        (
+                            ad["avito_id"],
+                            ad.get("title", ""),
+                            ad.get("price_rub"),
+                            ad.get("url", ""),
+                            ad.get("location"),
+                            ad.get("seller"),
+                            ad.get("is_reserved", False),
+                            ad.get("is_promotion", False),
+                            ad.get("total_views"),
+                            ad.get("today_views"),
+                            datetime.now(timezone.utc),
+                        )
+                        for ad in ads
+                        if ad.get("avito_id")
+                    ],
+                )
+    return len([ad for ad in ads if ad.get("avito_id")])
 
 
 @app.post("/parse")
@@ -78,6 +152,12 @@ def parse_ads(body: dict):
 
     ads = [_item_to_dict(item) for item in items]
     logger.info(f"Парсинг завершён: {len(ads)} объявлений")
+
+    pg_config = _get_postgres_config(body)
+    if pg_config and ads:
+        run_id = datetime.now(timezone.utc).strftime("svc_%Y%m%d_%H%M%S")
+        count = _write_ads_to_postgres(pg_config, run_id, config.urls, ads)
+        logger.info(f"Записано в Postgres: {count} строк, run_id={run_id}")
 
     return {"status": "ok", "count": len(ads), "ads": ads}
 

@@ -42,6 +42,7 @@ x-airflow-common: &airflow-common
     - ./include:/opt/airflow/include
     - ./dbt:/opt/airflow/dbt
     - ./airflow-logs:/opt/airflow/logs
+    - ../parser_avito/result:/opt/airflow/parser_result
   depends_on:
     airflow-metadb:
       condition: service_healthy
@@ -188,8 +189,21 @@ services:
     restart: unless-stopped
     ports:
       - "8001:8000"
+    volumes:
+      - ../parser_avito/result:/app/result
+      - ../parser_avito/entrypoint.sh:/app/entrypoint.sh:ro
+      - ../parser_avito/config.toml:/app/config.toml:ro
     environment:
       PYTHONPATH: /app
+      POSTGRES_HOST: external-postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: avito_dwh
+      POSTGRES_USER: avito
+      POSTGRES_PASSWORD: avito123
+    command: ["bash", "/app/entrypoint.sh"]
+    depends_on:
+      external-postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s

@@ -40,6 +40,7 @@ class AvitoConfig:
     one_file_for_link: bool = False
     parse_views: bool = False
     save_xlsx: bool = True
+    save_json: bool = True
     use_webdriver: bool = True
     use_bypass_api: bool = False
     cookies_api_key: str = None
@@ -49,4 +50,5 @@ class AvitoConfig:
     retry_delay: int = 5
     timeout: int = 20
     block_threshold: int = 3
+    user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
 

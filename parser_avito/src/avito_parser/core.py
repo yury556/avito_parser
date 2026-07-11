@@ -179,6 +179,8 @@ class AvitoParse:
                 logger.info(f"Сохраняю {len(ads_in_link)} объявлений")
                 self.result_storage.save(ads_in_link)
                 all_ads.extend(ads_in_link)
+                if self.config.save_json:
+                    self._save_ads_to_json(ads_in_link)
             else:
                 logger.info("Сохранять нечего")
 
@@ -188,6 +190,35 @@ class AvitoParse:
             self.stop_event = True
 
         return all_ads
+
+    @staticmethod
+    def _item_to_dict(item: Item) -> dict:
+        return {
+            "avito_id": item.id if isinstance(item.id, int) else None,
+            "title": item.title or "",
+            "price_rub": item.priceDetailed.value if item.priceDetailed else None,
+            "url": f"https://www.avito.ru{item.urlPath}" if item.urlPath else None,
+            "location": item.location.name if item.location else None,
+            "seller": item.sellerId if item.sellerId else None,
+            "is_reserved": item.isReserved if item.isReserved is not None else False,
+            "is_promotion": item.isPromotion if item.isPromotion is not None else False,
+            "total_views": item.total_views,
+            "today_views": item.today_views,
+        }
+
+    def _save_ads_to_json(self, ads: list[Item]) -> None:
+        import json as json_lib
+        output_path = self.config.output_dir / "ads.json"
+        output_path.parent.mkdir(exist_ok=True)
+        existing = []
+        if output_path.exists():
+            existing = json_lib.loads(output_path.read_text(encoding="utf-8"))
+        existing.extend([self._item_to_dict(ad) for ad in ads])
+        output_path.write_text(
+            json_lib.dumps(existing, ensure_ascii=False, indent=2),
+            encoding="utf-8"
+        )
+        logger.info(f"JSON сохранён: {output_path} ({len(existing)} объявлений)")
 
     @staticmethod
     def _clean_null_ads(ads: list[Item]) -> list[Item]:

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 import requests
 
@@ -8,6 +10,7 @@ from avito_pipeline.config import AvitoConfig
 from avito_pipeline.csv_contract import AvitoAd
 
 AVITO_PARSER_SERVICE_URL = "http://avito-parser-service:8000/parse"
+PARSER_RESULT_PATH = Path("/opt/airflow/parser_result/ads.json")
 
 
 def parse_avito_search(config: AvitoConfig) -> list[AvitoAd]:
@@ -55,4 +58,25 @@ def parse_avito_search(config: AvitoConfig) -> list[AvitoAd]:
             )
         )
 
+    return ads
+
+
+def load_ads_from_json_file(path: Path = PARSER_RESULT_PATH) -> list[AvitoAd]:
+    if not path.exists():
+        return []
+    parsed_at = datetime.now(timezone.utc)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    ads = [
+        AvitoAd(
+            avito_id=ad["avito_id"],
+            title=ad.get("title", ""),
+            price_rub=ad.get("price_rub"),
+            url=ad.get("url", ""),
+            location=ad.get("location"),
+            seller=ad.get("seller"),
+            parsed_at=parsed_at,
+        )
+        for ad in data
+        if ad.get("avito_id")
+    ]
     return ads

@@ -6,7 +6,7 @@ from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 
-from avito_pipeline.avito_parser import parse_avito_search
+from avito_pipeline.avito_parser import parse_avito_search, load_ads_from_json_file
 from avito_pipeline.config import avito_config_from_env, postgres_config_from_env
 from avito_pipeline.postgres_io import write_ads_as_raw_csv
 
@@ -22,6 +22,21 @@ def parse_avito_to_raw(**context) -> int:
         source_urls=avito_config.urls,
         ads=ads,
         source_system="avito",
+    )
+
+
+def load_json_to_raw(**context) -> int:
+    postgres_config = postgres_config_from_env()
+    run_id = context["run_id"] + "__json"
+    ads = load_ads_from_json_file()
+    if not ads:
+        return 0
+    return write_ads_as_raw_csv(
+        config=postgres_config,
+        run_id=run_id,
+        source_urls=[ad.url for ad in ads],
+        ads=ads,
+        source_system="avito-json",
     )
 
 
@@ -47,10 +62,15 @@ with DAG(
         python_callable=parse_avito_to_raw,
     )
 
+    load_json_csv = PythonOperator(
+        task_id="load_ads_from_json",
+        python_callable=load_json_to_raw,
+    )
+
     build_midraw = BashOperator(
         task_id="dbt_build_midraw",
         bash_command="cd /opt/airflow/dbt && dbt run --profiles-dir . --select avito_ads && dbt test --profiles-dir . --select avito_ads",
     )
 
-    load_raw_csv >> build_midraw
+    [load_raw_csv, load_json_csv] >> build_midraw
 
