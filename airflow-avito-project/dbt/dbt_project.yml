@@ -1,0 +1,20 @@
+name: avito_parser_dbt
+version: "1.0.0"
+config-version: 2
+
+profile: avito_parser_dbt
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+
+clean-targets:
+  - target
+  - dbt_packages
+
+models:
+  avito_parser_dbt:
+    midraw:
+      +materialized: table
+      +schema: midraw
+

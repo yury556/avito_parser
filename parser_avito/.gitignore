@@ -1,25 +1,19 @@
-# created by virtualenv automatically
-.secret.txt
-
 # Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
 *.egg-info/
-dist/
+.venv/
 build/
+dist/
 
-# Virtual environments
-venv/
-venv2/
-.env/
-
-# Logs
+# Runtime
+database.db
 logs/
+result/
+storage/
 
-# IDE
-.vscode/
-.idea/
+# Secrets
+config.toml
 
 # OS
 .DS_Store

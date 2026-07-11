@@ -1,0 +1,201 @@
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: docker/airflow/Dockerfile
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-metadb:5432/airflow
+    AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@airflow-metadb:5432/airflow
+    AIRFLOW__WEBSERVER__SECRET_KEY: avito-parser-dev-secret
+    PYTHONPATH: /opt/airflow/include
+    POSTGRES_DB: ${POSTGRES_DB:-avito_dwh}
+    POSTGRES_USER: ${POSTGRES_USER:-avito}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-avito123}
+    POSTGRES_HOST: ${POSTGRES_HOST:-external-postgres}
+    POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    AVITO_SEARCH_URLS: ${AVITO_SEARCH_URLS:-https://www.avito.ru/moskva?q=iphone}
+    AVITO_MAX_PAGES: ${AVITO_MAX_PAGES:-1}
+    AVITO_REQUEST_TIMEOUT: ${AVITO_REQUEST_TIMEOUT:-20}
+    AVITO_USER_AGENT: ${AVITO_USER_AGENT:-Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36}
+    AVITO_PROXY_STRING: ${AVITO_PROXY_STRING:-}
+    AVITO_PROXY_CHANGE_URL: ${AVITO_PROXY_CHANGE_URL:-}
+    AVITO_COOKIES_API_KEY: ${AVITO_COOKIES_API_KEY:-}
+    AVITO_USE_BYPASS_API: ${AVITO_USE_BYPASS_API:-false}
+    AVITO_USE_OWN_COOKIES: ${AVITO_USE_OWN_COOKIES:-false}
+    AVITO_MIN_PRICE: ${AVITO_MIN_PRICE:-0}
+    AVITO_MAX_PRICE: ${AVITO_MAX_PRICE:-999999999}
+    AVITO_WHITE_LIST: ${AVITO_WHITE_LIST:-}
+    AVITO_BLACK_LIST: ${AVITO_BLACK_LIST:-}
+    AVITO_SELLER_BLACK_LIST: ${AVITO_SELLER_BLACK_LIST:-}
+    AVITO_MAX_AGE: ${AVITO_MAX_AGE:-86400}
+    AVITO_IGNORE_RESERV: ${AVITO_IGNORE_RESERV:-true}
+    AVITO_IGNORE_PROMOTION: ${AVITO_IGNORE_PROMOTION:-false}
+    AVITO_PARSE_VIEWS: ${AVITO_PARSE_VIEWS:-false}
+    AVITO_RETRY_DELAY: ${AVITO_RETRY_DELAY:-5}
+    AVITO_BLOCK_THRESHOLD: ${AVITO_BLOCK_THRESHOLD:-3}
+    AVITO_PAUSE_BETWEEN_LINKS: ${AVITO_PAUSE_BETWEEN_LINKS:-5}
+  user: "${AIRFLOW_UID:-50000}:0"
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./include:/opt/airflow/include
+    - ./dbt:/opt/airflow/dbt
+    - ./airflow-logs:/opt/airflow/logs
+  depends_on:
+    airflow-metadb:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    external-postgres:
+      condition: service_healthy
+
+services:
+  external-postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-avito_dwh}
+      POSTGRES_USER: ${POSTGRES_USER:-avito}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-avito123}
+    ports:
+      - "5433:5432"
+    volumes:
+      - external_pgdata:/var/lib/postgresql/data
+      - ./sql/init_external_postgres.sql:/docker-entrypoint-initdb.d/001_init_external_postgres.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-avito} -d ${POSTGRES_DB:-avito_dwh}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  airflow-metadb:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: airflow
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+    volumes:
+      - airflow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -lc
+      - |
+        airflow db migrate
+        airflow users create \
+          --username airflow \
+          --password airflow \
+          --firstname Airflow \
+          --lastname Admin \
+          --role Admin \
+          --email airflow@example.com || true
+
+  airflow-webserver:
+    <<: *airflow-common
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    command: webserver
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      airflow-metadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      external-postgres:
+        condition: service_healthy
+
+  airflow-scheduler:
+    <<: *airflow-common
+    restart: unless-stopped
+    command: scheduler
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      airflow-metadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      external-postgres:
+        condition: service_healthy
+
+  airflow-worker:
+    <<: *airflow-common
+    restart: unless-stopped
+    command: >
+      bash -lc "exec celery --app airflow.providers.celery.executors.celery_executor.app worker
+      --loglevel INFO
+      --pidfile=/tmp/celery-worker.pid
+      --concurrency ${AIRFLOW_WORKER_CONCURRENCY:-2}"
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      airflow-metadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      external-postgres:
+        condition: service_healthy
+
+  dbt:
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
+    restart: unless-stopped
+    working_dir: /opt/airflow/dbt
+    entrypoint: /bin/bash
+    command:
+      - -lc
+      - |
+        dbt --version
+        tail -f /dev/null
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-avito_dwh}
+      POSTGRES_USER: ${POSTGRES_USER:-avito}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-avito123}
+      POSTGRES_HOST: ${POSTGRES_HOST:-external-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    user: "${AIRFLOW_UID:-50000}:0"
+    volumes:
+      - ./dbt:/opt/airflow/dbt
+    depends_on:
+      external-postgres:
+        condition: service_healthy
+
+  avito-parser-service:
+    build:
+      context: ../parser_avito
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      PYTHONPATH: /app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  external_pgdata:
+  airflow_pgdata:

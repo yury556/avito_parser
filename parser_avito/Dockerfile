@@ -1,36 +1,20 @@
-FROM python:3.11-slim
-LABEL org.opencontainers.image.source=https://github.com/Duff89/parser_avito
+FROM python:3.13-slim
 
-RUN apt-get update && apt-get install \
--y --ignore-missing --no-install-recommends --no-install-suggests \
-	libatk-bridge2.0-0t64 \
-	libatk1.0-0t64 \
-	libatspi2.0-0t64 \
-	libcairo2 \
-	libdbus-1-3 \
-	libdrm2 \
-	libgbm1 \
-	libglib2.0-0t64 \
-	libnspr4 \
-	libnss3 \
-	libpango-1.0-0 \
-	libxcomposite1 \
-	libxdamage1 \
-	libxfixes3 \
-	libxrandr2 \
-	libxkbcommon0 \
-	libasound2 \
-	&& apt-get autopurge \
-	&& apt-get clean \
-	&& apt-get distclean
-
-COPY requirements.txt /app/requirements.txt
 WORKDIR /app
-RUN pip install --upgrade pip && pip install -r requirements.txt
 
-RUN python -m playwright install chromium-headless-shell
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-COPY . /app
-COPY entrypoint.sh /
+COPY requirements.txt .
+ENV PLAYWRIGHT_BROWSERS_PATH=0
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir fastapi uvicorn
 
-ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
+COPY src/ ./src/
+COPY avito_service.py .
+
+ENV PYTHONPATH=/app
+
+EXPOSE 8000
+
+CMD ["uvicorn", "avito_service:app", "--host", "0.0.0.0", "--port", "8000"]

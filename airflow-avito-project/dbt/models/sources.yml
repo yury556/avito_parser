@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: avito_ads_csv
+        description: Raw layer with one CSV row per parsed Avito ad.
+
