@@ -15,6 +15,7 @@ clean-targets:
 models:
   avito_parser_dbt:
     midraw:
-      +materialized: table
+      +materialized: incremental
       +schema: midraw
+      +incremental_strategy: append
 

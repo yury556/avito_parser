@@ -55,13 +55,14 @@ def _build_config(body: dict) -> AvitoConfig:
 
 
 def _item_to_dict(item) -> dict:
+    price_raw = item.priceDetailed.value if item.priceDetailed else None
     return {
         "avito_id": item.id if isinstance(item.id, int) else None,
         "title": item.title or "",
-        "price_rub": item.priceDetailed.value if item.priceDetailed else None,
+        "price_rub": int(price_raw) if price_raw is not None else None,
         "url": f"https://www.avito.ru{item.urlPath}" if item.urlPath else None,
-        "location": item.location.name if item.location else None,
-        "seller": item.sellerId if item.sellerId else None,
+        "location": (item.location.name or "")[:64] if item.location else None,
+        "seller": (item.sellerId or "")[:64] if item.sellerId else None,
         "is_reserved": item.isReserved if item.isReserved is not None else False,
         "is_promotion": item.isPromotion if item.isPromotion is not None else False,
         "total_views": item.total_views,
@@ -119,6 +120,11 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                         total_views = EXCLUDED.total_views,
                         today_views = EXCLUDED.today_views,
                         parsed_at = EXCLUDED.parsed_at
+                    WHERE avito_original.ads.price_rub   IS DISTINCT FROM EXCLUDED.price_rub
+                       OR avito_original.ads.is_reserved IS DISTINCT FROM EXCLUDED.is_reserved
+                       OR avito_original.ads.is_promotion IS DISTINCT FROM EXCLUDED.is_promotion
+                       OR avito_original.ads.total_views IS DISTINCT FROM EXCLUDED.total_views
+                       OR avito_original.ads.today_views IS DISTINCT FROM EXCLUDED.today_views
                     """,
                     [
                         (

@@ -1,42 +1,31 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 
-from avito_pipeline.avito_parser import parse_avito_search, load_ads_from_json_file
-from avito_pipeline.config import avito_config_from_env, postgres_config_from_env
-from avito_pipeline.postgres_io import write_ads_as_raw_csv
+from avito_pipeline.config import postgres_config_from_env
+from avito_pipeline.postgres_io import write_ads_as_raw_csv, fetch_ads_from_original
 
 
-def parse_avito_to_raw(**context) -> int:
-    avito_config = avito_config_from_env()
-    postgres_config = postgres_config_from_env()
-    run_id = context["run_id"]
-    ads = parse_avito_search(avito_config)
-    return write_ads_as_raw_csv(
-        config=postgres_config,
-        run_id=run_id,
-        source_urls=avito_config.urls,
-        ads=ads,
-        source_system="avito",
-    )
-
-
-def load_json_to_raw(**context) -> int:
-    postgres_config = postgres_config_from_env()
-    run_id = context["run_id"] + "__json"
-    ads = load_ads_from_json_file()
+def fetch_from_original(**context) -> int:
+    pg_config = postgres_config_from_env()
+    since = context.get("data_interval_start")
+    if since is None:
+        since = datetime.now(timezone.utc) - timedelta(hours=1)
+    if since.tzinfo is None:
+        since = since.replace(tzinfo=timezone.utc)
+    ads = fetch_ads_from_original(pg_config, since)
     if not ads:
         return 0
     return write_ads_as_raw_csv(
-        config=postgres_config,
-        run_id=run_id,
-        source_urls=[ad.url for ad in ads],
+        config=pg_config,
+        run_id=context["run_id"],
+        source_urls=["avito_original.ads"],
         ads=ads,
-        source_system="avito-json",
+        source_system="avito",
     )
 
 
@@ -49,7 +38,7 @@ default_args = {
 
 with DAG(
     dag_id="avito_to_raw_midraw",
-    description="Parse Avito hourly, store CSV rows in raw Postgres, then build dbt midraw.",
+    description="Read Avito ads from avito_original.ads into raw CSV, then build dbt midraw.",
     default_args=default_args,
     schedule="0 * * * *",
     start_date=datetime(2026, 7, 1),
@@ -57,14 +46,9 @@ with DAG(
     max_active_runs=1,
     tags=["avito", "postgres", "dbt", "raw", "midraw"],
 ) as dag:
-    load_raw_csv = PythonOperator(
-        task_id="parse_avito_to_raw_csv",
-        python_callable=parse_avito_to_raw,
-    )
-
-    load_json_csv = PythonOperator(
-        task_id="load_ads_from_json",
-        python_callable=load_json_to_raw,
+    fetch_raw = PythonOperator(
+        task_id="fetch_raw_from_original",
+        python_callable=fetch_from_original,
     )
 
     build_midraw = BashOperator(
@@ -72,5 +56,4 @@ with DAG(
         bash_command="cd /opt/airflow/dbt && dbt run --profiles-dir . --select avito_ads && dbt test --profiles-dir . --select avito_ads",
     )
 
-    [load_raw_csv, load_json_csv] >> build_midraw
-
+    fetch_raw >> build_midraw

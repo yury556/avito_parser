@@ -6,4 +6,8 @@ sources:
     tables:
       - name: avito_ads_csv
         description: Raw layer with one CSV row per parsed Avito ad.
+      - name: dag_run_history
+        description: Per-run history linking run_id to avito_id.
+      - name: avito_load_audit
+        description: Audit log per DAG run.
 

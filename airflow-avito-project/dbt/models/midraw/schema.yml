@@ -2,14 +2,8 @@ version: 2
 
 models:
   - name: avito_ads
-    description: Typed midraw table built from raw CSV Avito rows.
+    description: Typed table built from raw CSV Avito rows.
     columns:
-      - name: run_id
-        tests:
-          - not_null
-      - name: row_number
-        tests:
-          - not_null
       - name: avito_id
         tests:
           - not_null

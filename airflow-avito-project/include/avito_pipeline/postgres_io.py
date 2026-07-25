@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from datetime import datetime
 
 import psycopg2
 from psycopg2.extras import execute_values
@@ -47,6 +48,18 @@ def ensure_raw_objects(conn) -> None:
         )
         cur.execute(
             """
+            CREATE TABLE IF NOT EXISTS raw.dag_run_history (
+                run_id       text      NOT NULL,
+                avito_id     bigint    NOT NULL,
+                row_number   integer   NOT NULL,
+                loaded_at    timestamptz NOT NULL DEFAULT now(),
+                source_system text     NOT NULL,
+                PRIMARY KEY (run_id, avito_id)
+            )
+            """
+        )
+        cur.execute(
+            """
             CREATE TABLE IF NOT EXISTS raw.avito_load_audit (
                 run_id text PRIMARY KEY,
                 source_system text NOT NULL,
@@ -86,6 +99,20 @@ def write_ads_as_raw_csv(
                     """,
                     rows,
                 )
+                dag_history_rows = [
+                    (run_id, ad.avito_id, index, source_system)
+                    for index, ad in enumerate(ads, start=1)
+                ]
+                execute_values(
+                    cur,
+                    """
+                    INSERT INTO raw.dag_run_history
+                        (run_id, avito_id, row_number, source_system)
+                    VALUES %s
+                    ON CONFLICT (run_id, avito_id) DO NOTHING
+                    """,
+                    dag_history_rows,
+                )
             cur.execute(
                 """
                 INSERT INTO raw.avito_load_audit
@@ -102,4 +129,30 @@ def write_ads_as_raw_csv(
                 (run_id, source_system, len(source_urls), len(rows), "success", None),
             )
     return len(rows)
+
+
+def fetch_ads_from_original(config: PostgresConfig, since: datetime) -> list[AvitoAd]:
+    with postgres_connection(config) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT avito_id, title, price_rub, url, location, seller, parsed_at
+                FROM avito_original.ads
+                WHERE parsed_at > %s
+                ORDER BY parsed_at
+                """,
+                (since,),
+            )
+            return [
+                AvitoAd(
+                    avito_id=row[0],
+                    title=row[1] or "",
+                    price_rub=row[2],
+                    url=row[3] or "",
+                    location=row[4],
+                    seller=row[5],
+                    parsed_at=row[6],
+                )
+                for row in cur.fetchall()
+            ]
 

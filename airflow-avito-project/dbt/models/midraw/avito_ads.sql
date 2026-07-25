@@ -1,21 +1,7 @@
 {{ config(materialized='table', schema='midraw') }}
 
-with raw_rows as (
+with parsed as (
     select
-        run_id,
-        row_number,
-        source_url,
-        csv_header,
-        csv_row,
-        loaded_at
-    from {{ source('raw', 'avito_ads_csv') }}
-    where csv_header = 'avito_id,title,price_rub,url,location,seller,parsed_at'
-),
-
-parsed as (
-    select
-        run_id,
-        row_number,
         nullif(split_part(csv_row, ',', 1), '')::bigint as avito_id,
         nullif(split_part(csv_row, ',', 2), '') as title,
         nullif(split_part(csv_row, ',', 3), '')::numeric(12, 2) as price_rub,
@@ -23,14 +9,12 @@ parsed as (
         nullif(split_part(csv_row, ',', 5), '') as location,
         nullif(split_part(csv_row, ',', 6), '') as seller,
         nullif(split_part(csv_row, ',', 7), '')::timestamptz as parsed_at,
-        source_url,
-        loaded_at
-    from raw_rows
+        source_url
+    from {{ source('raw', 'avito_ads_csv') }}
+    where csv_header = 'avito_id,title,price_rub,url,location,seller,parsed_at'
 )
 
 select
-    run_id,
-    row_number,
     avito_id,
     title,
     price_rub,
@@ -42,7 +26,6 @@ select
     case
         when source_url like 'synthetic://%' then 'synthetic_avito'
         else 'avito'
-    end as source_system,
-    loaded_at
+    end as source_system
 from parsed
 

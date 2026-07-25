@@ -51,6 +51,24 @@ x-airflow-common: &airflow-common
     external-postgres:
       condition: service_healthy
 
+x-superset-common: &superset-common
+  build:
+    context: .
+    dockerfile: docker/superset/Dockerfile
+  environment: &superset-common-env
+    SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+    SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-change-this-superset-secret-before-production}
+    SUPERSET_META_DB_HOST: superset-metadb
+    SUPERSET_META_DB_PORT: "5432"
+    SUPERSET_META_DB_NAME: ${SUPERSET_META_DB_NAME:-superset}
+    SUPERSET_META_DB_USER: ${SUPERSET_META_DB_USER:-superset}
+    SUPERSET_META_DB_PASSWORD: ${SUPERSET_META_DB_PASSWORD:-superset}
+    SUPERSET_REDIS_HOST: superset-redis
+    SUPERSET_REDIS_PORT: "6379"
+  volumes:
+    - ./docker/superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+    - superset_home:/app/superset_home
+
 services:
   external-postgres:
     image: postgres:16
@@ -210,6 +228,85 @@ services:
       timeout: 5s
       retries: 5
 
+  superset-metadb:
+      image: postgres:16
+      restart: unless-stopped
+      environment:
+        POSTGRES_DB: ${SUPERSET_META_DB_NAME:-superset}
+        POSTGRES_USER: ${SUPERSET_META_DB_USER:-superset}
+        POSTGRES_PASSWORD: ${SUPERSET_META_DB_PASSWORD:-superset}
+      volumes:
+        - superset_pgdata:/var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U ${SUPERSET_META_DB_USER:-superset} -d ${SUPERSET_META_DB_NAME:-superset}"]
+        interval: 5s
+        timeout: 5s
+        retries: 10
+
+  superset-init:
+    <<: *superset-common
+    restart: "no"
+    entrypoint: /bin/sh
+    command:
+      - -ec
+      - |
+        superset db upgrade
+        superset fab create-admin \
+          --username "${SUPERSET_ADMIN_USERNAME:-superset}" \
+          --firstname "${SUPERSET_ADMIN_FIRSTNAME:-Superset}" \
+          --lastname "${SUPERSET_ADMIN_LASTNAME:-Admin}" \
+          --email "${SUPERSET_ADMIN_EMAIL:-superset@example.com}" \
+          --password "${SUPERSET_ADMIN_PASSWORD:-superset}" || true
+        superset init
+    depends_on:
+      superset-metadb:
+        condition: service_healthy
+      superset-redis:
+        condition: service_healthy
+
+  superset-redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  superset:
+    <<: *superset-common
+    restart: unless-stopped
+    command: superset run -h 0.0.0.0 -p 8088 --with-threads
+    ports:
+      - "127.0.0.1:${SUPERSET_HOST_PORT:-18088}:8088"
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+      superset-redis:
+        condition: service_healthy
+
+  superset-worker:
+    <<: *superset-common
+    restart: unless-stopped
+    command: celery --app=superset.tasks.celery_app:app worker --loglevel=INFO
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+      superset-redis:
+        condition: service_healthy
+
+  superset-beat:
+    <<: *superset-common
+    restart: unless-stopped
+    command: celery --app=superset.tasks.celery_app:app beat --loglevel=INFO
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+      superset-redis:
+        condition: service_healthy
+
 volumes:
   external_pgdata:
   airflow_pgdata:
+  superset_pgdata:
+  superset_home:

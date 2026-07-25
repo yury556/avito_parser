@@ -1,0 +1,17 @@
+[2026-07-11T16:18:49.798+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-07-11T16:18:49.804+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: avito_to_raw_midraw.parse_avito_to_raw_csv manual_v3 [queued]>
+[2026-07-11T16:18:49.807+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: avito_to_raw_midraw.parse_avito_to_raw_csv manual_v3 [queued]>
+[2026-07-11T16:18:49.807+0000] {taskinstance.py:2867} INFO - Starting attempt 1 of 2
+[2026-07-11T16:18:49.810+0000] {taskinstance.py:2890} INFO - Executing <Task(PythonOperator): parse_avito_to_raw_csv> on 2026-07-11 16:18:43+00:00
+[2026-07-11T16:18:49.812+0000] {standard_task_runner.py:72} INFO - Started process 166 to run task
+[2026-07-11T16:18:49.814+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'avito_to_raw_midraw', 'parse_avito_to_raw_csv', 'manual_v3', '--job-id', '11', '--raw', '--subdir', 'DAGS_FOLDER/avito_to_raw_midraw.py', '--cfg-path', '/tmp/tmpt6_drwu4']
+[2026-07-11T16:18:49.815+0000] {standard_task_runner.py:105} INFO - Job 11: Subtask parse_avito_to_raw_csv
+[2026-07-11T16:18:49.833+0000] {task_command.py:467} INFO - Running <TaskInstance: avito_to_raw_midraw.parse_avito_to_raw_csv manual_v3 [running]> on host 214e7ce0f289
+[2026-07-11T16:18:49.861+0000] {taskinstance.py:3134} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='data-eng' AIRFLOW_CTX_DAG_ID='avito_to_raw_midraw' AIRFLOW_CTX_TASK_ID='parse_avito_to_raw_csv' AIRFLOW_CTX_EXECUTION_DATE='2026-07-11T16:18:43+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual_v3'
+[2026-07-11T16:18:49.861+0000] {taskinstance.py:732} INFO - ::endgroup::
+[2026-07-11T16:18:57.075+0000] {python.py:240} INFO - Done. Returned value was: 0
+[2026-07-11T16:18:57.087+0000] {taskinstance.py:341} INFO - ::group::Post task execution logs
+[2026-07-11T16:18:57.087+0000] {taskinstance.py:353} INFO - Marking task as SUCCESS. dag_id=avito_to_raw_midraw, task_id=parse_avito_to_raw_csv, run_id=manual_v3, execution_date=20260711T161843, start_date=20260711T161849, end_date=20260711T161857
+[2026-07-11T16:18:57.117+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-07-11T16:18:57.128+0000] {taskinstance.py:3901} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2026-07-11T16:18:57.129+0000] {local_task_job_runner.py:245} INFO - ::endgroup::

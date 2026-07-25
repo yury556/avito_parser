@@ -1,0 +1,58 @@
+[2026-07-12T13:00:15.346+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-07-12T13:00:15.361+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: avito_to_raw_midraw.dbt_build_midraw scheduled__2026-07-12T12:00:00+00:00 [queued]>
+[2026-07-12T13:00:15.365+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: avito_to_raw_midraw.dbt_build_midraw scheduled__2026-07-12T12:00:00+00:00 [queued]>
+[2026-07-12T13:00:15.366+0000] {taskinstance.py:2867} INFO - Starting attempt 1 of 2
+[2026-07-12T13:00:15.370+0000] {taskinstance.py:2890} INFO - Executing <Task(BashOperator): dbt_build_midraw> on 2026-07-12 12:00:00+00:00
+[2026-07-12T13:00:15.373+0000] {standard_task_runner.py:72} INFO - Started process 135 to run task
+[2026-07-12T13:00:15.375+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'avito_to_raw_midraw', 'dbt_build_midraw', 'scheduled__2026-07-12T12:00:00+00:00', '--job-id', '93', '--raw', '--subdir', 'DAGS_FOLDER/avito_to_raw_midraw.py', '--cfg-path', '/tmp/tmptjo1zw4t']
+[2026-07-12T13:00:15.377+0000] {standard_task_runner.py:105} INFO - Job 93: Subtask dbt_build_midraw
+[2026-07-12T13:00:15.408+0000] {task_command.py:467} INFO - Running <TaskInstance: avito_to_raw_midraw.dbt_build_midraw scheduled__2026-07-12T12:00:00+00:00 [running]> on host 4c6dd7d943f5
+[2026-07-12T13:00:15.583+0000] {taskinstance.py:3134} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='data-eng' AIRFLOW_CTX_DAG_ID='avito_to_raw_midraw' AIRFLOW_CTX_TASK_ID='dbt_build_midraw' AIRFLOW_CTX_EXECUTION_DATE='2026-07-12T12:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-07-12T12:00:00+00:00'
+[2026-07-12T13:00:15.584+0000] {taskinstance.py:732} INFO - ::endgroup::
+[2026-07-12T13:00:15.589+0000] {subprocess.py:78} INFO - Tmp dir root location: /tmp
+[2026-07-12T13:00:15.589+0000] {subprocess.py:88} INFO - Running command: ['/usr/bin/bash', '-c', 'cd /opt/***/dbt && dbt run --profiles-dir . --select avito_ads && dbt test --profiles-dir . --select avito_ads']
+[2026-07-12T13:00:15.595+0000] {subprocess.py:99} INFO - Output:
+[2026-07-12T13:00:16.751+0000] {subprocess.py:106} INFO - [0m13:00:16  Running with dbt=1.11.12
+[2026-07-12T13:00:16.851+0000] {subprocess.py:106} INFO - [0m13:00:16  Registered adapter: postgres=1.9.0
+[2026-07-12T13:00:17.226+0000] {subprocess.py:106} INFO - [0m13:00:17  Found 1 model, 6 data tests, 1 source, 475 macros
+[2026-07-12T13:00:17.228+0000] {subprocess.py:106} INFO - [0m13:00:17
+[2026-07-12T13:00:17.229+0000] {subprocess.py:106} INFO - [0m13:00:17  Concurrency: 4 threads (target='dev')
+[2026-07-12T13:00:17.230+0000] {subprocess.py:106} INFO - [0m13:00:17
+[2026-07-12T13:00:17.303+0000] {subprocess.py:106} INFO - [0m13:00:17  1 of 1 START sql table model midraw.avito_ads .................................. [RUN]
+[2026-07-12T13:00:35.869+0000] {subprocess.py:106} INFO - [0m13:00:35  1 of 1 OK created sql table model midraw.avito_ads ............................. [[32mSELECT 41925[0m in 18.56s]
+[2026-07-12T13:00:35.894+0000] {subprocess.py:106} INFO - [0m13:00:35
+[2026-07-12T13:00:35.895+0000] {subprocess.py:106} INFO - [0m13:00:35  Finished running 1 table model in 0 hours 0 minutes and 18.66 seconds (18.66s).
+[2026-07-12T13:00:35.951+0000] {subprocess.py:106} INFO - [0m13:00:35
+[2026-07-12T13:00:35.952+0000] {subprocess.py:106} INFO - [0m13:00:35  [32mCompleted successfully[0m
+[2026-07-12T13:00:35.952+0000] {subprocess.py:106} INFO - [0m13:00:35
+[2026-07-12T13:00:35.953+0000] {subprocess.py:106} INFO - [0m13:00:35  Done. PASS=1 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=1
+[2026-07-12T13:00:41.792+0000] {subprocess.py:106} INFO - [0m13:00:41  Running with dbt=1.11.12
+[2026-07-12T13:00:41.895+0000] {subprocess.py:106} INFO - [0m13:00:41  Registered adapter: postgres=1.9.0
+[2026-07-12T13:00:42.105+0000] {subprocess.py:106} INFO - [0m13:00:42  Found 1 model, 6 data tests, 1 source, 475 macros
+[2026-07-12T13:00:42.106+0000] {subprocess.py:106} INFO - [0m13:00:42
+[2026-07-12T13:00:42.107+0000] {subprocess.py:106} INFO - [0m13:00:42  Concurrency: 4 threads (target='dev')
+[2026-07-12T13:00:42.107+0000] {subprocess.py:106} INFO - [0m13:00:42
+[2026-07-12T13:00:42.161+0000] {subprocess.py:106} INFO - [0m13:00:42  1 of 6 START test accepted_values_avito_ads_source_system__avito__synthetic_avito  [RUN]
+[2026-07-12T13:00:42.162+0000] {subprocess.py:106} INFO - [0m13:00:42  2 of 6 START test not_null_avito_ads_avito_id .................................. [RUN]
+[2026-07-12T13:00:42.162+0000] {subprocess.py:106} INFO - [0m13:00:42  3 of 6 START test not_null_avito_ads_row_number ................................ [RUN]
+[2026-07-12T13:00:42.162+0000] {subprocess.py:106} INFO - [0m13:00:42  4 of 6 START test not_null_avito_ads_run_id .................................... [RUN]
+[2026-07-12T13:00:42.248+0000] {subprocess.py:106} INFO - [0m13:00:42  1 of 6 PASS accepted_values_avito_ads_source_system__avito__synthetic_avito .... [[32mPASS[0m in 0.09s]
+[2026-07-12T13:00:42.248+0000] {subprocess.py:106} INFO - [0m13:00:42  4 of 6 PASS not_null_avito_ads_run_id .......................................... [[32mPASS[0m in 0.08s]
+[2026-07-12T13:00:42.249+0000] {subprocess.py:106} INFO - [0m13:00:42  3 of 6 PASS not_null_avito_ads_row_number ...................................... [[32mPASS[0m in 0.09s]
+[2026-07-12T13:00:42.249+0000] {subprocess.py:106} INFO - [0m13:00:42  2 of 6 PASS not_null_avito_ads_avito_id ........................................ [[32mPASS[0m in 0.09s]
+[2026-07-12T13:00:42.252+0000] {subprocess.py:106} INFO - [0m13:00:42  5 of 6 START test not_null_avito_ads_title ..................................... [RUN]
+[2026-07-12T13:00:42.252+0000] {subprocess.py:106} INFO - [0m13:00:42  6 of 6 START test not_null_avito_ads_url ....................................... [RUN]
+[2026-07-12T13:00:42.278+0000] {subprocess.py:106} INFO - [0m13:00:42  5 of 6 PASS not_null_avito_ads_title ........................................... [[32mPASS[0m in 0.03s]
+[2026-07-12T13:00:42.279+0000] {subprocess.py:106} INFO - [0m13:00:42  6 of 6 PASS not_null_avito_ads_url ............................................. [[32mPASS[0m in 0.03s]
+[2026-07-12T13:00:42.288+0000] {subprocess.py:106} INFO - [0m13:00:42
+[2026-07-12T13:00:42.289+0000] {subprocess.py:106} INFO - [0m13:00:42  Finished running 6 data tests in 0 hours 0 minutes and 0.18 seconds (0.18s).
+[2026-07-12T13:00:42.314+0000] {subprocess.py:106} INFO - [0m13:00:42
+[2026-07-12T13:00:42.314+0000] {subprocess.py:106} INFO - [0m13:00:42  [32mCompleted successfully[0m
+[2026-07-12T13:00:42.314+0000] {subprocess.py:106} INFO - [0m13:00:42
+[2026-07-12T13:00:42.315+0000] {subprocess.py:106} INFO - [0m13:00:42  Done. PASS=6 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=6
+[2026-07-12T13:00:43.026+0000] {subprocess.py:110} INFO - Command exited with return code 0
+[2026-07-12T13:00:43.053+0000] {taskinstance.py:341} INFO - ::group::Post task execution logs
+[2026-07-12T13:00:43.053+0000] {taskinstance.py:353} INFO - Marking task as SUCCESS. dag_id=avito_to_raw_midraw, task_id=dbt_build_midraw, run_id=scheduled__2026-07-12T12:00:00+00:00, execution_date=20260712T120000, start_date=20260712T130015, end_date=20260712T130043
+[2026-07-12T13:00:43.099+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-07-12T13:00:43.113+0000] {taskinstance.py:3901} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-07-12T13:00:43.114+0000] {local_task_job_runner.py:245} INFO - ::endgroup::
