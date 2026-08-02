@@ -22,13 +22,20 @@ CONFIG_PATH = os.environ.get('PARSER_CONFIG', '/app/config.toml')
 
 def item_to_dict(item) -> dict:
     price_raw = item.priceDetailed.value if item.priceDetailed else None
+    description_raw = item.description or ''
+    if not description_raw and item.iva:
+        steps = item.iva.get('DescriptionStep', [])
+        if steps and steps[0].payload:
+            description_raw = steps[0].payload.get('description', '') or ''
+    description_clean = ' '.join(description_raw.replace('\n', ' ').replace('\r', ' ').split())[:2000] or None
     return {
         'avito_id': item.id if isinstance(item.id, int) else None,
         'title': item.title or '',
         'price_rub': int(price_raw) if price_raw is not None else None,
         'url': f'https://www.avito.ru{item.urlPath}' if item.urlPath else None,
-        'location': (item.location.name or '')[:64] if item.location else None,
+        'location': (item.location.name or '')[:256] if item.location else None,
         'seller': (item.sellerId or '')[:64] if item.sellerId else None,
+        'description': description_clean,
         'is_reserved': item.isReserved if item.isReserved is not None else False,
         'is_promotion': item.isPromotion if item.isPromotion is not None else False,
         'total_views': item.total_views,
@@ -48,11 +55,16 @@ def write_to_postgres(ads: list[dict]):
     try:
         conn = psycopg2.connect(**pg_config)
         with conn.cursor() as cur:
+            cur.execute('''
+                ALTER TABLE avito_original.ads
+                ADD COLUMN IF NOT EXISTS description TEXT
+            ''')
             execute_values(
                 cur,
                 '''
                 INSERT INTO avito_original.ads
                     (avito_id, title, price_rub, url, location, seller,
+                     description,
                      is_reserved, is_promotion, total_views, today_views, parsed_at)
                 VALUES %s
                 ON CONFLICT (avito_id) DO UPDATE SET
@@ -61,16 +73,18 @@ def write_to_postgres(ads: list[dict]):
                     url = EXCLUDED.url,
                     location = EXCLUDED.location,
                     seller = EXCLUDED.seller,
+                    description = EXCLUDED.description,
                     is_reserved = EXCLUDED.is_reserved,
                     is_promotion = EXCLUDED.is_promotion,
                     total_views = EXCLUDED.total_views,
                     today_views = EXCLUDED.today_views,
                     parsed_at = EXCLUDED.parsed_at
-                WHERE avito_original.ads.price_rub   IS DISTINCT FROM EXCLUDED.price_rub
-                   OR avito_original.ads.is_reserved IS DISTINCT FROM EXCLUDED.is_reserved
-                   OR avito_original.ads.is_promotion IS DISTINCT FROM EXCLUDED.is_promotion
-                   OR avito_original.ads.total_views IS DISTINCT FROM EXCLUDED.total_views
-                   OR avito_original.ads.today_views IS DISTINCT FROM EXCLUDED.today_views
+                WHERE avito_original.ads.price_rub     IS DISTINCT FROM EXCLUDED.price_rub
+                   OR avito_original.ads.is_reserved   IS DISTINCT FROM EXCLUDED.is_reserved
+                   OR avito_original.ads.is_promotion  IS DISTINCT FROM EXCLUDED.is_promotion
+                   OR avito_original.ads.total_views   IS DISTINCT FROM EXCLUDED.total_views
+                   OR avito_original.ads.today_views   IS DISTINCT FROM EXCLUDED.today_views
+                   OR avito_original.ads.description IS DISTINCT FROM EXCLUDED.description
                 ''',
                 [
                     (
@@ -80,6 +94,7 @@ def write_to_postgres(ads: list[dict]):
                         ad.get('url', ''),
                         ad.get('location'),
                         ad.get('seller'),
+                        ad.get('description'),
                         ad.get('is_reserved', False),
                         ad.get('is_promotion', False),
                         ad.get('total_views'),

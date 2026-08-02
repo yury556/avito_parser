@@ -8,10 +8,11 @@ with parsed as (
         nullif(split_part(csv_row, ',', 4), '') as url,
         nullif(split_part(csv_row, ',', 5), '') as location,
         nullif(split_part(csv_row, ',', 6), '') as seller,
-        nullif(split_part(csv_row, ',', 7), '')::timestamptz as parsed_at,
+        nullif(split_part(csv_row, ',', 7), '') as description,
+        nullif(split_part(csv_row, ',', 8), '')::timestamptz as parsed_at,
         source_url
     from {{ source('raw', 'avito_ads_csv') }}
-    where csv_header = 'avito_id,title,price_rub,url,location,seller,parsed_at'
+    where csv_header = 'avito_id,title,price_rub,url,location,seller,description,parsed_at'
 )
 
 select
@@ -21,6 +22,7 @@ select
     url,
     location,
     seller,
+    description,
     parsed_at,
     source_url,
     case

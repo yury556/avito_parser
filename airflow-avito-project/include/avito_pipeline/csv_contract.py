@@ -13,6 +13,7 @@ CSV_COLUMNS = [
     "url",
     "location",
     "seller",
+    "description",
     "parsed_at",
 ]
 
@@ -25,6 +26,7 @@ class AvitoAd:
     url: str
     location: str | None = None
     seller: str | None = None
+    description: str | None = None
     parsed_at: datetime | None = None
 
 
@@ -48,6 +50,7 @@ def ad_to_csv_row(ad: AvitoAd) -> str:
         ad.url,
         ad.location or "",
         ad.seller or "",
+        ad.description or "",
         parsed_at.isoformat(),
     ]
     buffer = io.StringIO()

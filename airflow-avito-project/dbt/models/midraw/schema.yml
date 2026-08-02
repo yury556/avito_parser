@@ -13,6 +13,8 @@ models:
       - name: url
         tests:
           - not_null
+      - name: description
+        description: Full text of the Avito ad listing
       - name: source_system
         tests:
           - accepted_values:

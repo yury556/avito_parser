@@ -200,6 +200,7 @@ class AvitoParse:
             "url": f"https://www.avito.ru{item.urlPath}" if item.urlPath else None,
             "location": item.location.name if item.location else None,
             "seller": item.sellerId if item.sellerId else None,
+            "description": item.description or None,
             "is_reserved": item.isReserved if item.isReserved is not None else False,
             "is_promotion": item.isPromotion if item.isPromotion is not None else False,
             "total_views": item.total_views,
@@ -269,7 +270,7 @@ class AvitoParse:
         if not self.config.parse_views:
             return ads
 
-        logger.info("Начинаю парсинг просмотров")
+        logger.info("Начинаю парсинг просмотров и описаний")
 
         for ad in ads:
             try:
@@ -277,6 +278,9 @@ class AvitoParse:
                 if not html_code_full_page:
                     continue
                 ad.total_views, ad.today_views = self._extract_views(html=html_code_full_page)
+                full_description = self._extract_description(html=html_code_full_page)
+                if full_description:
+                    ad.description = full_description
                 delay = random.uniform(0.1, 0.9)
                 time.sleep(delay)
             except Exception as err:
@@ -284,6 +288,43 @@ class AvitoParse:
                 continue
 
         return ads
+
+    @staticmethod
+    def _extract_description(html: str) -> str | None:
+        soup = BeautifulSoup(html, "html.parser")
+
+        desc_block = soup.select_one('[data-marker="item-view/item-description"]')
+        if desc_block:
+            text = desc_block.get_text(separator=" ", strip=True)
+            if text:
+                return text
+
+        import html as html_lib
+        for script in soup.select('script[type="application/ld+json"]'):
+            try:
+                data = json.loads(html_lib.unescape(script.text))
+                if isinstance(data, dict) and data.get("description"):
+                    return data["description"]
+                if isinstance(data, list):
+                    for entry in data:
+                        if isinstance(entry, dict) and entry.get("description"):
+                            return entry["description"]
+            except Exception:
+                continue
+
+        for script in soup.select('script'):
+            if script.get('type') == 'mime/invalid' and script.get('data-mfe-state') == 'true':
+                try:
+                    data = json.loads(html_lib.unescape(script.text))
+                    item_data = data.get("loaderData", {}).get("data", {})
+                    item_view = item_data.get("item", {})
+                    desc = item_view.get("description") or item_view.get("fullDescription")
+                    if desc:
+                        return desc
+                except Exception:
+                    continue
+
+        return None
 
     @staticmethod
     def _extract_views(html: str) -> tuple:

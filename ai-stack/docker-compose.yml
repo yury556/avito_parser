@@ -1,0 +1,52 @@
+# AI Stack — Ollama + ai_enrich микросервис
+
+name: ai-stack
+
+services:
+  # ===== НЕЙРОСЕТЬ =====
+  ollama:
+    image: ollama/ollama:latest
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=5m
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list 2>/dev/null | grep -q ${AI_MODEL:-qwen2.5:0.5b}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    networks:
+      - ai-net
+
+  # ===== МИКРОСЕРВИС AI-ОБОГАЩЕНИЯ =====
+  ai_enrich:
+    build:
+      context: ./services/ai_enrich
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "${AI_ENRICH_PORT:-8000}:8000"
+    depends_on: []
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - OPENROUTER_BASE_URL=${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      - AI_MODEL=${AI_MODEL:-google/gemma-4-26b-a4b-it:free}
+      - DB_HOST=${DB_HOST:-host.docker.internal}
+      - DB_PORT=${DB_PORT:-5433}
+      - DB_NAME=${DB_NAME:-avito_dwh}
+      - DB_USER=${DB_USER:-avito}
+      - DB_PASSWORD=${DB_PASSWORD:-avito123}
+      - AI_PROMPT_VERSION=${AI_PROMPT_VERSION:-v1}
+    networks:
+      - ai-net
+
+networks:
+  ai-net:
+    driver: bridge
+
+volumes:
+  ollama_models:

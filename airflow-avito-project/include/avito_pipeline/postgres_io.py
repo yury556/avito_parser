@@ -136,7 +136,7 @@ def fetch_ads_from_original(config: PostgresConfig, since: datetime) -> list[Avi
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT avito_id, title, price_rub, url, location, seller, parsed_at
+                SELECT avito_id, title, price_rub, url, location, seller, description, parsed_at
                 FROM avito_original.ads
                 WHERE parsed_at > %s
                 ORDER BY parsed_at
@@ -151,7 +151,8 @@ def fetch_ads_from_original(config: PostgresConfig, since: datetime) -> list[Avi
                     url=row[3] or "",
                     location=row[4],
                     seller=row[5],
-                    parsed_at=row[6],
+                    description=row[6],
+                    parsed_at=row[7],
                 )
                 for row in cur.fetchall()
             ]
