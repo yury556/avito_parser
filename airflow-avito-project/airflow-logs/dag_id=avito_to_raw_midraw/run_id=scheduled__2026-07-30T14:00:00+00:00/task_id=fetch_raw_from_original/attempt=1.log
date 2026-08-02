@@ -1,0 +1,17 @@
+[2026-07-30T15:06:15.183+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-07-30T15:06:15.192+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: avito_to_raw_midraw.fetch_raw_from_original scheduled__2026-07-30T14:00:00+00:00 [queued]>
+[2026-07-30T15:06:15.195+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: avito_to_raw_midraw.fetch_raw_from_original scheduled__2026-07-30T14:00:00+00:00 [queued]>
+[2026-07-30T15:06:15.195+0000] {taskinstance.py:2867} INFO - Starting attempt 1 of 2
+[2026-07-30T15:06:15.200+0000] {taskinstance.py:2890} INFO - Executing <Task(PythonOperator): fetch_raw_from_original> on 2026-07-30 14:00:00+00:00
+[2026-07-30T15:06:15.202+0000] {standard_task_runner.py:72} INFO - Started process 6271 to run task
+[2026-07-30T15:06:15.205+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'avito_to_raw_midraw', 'fetch_raw_from_original', 'scheduled__2026-07-30T14:00:00+00:00', '--job-id', '556', '--raw', '--subdir', 'DAGS_FOLDER/avito_to_raw_midraw.py', '--cfg-path', '/tmp/tmpi7sxthwz']
+[2026-07-30T15:06:15.206+0000] {standard_task_runner.py:105} INFO - Job 556: Subtask fetch_raw_from_original
+[2026-07-30T15:06:15.231+0000] {task_command.py:467} INFO - Running <TaskInstance: avito_to_raw_midraw.fetch_raw_from_original scheduled__2026-07-30T14:00:00+00:00 [running]> on host 4c6dd7d943f5
+[2026-07-30T15:06:15.404+0000] {taskinstance.py:3134} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='data-eng' AIRFLOW_CTX_DAG_ID='avito_to_raw_midraw' AIRFLOW_CTX_TASK_ID='fetch_raw_from_original' AIRFLOW_CTX_EXECUTION_DATE='2026-07-30T14:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-07-30T14:00:00+00:00'
+[2026-07-30T15:06:15.404+0000] {taskinstance.py:732} INFO - ::endgroup::
+[2026-07-30T15:06:15.420+0000] {python.py:240} INFO - Done. Returned value was: 9
+[2026-07-30T15:06:15.433+0000] {taskinstance.py:341} INFO - ::group::Post task execution logs
+[2026-07-30T15:06:15.434+0000] {taskinstance.py:353} INFO - Marking task as SUCCESS. dag_id=avito_to_raw_midraw, task_id=fetch_raw_from_original, run_id=scheduled__2026-07-30T14:00:00+00:00, execution_date=20260730T140000, start_date=20260730T150615, end_date=20260730T150615
+[2026-07-30T15:06:15.467+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-07-30T15:06:15.481+0000] {taskinstance.py:3901} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2026-07-30T15:06:15.481+0000] {local_task_job_runner.py:245} INFO - ::endgroup::
