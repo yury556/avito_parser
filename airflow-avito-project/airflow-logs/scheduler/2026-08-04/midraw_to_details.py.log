@@ -1,0 +1,717 @@
+[2026-08-04T00:27:25.333+0000] {processor.py:186} INFO - Started process (PID=84) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T00:27:25.334+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T00:27:25.339+0000] {logging_mixin.py:190} INFO - [2026-08-04T00:27:25.338+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T00:27:25.353+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T00:27:25.386+0000] {logging_mixin.py:190} INFO - [2026-08-04T00:27:25.385+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T00:27:25.418+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.106 seconds
+[2026-08-04T00:44:34.769+0000] {processor.py:186} INFO - Started process (PID=87) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T00:44:34.771+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T00:44:34.778+0000] {logging_mixin.py:190} INFO - [2026-08-04T00:44:34.777+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T00:44:34.801+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T00:44:34.859+0000] {logging_mixin.py:190} INFO - [2026-08-04T00:44:34.858+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T00:44:34.893+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.156 seconds
+[2026-08-04T00:53:43.176+0000] {processor.py:186} INFO - Started process (PID=90) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T00:53:43.177+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T00:53:43.182+0000] {logging_mixin.py:190} INFO - [2026-08-04T00:53:43.182+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T00:53:43.200+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T00:53:43.237+0000] {logging_mixin.py:190} INFO - [2026-08-04T00:53:43.236+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T00:53:43.268+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.104 seconds
+[2026-08-04T01:28:31.788+0000] {processor.py:186} INFO - Started process (PID=93) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T01:28:31.791+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T01:28:31.795+0000] {logging_mixin.py:190} INFO - [2026-08-04T01:28:31.794+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T01:28:31.815+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T01:28:31.860+0000] {logging_mixin.py:190} INFO - [2026-08-04T01:28:31.860+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T01:28:31.911+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.140 seconds
+[2026-08-04T01:46:44.715+0000] {processor.py:186} INFO - Started process (PID=96) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T01:46:44.717+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T01:46:44.722+0000] {logging_mixin.py:190} INFO - [2026-08-04T01:46:44.722+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T01:46:44.750+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T01:46:44.781+0000] {logging_mixin.py:190} INFO - [2026-08-04T01:46:44.781+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T01:46:44.815+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.116 seconds
+[2026-08-04T01:54:43.489+0000] {processor.py:186} INFO - Started process (PID=99) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T01:54:43.493+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T01:54:43.511+0000] {logging_mixin.py:190} INFO - [2026-08-04T01:54:43.509+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T01:54:43.526+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T01:54:43.568+0000] {logging_mixin.py:190} INFO - [2026-08-04T01:54:43.568+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T01:54:43.596+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.121 seconds
+[2026-08-04T01:55:14.011+0000] {processor.py:186} INFO - Started process (PID=102) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T01:55:14.014+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T01:55:14.019+0000] {logging_mixin.py:190} INFO - [2026-08-04T01:55:14.017+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T01:55:14.032+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T01:55:14.058+0000] {logging_mixin.py:190} INFO - [2026-08-04T01:55:14.057+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T01:55:14.089+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.095 seconds
+[2026-08-04T02:10:55.572+0000] {processor.py:186} INFO - Started process (PID=105) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:10:55.574+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T02:10:55.583+0000] {logging_mixin.py:190} INFO - [2026-08-04T02:10:55.583+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:10:55.605+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:10:55.650+0000] {logging_mixin.py:190} INFO - [2026-08-04T02:10:55.649+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T02:10:55.706+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.150 seconds
+[2026-08-04T02:11:26.046+0000] {processor.py:186} INFO - Started process (PID=108) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:11:26.047+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T02:11:26.053+0000] {logging_mixin.py:190} INFO - [2026-08-04T02:11:26.052+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:11:26.078+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:11:26.121+0000] {logging_mixin.py:190} INFO - [2026-08-04T02:11:26.121+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T02:11:26.158+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.126 seconds
+[2026-08-04T02:26:58.408+0000] {processor.py:186} INFO - Started process (PID=111) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:26:58.411+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T02:26:58.423+0000] {logging_mixin.py:190} INFO - [2026-08-04T02:26:58.421+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:26:58.479+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:26:58.533+0000] {logging_mixin.py:190} INFO - [2026-08-04T02:26:58.532+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T02:26:58.583+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.196 seconds
+[2026-08-04T02:43:09.546+0000] {processor.py:186} INFO - Started process (PID=114) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:43:09.548+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T02:43:09.560+0000] {logging_mixin.py:190} INFO - [2026-08-04T02:43:09.557+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:43:09.597+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:43:09.656+0000] {logging_mixin.py:190} INFO - [2026-08-04T02:43:09.656+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T02:43:09.709+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.192 seconds
+[2026-08-04T02:55:35.380+0000] {processor.py:186} INFO - Started process (PID=117) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:55:35.388+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T02:55:35.434+0000] {logging_mixin.py:190} INFO - [2026-08-04T02:55:35.430+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:55:35.473+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:55:35.520+0000] {logging_mixin.py:190} INFO - [2026-08-04T02:55:35.520+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T02:55:35.559+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.243 seconds
+[2026-08-04T02:56:05.924+0000] {processor.py:186} INFO - Started process (PID=120) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:56:05.925+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T02:56:05.929+0000] {logging_mixin.py:190} INFO - [2026-08-04T02:56:05.929+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:56:05.947+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T02:56:05.977+0000] {logging_mixin.py:190} INFO - [2026-08-04T02:56:05.976+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T02:56:06.005+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.092 seconds
+[2026-08-04T03:13:11.956+0000] {processor.py:186} INFO - Started process (PID=123) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T03:13:11.957+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T03:13:11.964+0000] {logging_mixin.py:190} INFO - [2026-08-04T03:13:11.964+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T03:13:12.004+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T03:13:12.440+0000] {logging_mixin.py:190} INFO - [2026-08-04T03:13:12.440+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T03:13:12.755+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.828 seconds
+[2026-08-04T04:30:28.912+0000] {processor.py:186} INFO - Started process (PID=126) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T04:30:28.916+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T04:30:28.921+0000] {logging_mixin.py:190} INFO - [2026-08-04T04:30:28.920+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T04:30:28.957+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T04:30:29.015+0000] {logging_mixin.py:190} INFO - [2026-08-04T04:30:29.015+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T04:30:29.127+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.226 seconds
+[2026-08-04T05:14:50.382+0000] {processor.py:186} INFO - Started process (PID=129) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T05:14:50.384+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T05:14:50.395+0000] {logging_mixin.py:190} INFO - [2026-08-04T05:14:50.393+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T05:14:50.411+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T05:14:50.452+0000] {logging_mixin.py:190} INFO - [2026-08-04T05:14:50.452+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T05:14:50.487+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.141 seconds
+[2026-08-04T06:30:46.530+0000] {processor.py:186} INFO - Started process (PID=132) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T06:30:46.531+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T06:30:46.538+0000] {logging_mixin.py:190} INFO - [2026-08-04T06:30:46.537+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T06:30:46.570+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T06:30:46.613+0000] {logging_mixin.py:190} INFO - [2026-08-04T06:30:46.613+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T06:30:46.731+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.218 seconds
+[2026-08-04T07:15:47.231+0000] {processor.py:186} INFO - Started process (PID=135) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T07:15:47.234+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T07:15:47.241+0000] {logging_mixin.py:190} INFO - [2026-08-04T07:15:47.241+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T07:15:47.270+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T07:15:47.335+0000] {logging_mixin.py:190} INFO - [2026-08-04T07:15:47.334+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T07:15:47.408+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.202 seconds
+[2026-08-04T08:33:03.693+0000] {processor.py:186} INFO - Started process (PID=138) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T08:33:03.702+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T08:33:03.722+0000] {logging_mixin.py:190} INFO - [2026-08-04T08:33:03.720+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T08:33:03.767+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T08:33:03.857+0000] {logging_mixin.py:190} INFO - [2026-08-04T08:33:03.857+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T08:33:03.927+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.260 seconds
+[2026-08-04T09:49:51.163+0000] {processor.py:186} INFO - Started process (PID=141) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T09:49:51.165+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T09:49:51.175+0000] {logging_mixin.py:190} INFO - [2026-08-04T09:49:51.174+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T09:49:51.209+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T09:49:51.250+0000] {logging_mixin.py:190} INFO - [2026-08-04T09:49:51.250+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T09:49:51.332+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.232 seconds
+[2026-08-04T11:03:35.482+0000] {processor.py:186} INFO - Started process (PID=144) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T11:03:35.484+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T11:03:35.505+0000] {logging_mixin.py:190} INFO - [2026-08-04T11:03:35.503+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T11:03:35.892+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T11:03:36.046+0000] {logging_mixin.py:190} INFO - [2026-08-04T11:03:36.045+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T11:03:36.184+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.728 seconds
+[2026-08-04T12:04:40.897+0000] {processor.py:186} INFO - Started process (PID=147) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:04:40.901+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T12:04:40.916+0000] {logging_mixin.py:190} INFO - [2026-08-04T12:04:40.915+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:04:40.962+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:04:41.003+0000] {logging_mixin.py:190} INFO - [2026-08-04T12:04:41.003+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T12:04:41.063+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.201 seconds
+[2026-08-04T12:20:57.668+0000] {processor.py:186} INFO - Started process (PID=150) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:20:57.673+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T12:20:57.680+0000] {logging_mixin.py:190} INFO - [2026-08-04T12:20:57.678+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:20:57.708+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:20:57.753+0000] {logging_mixin.py:190} INFO - [2026-08-04T12:20:57.753+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T12:20:57.822+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.192 seconds
+[2026-08-04T12:21:28.139+0000] {processor.py:186} INFO - Started process (PID=153) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:21:28.141+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T12:21:28.144+0000] {logging_mixin.py:190} INFO - [2026-08-04T12:21:28.144+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:21:28.172+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:21:28.201+0000] {logging_mixin.py:190} INFO - [2026-08-04T12:21:28.200+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T12:21:28.235+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.108 seconds
+[2026-08-04T12:37:59.817+0000] {processor.py:186} INFO - Started process (PID=156) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:37:59.819+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T12:37:59.826+0000] {logging_mixin.py:190} INFO - [2026-08-04T12:37:59.825+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:37:59.843+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:37:59.885+0000] {logging_mixin.py:190} INFO - [2026-08-04T12:37:59.885+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T12:37:59.945+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.139 seconds
+[2026-08-04T12:51:25.426+0000] {processor.py:186} INFO - Started process (PID=159) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:51:25.428+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T12:51:25.437+0000] {logging_mixin.py:190} INFO - [2026-08-04T12:51:25.436+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:51:25.471+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T12:51:25.511+0000] {logging_mixin.py:190} INFO - [2026-08-04T12:51:25.510+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T12:51:25.572+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.176 seconds
+[2026-08-04T13:05:49.111+0000] {processor.py:186} INFO - Started process (PID=162) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T13:05:49.119+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T13:05:49.129+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:05:49.129+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T13:05:49.189+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T13:05:49.223+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:05:49.223+0000] {taskinstance.py:3315} ERROR - {'DAG Id': 'midraw_to_details', 'Task Id': 'ai_enrich_batch', 'Run Id': 'scheduled__2026-08-03T20:00:00+00:00', 'Hostname': '4c6dd7d943f5', 'External Executor Id': '4e09be21-7135-4f26-9c72-764e7c657ffb'}
+[2026-08-04T13:05:49.245+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:05:49.244+0000] {taskinstance.py:1226} INFO - Marking task as FAILED. dag_id=midraw_to_details, task_id=ai_enrich_batch, run_id=scheduled__2026-08-03T20:00:00+00:00, execution_date=20260803T200000, start_date=20260804T024310, end_date=20260804T130549
+[2026-08-04T13:05:49.273+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:05:49.273+0000] {processor.py:876} INFO - Executed callback for <TaskInstance: midraw_to_details.ai_enrich_batch scheduled__2026-08-03T20:00:00+00:00 [failed]> in state failed
+[2026-08-04T13:05:49.287+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:05:49.287+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T13:05:49.309+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.219 seconds
+[2026-08-04T13:23:59.578+0000] {processor.py:186} INFO - Started process (PID=165) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T13:23:59.579+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T13:23:59.588+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:23:59.586+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T13:23:59.611+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T13:23:59.650+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:23:59.650+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T13:23:59.696+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.133 seconds
+[2026-08-04T13:57:31.416+0000] {processor.py:186} INFO - Started process (PID=168) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T13:57:31.418+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T13:57:31.423+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:57:31.422+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T13:57:31.441+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T13:57:31.464+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:57:31.463+0000] {taskinstance.py:3315} ERROR - {'DAG Id': 'midraw_to_details', 'Task Id': 'ai_enrich_batch', 'Run Id': 'scheduled__2026-08-04T12:30:00+00:00', 'Hostname': '4c6dd7d943f5', 'External Executor Id': 'eb94cf79-a9e6-4563-ac99-1eade7d1ba6f'}
+[2026-08-04T13:57:31.484+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:57:31.484+0000] {taskinstance.py:1226} INFO - Marking task as UP_FOR_RETRY. dag_id=midraw_to_details, task_id=ai_enrich_batch, run_id=scheduled__2026-08-04T12:30:00+00:00, execution_date=20260804T123000, start_date=20260804T130600, end_date=20260804T135731
+[2026-08-04T13:57:31.503+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:57:31.502+0000] {processor.py:876} INFO - Executed callback for <TaskInstance: midraw_to_details.ai_enrich_batch scheduled__2026-08-04T12:30:00+00:00 [up_for_retry]> in state up_for_retry
+[2026-08-04T13:57:31.504+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:57:31.504+0000] {taskinstance.py:3315} ERROR - {'DAG Id': 'midraw_to_details', 'Task Id': 'ai_enrich_batch', 'Run Id': 'scheduled__2026-08-04T12:30:00+00:00', 'Hostname': '4c6dd7d943f5', 'External Executor Id': 'eb94cf79-a9e6-4563-ac99-1eade7d1ba6f'}
+[2026-08-04T13:57:31.508+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:57:31.508+0000] {taskinstance.py:1226} INFO - Marking task as UP_FOR_RETRY. dag_id=midraw_to_details, task_id=ai_enrich_batch, run_id=scheduled__2026-08-04T12:30:00+00:00, execution_date=20260804T123000, start_date=20260804T130600, end_date=20260804T135731
+[2026-08-04T13:57:31.512+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:57:31.512+0000] {processor.py:876} INFO - Executed callback for <TaskInstance: midraw_to_details.ai_enrich_batch scheduled__2026-08-04T12:30:00+00:00 [up_for_retry]> in state up_for_retry
+[2026-08-04T13:57:31.529+0000] {logging_mixin.py:190} INFO - [2026-08-04T13:57:31.528+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T13:57:31.549+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.146 seconds
+[2026-08-04T14:06:48.293+0000] {processor.py:186} INFO - Started process (PID=171) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T14:06:48.294+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T14:06:48.302+0000] {logging_mixin.py:190} INFO - [2026-08-04T14:06:48.301+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T14:06:48.355+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T14:06:48.420+0000] {logging_mixin.py:190} INFO - [2026-08-04T14:06:48.420+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T14:06:48.495+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.218 seconds
+[2026-08-04T14:07:18.878+0000] {processor.py:186} INFO - Started process (PID=178) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T14:07:18.879+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T14:07:18.882+0000] {logging_mixin.py:190} INFO - [2026-08-04T14:07:18.882+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T14:07:18.899+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T14:07:18.937+0000] {logging_mixin.py:190} INFO - [2026-08-04T14:07:18.937+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T14:07:18.981+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.119 seconds
+[2026-08-04T14:25:28.797+0000] {processor.py:186} INFO - Started process (PID=181) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T14:25:28.801+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T14:25:28.806+0000] {logging_mixin.py:190} INFO - [2026-08-04T14:25:28.805+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T14:25:28.833+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T14:25:28.894+0000] {logging_mixin.py:190} INFO - [2026-08-04T14:25:28.894+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T14:25:28.945+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.165 seconds
+[2026-08-04T14:25:29.673+0000] {processor.py:186} INFO - Started process (PID=184) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T14:25:29.675+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T14:25:29.679+0000] {logging_mixin.py:190} INFO - [2026-08-04T14:25:29.678+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T14:25:29.689+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T14:25:29.709+0000] {logging_mixin.py:190} INFO - [2026-08-04T14:25:29.708+0000] {taskinstance.py:3315} ERROR - {'DAG Id': 'midraw_to_details', 'Task Id': 'ai_enrich_batch', 'Run Id': 'scheduled__2026-08-04T12:30:00+00:00', 'Hostname': '4c6dd7d943f5', 'External Executor Id': '766e29c4-6273-403e-ad3a-3a0e014e6b94'}
+[2026-08-04T14:25:29.729+0000] {logging_mixin.py:190} INFO - [2026-08-04T14:25:29.728+0000] {taskinstance.py:1226} INFO - Marking task as UP_FOR_RETRY. dag_id=midraw_to_details, task_id=ai_enrich_batch, run_id=scheduled__2026-08-04T12:30:00+00:00, execution_date=20260804T123000, start_date=20260804T140649, end_date=20260804T142529
+[2026-08-04T14:25:29.748+0000] {logging_mixin.py:190} INFO - [2026-08-04T14:25:29.747+0000] {processor.py:876} INFO - Executed callback for <TaskInstance: midraw_to_details.ai_enrich_batch scheduled__2026-08-04T12:30:00+00:00 [up_for_retry]> in state up_for_retry
+[2026-08-04T14:25:29.759+0000] {logging_mixin.py:190} INFO - [2026-08-04T14:25:29.759+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T14:25:29.779+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.122 seconds
+[2026-08-04T15:00:08.343+0000] {processor.py:186} INFO - Started process (PID=185) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:00:08.345+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T15:00:08.354+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:00:08.353+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:00:08.381+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:00:08.417+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:00:08.417+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T15:00:08.458+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.136 seconds
+[2026-08-04T15:07:52.215+0000] {processor.py:186} INFO - Started process (PID=192) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:07:52.216+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T15:07:52.219+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:07:52.218+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:07:52.235+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:07:52.272+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:07:52.272+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T15:07:52.314+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.111 seconds
+[2026-08-04T15:07:52.536+0000] {processor.py:186} INFO - Started process (PID=195) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:07:52.538+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T15:07:52.540+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:07:52.539+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:07:52.546+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:07:52.559+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:07:52.558+0000] {taskinstance.py:3315} ERROR - {'DAG Id': 'midraw_to_details', 'Task Id': 'ai_enrich_batch', 'Run Id': 'scheduled__2026-08-04T12:30:00+00:00', 'Hostname': '4c6dd7d943f5', 'External Executor Id': '06aca8e9-1e2b-4133-a8f2-f39f90d37e70'}
+[2026-08-04T15:07:52.570+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:07:52.569+0000] {taskinstance.py:1226} INFO - Marking task as FAILED. dag_id=midraw_to_details, task_id=ai_enrich_batch, run_id=scheduled__2026-08-04T12:30:00+00:00, execution_date=20260804T123000, start_date=20260804T150008, end_date=20260804T150752
+[2026-08-04T15:07:52.583+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:07:52.583+0000] {processor.py:876} INFO - Executed callback for <TaskInstance: midraw_to_details.ai_enrich_batch scheduled__2026-08-04T12:30:00+00:00 [failed]> in state failed
+[2026-08-04T15:07:52.591+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:07:52.591+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T15:07:52.606+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.074 seconds
+[2026-08-04T15:08:22.805+0000] {processor.py:186} INFO - Started process (PID=196) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:08:22.808+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T15:08:22.811+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:08:22.811+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:08:22.828+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:08:22.853+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:08:22.853+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T15:08:22.892+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.097 seconds
+[2026-08-04T15:08:53.210+0000] {processor.py:186} INFO - Started process (PID=199) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:08:53.211+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T15:08:53.215+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:08:53.214+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:08:53.232+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:08:53.273+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:08:53.273+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T15:08:53.303+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.105 seconds
+[2026-08-04T15:24:52.874+0000] {processor.py:186} INFO - Started process (PID=202) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:24:52.876+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T15:24:52.880+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:24:52.880+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:24:52.900+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:24:52.935+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:24:52.935+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T15:24:52.968+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.105 seconds
+[2026-08-04T15:24:54.166+0000] {processor.py:186} INFO - Started process (PID=205) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:24:54.167+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T15:24:54.169+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:24:54.168+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:24:54.175+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:24:54.188+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:24:54.188+0000] {taskinstance.py:3315} ERROR - {'DAG Id': 'midraw_to_details', 'Task Id': 'ai_enrich_batch', 'Run Id': 'scheduled__2026-08-04T14:30:00+00:00', 'Hostname': '4c6dd7d943f5', 'External Executor Id': '0c1b3ff9-751b-43ba-b971-7bbf69016f07'}
+[2026-08-04T15:24:54.201+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:24:54.201+0000] {taskinstance.py:1226} INFO - Marking task as UP_FOR_RETRY. dag_id=midraw_to_details, task_id=ai_enrich_batch, run_id=scheduled__2026-08-04T14:30:00+00:00, execution_date=20260804T143000, start_date=20260804T150754, end_date=20260804T152454
+[2026-08-04T15:24:54.219+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:24:54.219+0000] {processor.py:876} INFO - Executed callback for <TaskInstance: midraw_to_details.ai_enrich_batch scheduled__2026-08-04T14:30:00+00:00 [up_for_retry]> in state up_for_retry
+[2026-08-04T15:24:54.230+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:24:54.230+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T15:24:54.249+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.087 seconds
+[2026-08-04T15:25:24.755+0000] {processor.py:186} INFO - Started process (PID=208) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:25:24.756+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T15:25:24.759+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:25:24.758+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:25:24.773+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:25:24.811+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:25:24.811+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T15:25:24.863+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.118 seconds
+[2026-08-04T15:58:24.533+0000] {processor.py:186} INFO - Started process (PID=209) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:58:24.534+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T15:58:24.538+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:58:24.537+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:58:24.561+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T15:58:24.594+0000] {logging_mixin.py:190} INFO - [2026-08-04T15:58:24.594+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T15:58:24.633+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.113 seconds
+[2026-08-04T16:08:52.430+0000] {processor.py:186} INFO - Started process (PID=212) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:08:52.433+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T16:08:52.442+0000] {logging_mixin.py:190} INFO - [2026-08-04T16:08:52.441+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:08:52.483+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:08:52.551+0000] {logging_mixin.py:190} INFO - [2026-08-04T16:08:52.551+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T16:08:52.595+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.182 seconds
+[2026-08-04T16:25:10.183+0000] {processor.py:186} INFO - Started process (PID=215) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:25:10.184+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T16:25:10.205+0000] {logging_mixin.py:190} INFO - [2026-08-04T16:25:10.201+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:25:10.221+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:25:10.253+0000] {logging_mixin.py:190} INFO - [2026-08-04T16:25:10.252+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T16:25:10.308+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.143 seconds
+[2026-08-04T16:25:40.986+0000] {processor.py:186} INFO - Started process (PID=218) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:25:40.998+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T16:25:41.024+0000] {logging_mixin.py:190} INFO - [2026-08-04T16:25:41.022+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:25:41.057+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:25:41.173+0000] {logging_mixin.py:190} INFO - [2026-08-04T16:25:41.173+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T16:25:41.276+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.342 seconds
+[2026-08-04T16:59:42.194+0000] {processor.py:186} INFO - Started process (PID=221) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:59:42.197+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T16:59:42.204+0000] {logging_mixin.py:190} INFO - [2026-08-04T16:59:42.204+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:59:42.233+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:59:42.271+0000] {logging_mixin.py:190} INFO - [2026-08-04T16:59:42.270+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T16:59:42.310+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.133 seconds
+[2026-08-04T16:59:44.437+0000] {processor.py:186} INFO - Started process (PID=224) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:59:44.438+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T16:59:44.440+0000] {logging_mixin.py:190} INFO - [2026-08-04T16:59:44.439+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:59:44.446+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T16:59:44.460+0000] {logging_mixin.py:190} INFO - [2026-08-04T16:59:44.460+0000] {taskinstance.py:3315} ERROR - {'DAG Id': 'midraw_to_details', 'Task Id': 'ai_enrich_batch', 'Run Id': 'scheduled__2026-08-04T14:30:00+00:00', 'Hostname': '4c6dd7d943f5', 'External Executor Id': 'c0a17588-8707-469c-8e84-799137bb05d9'}
+[2026-08-04T16:59:44.474+0000] {logging_mixin.py:190} INFO - [2026-08-04T16:59:44.474+0000] {taskinstance.py:1226} INFO - Marking task as UP_FOR_RETRY. dag_id=midraw_to_details, task_id=ai_enrich_batch, run_id=scheduled__2026-08-04T14:30:00+00:00, execution_date=20260804T143000, start_date=20260804T155825, end_date=20260804T165944
+[2026-08-04T16:59:44.499+0000] {logging_mixin.py:190} INFO - [2026-08-04T16:59:44.499+0000] {processor.py:876} INFO - Executed callback for <TaskInstance: midraw_to_details.ai_enrich_batch scheduled__2026-08-04T14:30:00+00:00 [up_for_retry]> in state up_for_retry
+[2026-08-04T16:59:44.510+0000] {logging_mixin.py:190} INFO - [2026-08-04T16:59:44.510+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T16:59:44.529+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.096 seconds
+[2026-08-04T17:09:52.089+0000] {processor.py:186} INFO - Started process (PID=225) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:09:52.090+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:09:52.095+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:09:52.095+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:09:52.113+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:09:52.144+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:09:52.143+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:09:52.178+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.109 seconds
+[2026-08-04T17:23:45.933+0000] {processor.py:186} INFO - Started process (PID=228) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:23:45.940+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:23:45.964+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:23:45.963+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:23:45.994+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:23:46.037+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:23:46.036+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:23:46.100+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.213 seconds
+[2026-08-04T17:24:16.439+0000] {processor.py:186} INFO - Started process (PID=231) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:24:16.441+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:24:16.443+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:24:16.443+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:24:16.460+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:24:16.492+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:24:16.492+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:24:16.561+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.132 seconds
+[2026-08-04T17:24:46.803+0000] {processor.py:186} INFO - Started process (PID=234) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:24:46.804+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:24:46.807+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:24:46.807+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:24:46.821+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:24:46.845+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:24:46.845+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:24:46.879+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.083 seconds
+[2026-08-04T17:25:17.096+0000] {processor.py:186} INFO - Started process (PID=237) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:25:17.097+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:25:17.102+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:25:17.101+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:25:17.113+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:25:17.135+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:25:17.135+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:25:17.159+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.069 seconds
+[2026-08-04T17:25:47.416+0000] {processor.py:186} INFO - Started process (PID=240) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:25:47.417+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:25:47.421+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:25:47.421+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:25:47.433+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:25:47.457+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:25:47.457+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:25:47.488+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.080 seconds
+[2026-08-04T17:26:17.703+0000] {processor.py:186} INFO - Started process (PID=243) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:26:17.703+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:26:17.706+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:26:17.706+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:26:17.717+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:26:17.737+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:26:17.737+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:26:17.761+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.064 seconds
+[2026-08-04T17:26:48.025+0000] {processor.py:186} INFO - Started process (PID=246) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:26:48.027+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:26:48.033+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:26:48.033+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:26:48.057+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:26:48.114+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:26:48.114+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:26:48.154+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.147 seconds
+[2026-08-04T17:27:18.466+0000] {processor.py:186} INFO - Started process (PID=249) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:27:18.468+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:27:18.472+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:27:18.471+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:27:18.483+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:27:18.520+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:27:18.519+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:27:18.545+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.086 seconds
+[2026-08-04T17:27:48.808+0000] {processor.py:186} INFO - Started process (PID=252) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:27:48.811+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:27:48.812+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:27:48.812+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:27:48.825+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:27:48.847+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:27:48.847+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:27:48.882+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.085 seconds
+[2026-08-04T17:28:19.141+0000] {processor.py:186} INFO - Started process (PID=255) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:28:19.142+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:28:19.147+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:28:19.146+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:28:19.164+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:28:19.188+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:28:19.188+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:28:19.213+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.079 seconds
+[2026-08-04T17:28:49.519+0000] {processor.py:186} INFO - Started process (PID=258) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:28:49.520+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:28:49.526+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:28:49.526+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:28:49.549+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:28:49.588+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:28:49.587+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:28:49.621+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.112 seconds
+[2026-08-04T17:29:19.957+0000] {processor.py:186} INFO - Started process (PID=261) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:29:19.958+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:29:19.961+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:29:19.961+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:29:19.981+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:29:20.009+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:29:20.009+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:29:20.035+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.086 seconds
+[2026-08-04T17:29:50.315+0000] {processor.py:186} INFO - Started process (PID=264) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:29:50.316+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:29:50.321+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:29:50.321+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:29:50.337+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:29:50.385+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:29:50.385+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:29:50.425+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.117 seconds
+[2026-08-04T17:30:20.736+0000] {processor.py:186} INFO - Started process (PID=267) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:30:20.739+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:30:20.746+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:30:20.746+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:30:20.773+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:30:20.856+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:30:20.855+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:30:20.911+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.199 seconds
+[2026-08-04T17:30:51.192+0000] {processor.py:186} INFO - Started process (PID=270) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:30:51.193+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:30:51.199+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:30:51.198+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:30:51.215+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:30:51.252+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:30:51.251+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:30:51.286+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.110 seconds
+[2026-08-04T17:31:21.535+0000] {processor.py:186} INFO - Started process (PID=273) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:31:21.536+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:31:21.542+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:31:21.541+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:31:21.559+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:31:21.599+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:31:21.599+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:31:21.645+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.122 seconds
+[2026-08-04T17:31:51.914+0000] {processor.py:186} INFO - Started process (PID=276) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:31:51.917+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:31:51.938+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:31:51.935+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:31:51.963+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:31:52.004+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:31:52.004+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:31:52.036+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.145 seconds
+[2026-08-04T17:32:22.363+0000] {processor.py:186} INFO - Started process (PID=279) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:32:22.365+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:32:22.368+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:32:22.368+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:32:22.384+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:32:22.422+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:32:22.422+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:32:22.454+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.107 seconds
+[2026-08-04T17:32:52.698+0000] {processor.py:186} INFO - Started process (PID=282) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:32:52.699+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:32:52.703+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:32:52.703+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:32:52.725+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:32:52.750+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:32:52.750+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:32:52.779+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.092 seconds
+[2026-08-04T17:33:23.055+0000] {processor.py:186} INFO - Started process (PID=285) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:33:23.056+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:33:23.060+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:33:23.059+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:33:23.072+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:33:23.103+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:33:23.103+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:33:23.132+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.086 seconds
+[2026-08-04T17:33:53.466+0000] {processor.py:186} INFO - Started process (PID=288) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:33:53.469+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:33:53.477+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:33:53.477+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:33:53.499+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:33:53.537+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:33:53.536+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:33:53.574+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.131 seconds
+[2026-08-04T17:34:23.882+0000] {processor.py:186} INFO - Started process (PID=291) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:34:23.883+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:34:23.887+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:34:23.887+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:34:23.903+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:34:23.938+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:34:23.937+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:34:23.969+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.104 seconds
+[2026-08-04T17:34:54.165+0000] {processor.py:186} INFO - Started process (PID=294) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:34:54.166+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:34:54.169+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:34:54.169+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:34:54.181+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:34:54.202+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:34:54.202+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:34:54.226+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.067 seconds
+[2026-08-04T17:35:24.459+0000] {processor.py:186} INFO - Started process (PID=297) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:35:24.459+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:35:24.462+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:35:24.462+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:35:24.473+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:35:24.494+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:35:24.494+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:35:24.524+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.072 seconds
+[2026-08-04T17:35:54.956+0000] {processor.py:186} INFO - Started process (PID=300) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:35:54.959+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:35:54.967+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:35:54.967+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:35:54.996+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:35:55.047+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:35:55.046+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:35:55.100+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.265 seconds
+[2026-08-04T17:36:25.418+0000] {processor.py:186} INFO - Started process (PID=303) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:36:25.420+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:36:25.422+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:36:25.422+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:36:25.434+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:36:25.463+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:36:25.463+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:36:25.491+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.084 seconds
+[2026-08-04T17:36:55.735+0000] {processor.py:186} INFO - Started process (PID=306) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:36:55.736+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:36:55.742+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:36:55.741+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:36:55.765+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:36:55.799+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:36:55.798+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:36:55.823+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.100 seconds
+[2026-08-04T17:37:26.164+0000] {processor.py:186} INFO - Started process (PID=309) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:37:26.166+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:37:26.173+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:37:26.172+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:37:26.188+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:37:26.217+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:37:26.217+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:37:26.250+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.095 seconds
+[2026-08-04T17:37:56.540+0000] {processor.py:186} INFO - Started process (PID=312) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:37:56.542+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:37:56.548+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:37:56.547+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:37:56.567+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:37:56.594+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:37:56.594+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:37:56.625+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.096 seconds
+[2026-08-04T17:38:26.886+0000] {processor.py:186} INFO - Started process (PID=315) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:38:26.887+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:38:26.892+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:38:26.891+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:38:26.907+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:38:26.931+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:38:26.931+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:38:26.959+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.080 seconds
+[2026-08-04T17:38:57.232+0000] {processor.py:186} INFO - Started process (PID=318) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:38:57.234+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:38:57.239+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:38:57.239+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:38:57.253+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:38:57.276+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:38:57.276+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:38:57.313+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.098 seconds
+[2026-08-04T17:39:27.557+0000] {processor.py:186} INFO - Started process (PID=321) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:39:27.563+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:39:27.574+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:39:27.573+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:39:27.587+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:39:27.619+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:39:27.619+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:39:27.651+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.105 seconds
+[2026-08-04T17:39:57.957+0000] {processor.py:186} INFO - Started process (PID=324) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:39:57.960+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:39:57.965+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:39:57.963+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:39:57.988+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:39:58.013+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:39:58.013+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:39:58.038+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.089 seconds
+[2026-08-04T17:40:28.295+0000] {processor.py:186} INFO - Started process (PID=327) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:40:28.295+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:40:28.300+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:40:28.300+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:40:28.312+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:40:28.335+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:40:28.335+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:40:28.372+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.084 seconds
+[2026-08-04T17:40:58.630+0000] {processor.py:186} INFO - Started process (PID=330) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:40:58.632+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:40:58.634+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:40:58.634+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:40:58.649+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:40:58.673+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:40:58.673+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:40:58.706+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.089 seconds
+[2026-08-04T17:41:45.422+0000] {processor.py:186} INFO - Started process (PID=39) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:41:45.425+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:41:45.427+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:41:45.426+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:41:45.444+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:41:45.480+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:41:45.480+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:41:45.541+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.133 seconds
+[2026-08-04T17:42:15.978+0000] {processor.py:186} INFO - Started process (PID=42) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:42:15.981+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:42:15.990+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:42:15.990+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:42:16.016+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:42:16.070+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:42:16.070+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:42:16.138+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.173 seconds
+[2026-08-04T17:42:46.492+0000] {processor.py:186} INFO - Started process (PID=45) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:42:46.493+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:42:46.497+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:42:46.497+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:42:46.511+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:42:46.539+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:42:46.539+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:42:46.564+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.096 seconds
+[2026-08-04T17:43:16.905+0000] {processor.py:186} INFO - Started process (PID=48) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:43:16.907+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:43:16.913+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:43:16.912+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:43:16.925+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:43:16.949+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:43:16.949+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:43:16.978+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.095 seconds
+[2026-08-04T17:44:00.794+0000] {processor.py:186} INFO - Started process (PID=40) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:44:00.797+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:44:00.802+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:44:00.802+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:44:00.823+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:44:00.866+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:44:00.866+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:44:00.900+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.120 seconds
+[2026-08-04T17:44:31.128+0000] {processor.py:186} INFO - Started process (PID=43) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:44:31.130+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:44:31.132+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:44:31.132+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:44:31.147+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:44:31.176+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:44:31.176+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:44:31.204+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.084 seconds
+[2026-08-04T17:45:01.425+0000] {processor.py:186} INFO - Started process (PID=46) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:45:01.426+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:45:01.428+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:45:01.428+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:45:01.441+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:45:01.479+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:45:01.479+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:45:01.505+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.086 seconds
+[2026-08-04T17:45:31.847+0000] {processor.py:186} INFO - Started process (PID=49) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:45:31.849+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:45:31.854+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:45:31.854+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:45:31.869+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:45:31.907+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:45:31.907+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:45:31.936+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.097 seconds
+[2026-08-04T17:46:02.207+0000] {processor.py:186} INFO - Started process (PID=52) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:46:02.208+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:46:02.214+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:46:02.213+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:46:02.236+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:46:02.265+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:46:02.265+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:46:02.291+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.098 seconds
+[2026-08-04T17:46:31.389+0000] {processor.py:186} INFO - Started process (PID=55) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:46:31.390+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:46:31.392+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:46:31.391+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:46:31.402+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:46:31.421+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:46:31.421+0000] {taskinstance.py:3315} ERROR - {'DAG Id': 'midraw_to_details', 'Task Id': 'ai_enrich_batch', 'Run Id': 'scheduled__2026-08-04T17:00:00+00:00', 'Hostname': '4c6dd7d943f5', 'External Executor Id': '7338e158-e17c-438d-b1d6-50059755f959'}
+[2026-08-04T17:46:31.444+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:46:31.444+0000] {taskinstance.py:1226} INFO - Marking task as UP_FOR_RETRY. dag_id=midraw_to_details, task_id=ai_enrich_batch, run_id=scheduled__2026-08-04T17:00:00+00:00, execution_date=20260804T170000, start_date=20260804T173318, end_date=20260804T174631
+[2026-08-04T17:46:31.463+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:46:31.462+0000] {processor.py:876} INFO - Executed callback for <TaskInstance: midraw_to_details.ai_enrich_batch scheduled__2026-08-04T17:00:00+00:00 [up_for_retry]> in state up_for_retry
+[2026-08-04T17:46:31.473+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:46:31.473+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:46:31.487+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.105 seconds
+[2026-08-04T17:47:01.649+0000] {processor.py:186} INFO - Started process (PID=58) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:47:01.650+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:47:01.652+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:47:01.652+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:47:01.662+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:47:01.686+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:47:01.686+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:47:01.713+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.071 seconds
+[2026-08-04T17:47:32.015+0000] {processor.py:186} INFO - Started process (PID=61) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:47:32.016+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:47:32.018+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:47:32.018+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:47:32.027+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:47:32.048+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:47:32.048+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:47:32.071+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.061 seconds
+[2026-08-04T17:48:02.377+0000] {processor.py:186} INFO - Started process (PID=64) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:48:02.380+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:48:02.383+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:48:02.383+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:48:02.393+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:48:02.442+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:48:02.442+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:48:02.527+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.167 seconds
+[2026-08-04T17:48:32.723+0000] {processor.py:186} INFO - Started process (PID=67) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:48:32.724+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:48:32.727+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:48:32.727+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:48:32.738+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:48:32.763+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:48:32.762+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:48:32.785+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.068 seconds
+[2026-08-04T17:49:03.009+0000] {processor.py:186} INFO - Started process (PID=70) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:49:03.009+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:49:03.011+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:49:03.011+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:49:03.021+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:49:03.043+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:49:03.043+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:49:03.069+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.065 seconds
+[2026-08-04T17:49:33.347+0000] {processor.py:186} INFO - Started process (PID=73) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:49:33.348+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:49:33.351+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:49:33.350+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:49:33.362+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:49:33.386+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:49:33.385+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:49:33.408+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.067 seconds
+[2026-08-04T17:50:03.762+0000] {processor.py:186} INFO - Started process (PID=76) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:50:03.763+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:50:03.765+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:50:03.765+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:50:03.778+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:50:03.811+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:50:03.810+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:50:03.850+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.095 seconds
+[2026-08-04T17:50:34.100+0000] {processor.py:186} INFO - Started process (PID=79) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:50:34.102+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:50:34.104+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:50:34.104+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:50:34.123+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:50:34.167+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:50:34.167+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:50:34.204+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.110 seconds
+[2026-08-04T17:51:04.475+0000] {processor.py:186} INFO - Started process (PID=82) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:51:04.476+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:51:04.479+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:51:04.479+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:51:04.491+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:51:04.513+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:51:04.513+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:51:04.538+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.068 seconds
+[2026-08-04T17:51:34.821+0000] {processor.py:186} INFO - Started process (PID=85) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:51:34.822+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:51:34.824+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:51:34.824+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:51:34.831+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:51:34.850+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:51:34.850+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:51:34.870+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.055 seconds
+[2026-08-04T17:52:05.145+0000] {processor.py:186} INFO - Started process (PID=88) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:52:05.148+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:52:05.150+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:52:05.150+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:52:05.160+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:52:05.181+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:52:05.181+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:52:05.202+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.071 seconds
+[2026-08-04T17:52:35.418+0000] {processor.py:186} INFO - Started process (PID=91) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:52:35.419+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:52:35.421+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:52:35.421+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:52:35.432+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:52:35.452+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:52:35.452+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:52:35.475+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.063 seconds
+[2026-08-04T17:53:05.724+0000] {processor.py:186} INFO - Started process (PID=94) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:53:05.725+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:53:05.727+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:53:05.727+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:53:05.737+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:53:05.785+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:53:05.785+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:53:05.807+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.088 seconds
+[2026-08-04T17:53:35.956+0000] {processor.py:186} INFO - Started process (PID=97) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:53:35.957+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:53:35.960+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:53:35.959+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:53:35.969+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:53:36.017+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:53:36.017+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:53:36.045+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.094 seconds
+[2026-08-04T17:54:06.392+0000] {processor.py:186} INFO - Started process (PID=100) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:54:06.393+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:54:06.395+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:54:06.395+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:54:06.433+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:54:06.453+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:54:06.453+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:54:06.473+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.086 seconds
+[2026-08-04T17:54:36.700+0000] {processor.py:186} INFO - Started process (PID=103) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:54:36.701+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:54:36.703+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:54:36.703+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:54:36.713+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:54:36.736+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:54:36.736+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:54:36.769+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.073 seconds
+[2026-08-04T17:55:07.044+0000] {processor.py:186} INFO - Started process (PID=106) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:55:07.045+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:55:07.048+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:55:07.047+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:55:07.057+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:55:07.077+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:55:07.077+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:55:07.104+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.065 seconds
+[2026-08-04T17:55:37.444+0000] {processor.py:186} INFO - Started process (PID=109) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:55:37.445+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:55:37.448+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:55:37.448+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:55:37.457+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:55:37.478+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:55:37.478+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:55:37.500+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.061 seconds
+[2026-08-04T17:56:07.800+0000] {processor.py:186} INFO - Started process (PID=112) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:56:07.801+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:56:07.804+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:56:07.804+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:56:07.814+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:56:07.844+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:56:07.844+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:56:07.866+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.073 seconds
+[2026-08-04T17:56:38.138+0000] {processor.py:186} INFO - Started process (PID=115) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:56:38.139+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:56:38.141+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:56:38.140+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:56:38.153+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:56:38.175+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:56:38.175+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:56:38.187+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:56:38.187+0000] {dag.py:4180} INFO - Setting next_dagrun for midraw_to_details to 2026-08-04 17:30:00+00:00, run_after=2026-08-04 18:00:00+00:00
+[2026-08-04T17:56:38.198+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.067 seconds
+[2026-08-04T17:57:08.573+0000] {processor.py:186} INFO - Started process (PID=118) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:57:08.575+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:57:08.586+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:57:08.585+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:57:08.626+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:57:08.680+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:57:08.680+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:57:08.698+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:57:08.698+0000] {dag.py:4180} INFO - Setting next_dagrun for midraw_to_details to 2026-08-04 17:30:00+00:00, run_after=2026-08-04 18:00:00+00:00
+[2026-08-04T17:57:08.710+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.156 seconds
+[2026-08-04T17:57:38.841+0000] {processor.py:186} INFO - Started process (PID=121) to work on /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:57:38.842+0000] {processor.py:914} INFO - Processing file /opt/airflow/dags/midraw_to_details.py for tasks to queue
+[2026-08-04T17:57:38.844+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:57:38.844+0000] {dagbag.py:588} INFO - Filling up the DagBag from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:57:38.854+0000] {processor.py:925} INFO - DAG(s) 'midraw_to_details' retrieved from /opt/airflow/dags/midraw_to_details.py
+[2026-08-04T17:57:38.876+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:57:38.876+0000] {dag.py:3239} INFO - Sync 1 DAGs
+[2026-08-04T17:57:38.891+0000] {logging_mixin.py:190} INFO - [2026-08-04T17:57:38.891+0000] {dag.py:4180} INFO - Setting next_dagrun for midraw_to_details to 2026-08-04 17:30:00+00:00, run_after=2026-08-04 18:00:00+00:00
+[2026-08-04T17:57:38.901+0000] {processor.py:208} INFO - Processing /opt/airflow/dags/midraw_to_details.py took 0.065 seconds

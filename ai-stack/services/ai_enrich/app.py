@@ -75,6 +75,7 @@ class BatchItem(BaseModel):
     avito_id: int
     title: str | None
     description: str | None
+    price_rub: float | None = None
 
 
 class BatchResult(BaseModel):
@@ -95,7 +96,7 @@ def batch_process(req: BatchRequest):
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT a.avito_id, a.title, a.description
+        SELECT a.avito_id, a.title, a.description, a.price_rub
         FROM midraw.avito_ads a
         LEFT JOIN detail.ads d ON a.avito_id = d.avito_id
         WHERE d.avito_id IS NULL
@@ -107,7 +108,7 @@ def batch_process(req: BatchRequest):
     errors = 0
     results = []
 
-    for avito_id, title, desc in rows:
+    for avito_id, title, desc, price_rub in rows:
         time.sleep(0.5)
         messages = _build_messages(title or "", desc or "")
         result = _call_openrouter(messages)
@@ -117,11 +118,13 @@ def batch_process(req: BatchRequest):
                     INSERT INTO detail.ads
                         (avito_id, category, brand, model, tags,
                          input_title, input_description,
+                         price_rub,
                          ai_model, ai_version, ai_processed_at, ai_status)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), 'success')
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), 'success')
                     ON CONFLICT (avito_id) DO UPDATE SET
                         category=EXCLUDED.category, brand=EXCLUDED.brand,
                         model=EXCLUDED.model, tags=EXCLUDED.tags,
+                        price_rub=EXCLUDED.price_rub,
                         ai_processed_at=NOW(), ai_status='success'
                 """, (
                     avito_id,
@@ -129,7 +132,9 @@ def batch_process(req: BatchRequest):
                     result.get("brand"),
                     result.get("model"),
                     json.dumps(result.get("tags", [])),
-                    title, desc, AI_MODEL, PROMPT_VERSION,
+                    title, desc,
+                    result.get("price_rub") if result.get("price_rub") is not None else price_rub,
+                    AI_MODEL, PROMPT_VERSION,
                 ))
                 conn.commit()
                 processed += 1

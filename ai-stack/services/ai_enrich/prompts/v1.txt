@@ -10,6 +10,7 @@
   "category": null,
   "brand": null,
   "model": null,
+  "price_rub": null,
   "tags": [],
   "attributes": {{}}
 }}
@@ -167,6 +168,7 @@ LG, Xiaomi, Google, PNY, Palit, Gainward, Dell, HP, Lenovo, Acer, HP, Huawei
   "category": "...",
   "brand": "...",
   "model": "...",
+  "price_rub": null,
   "tags": ["..."],
   "attributes": {{}}
 }}
