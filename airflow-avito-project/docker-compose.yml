@@ -218,6 +218,14 @@ services:
       POSTGRES_DB: avito_dwh
       POSTGRES_USER: avito
       POSTGRES_PASSWORD: avito123
+      STORAGE_TYPE: minio
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: avito-images
+      MAX_IMAGES_PER_AD: "10"
+      DOWNLOAD_TIMEOUT: "30"
+      MAX_IMAGE_SIZE_MB: "10"
     command: ["bash", "/app/entrypoint.sh"]
     depends_on:
       external-postgres:
@@ -227,6 +235,38 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  image-downloader:
+    build:
+      context: ../parser_avito
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: ["python3", "/app/image_downloader_service.py"]
+    environment:
+      PYTHONPATH: /app/src
+      POSTGRES_HOST: external-postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: avito_dwh
+      POSTGRES_USER: avito
+      POSTGRES_PASSWORD: avito123
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: avito-images
+      BATCH_SIZE: "20"
+      DELAY_BETWEEN_ADS: "2.0"
+      DELAY_BETWEEN_BATCHES: "60"
+      MAX_IMAGES_PER_AD: "10"
+      MAX_IMAGE_SIZE_MB: "10"
+      DOWNLOAD_TIMEOUT: "30"
+      REQUEST_TIMEOUT: "20"
+    volumes:
+      - ../parser_avito/image_downloader_service.py:/app/image_downloader_service.py:ro
+    depends_on:
+      external-postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
 
   superset-metadb:
       image: postgres:16
@@ -288,6 +328,7 @@ services:
   superset-worker:
     <<: *superset-common
     restart: unless-stopped
+    working_dir: /app/superset_home
     command: celery --app=superset.tasks.celery_app:app worker --loglevel=INFO
     depends_on:
       superset-init:
@@ -298,6 +339,7 @@ services:
   superset-beat:
     <<: *superset-common
     restart: unless-stopped
+    working_dir: /app/superset_home
     command: celery --app=superset.tasks.celery_app:app beat --loglevel=INFO
     depends_on:
       superset-init:
@@ -305,8 +347,49 @@ services:
       superset-redis:
         condition: service_healthy
 
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9002"
+    ports:
+      - "9000:9000"
+      - "9002:9002"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    restart: unless-stopped
+    ports:
+      - "8123:8123"       # HTTP API (REST, Superset)
+      - "9004:9000"       # Native TCP (clickhouse-client, mapped ≠ minio 9000)
+    environment:
+      CLICKHOUSE_DB: mart
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ""
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
 volumes:
   external_pgdata:
   airflow_pgdata:
   superset_pgdata:
   superset_home:
+  minio_data:
+  clickhouse_data:
