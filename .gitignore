@@ -1,0 +1,28 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
+
+# ---- Airflow logs (шум, не для git) ----
+airflow-avito-project/airflow-logs/
+airflow-avito-project/dbt/logs/
+airflow-avito-project/dbt/target/
+*.log
+
+# ---- Рантайм-данные ----
+parser_avito/database.db
+parser_avito/parser.log
+parser_avito/config.toml.bak
+
+# ---- Секреты (не пушить!) ----
+parser_avito/config.toml
+ai-stack/.env
+airflow-avito-project/.env
+
+# ---- ОС / IDE ----
+.DS_Store
+.idea/
+.vscode/

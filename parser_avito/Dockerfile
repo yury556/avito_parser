@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 
 COPY src/ ./src/
 COPY avito_service.py .
+COPY image_downloader_service.py .
 
 ENV PYTHONPATH=/app
 

@@ -20,6 +20,44 @@ from avito_parser.core import AvitoParse
 
 CONFIG_PATH = os.environ.get('PARSER_CONFIG', '/app/config.toml')
 
+def _extract_image_urls(item):
+    urls = []
+    # 1. Try gallery (search results)
+    try:
+        gallery = getattr(item, 'gallery', None)
+        if gallery:
+            for url_attr in ('imageLargeVipUrl', 'imageLargeUrl', 'imageUrl', 'imageVipUrl'):
+                url = getattr(gallery, url_attr, None)
+                if url:
+                    urls.append(str(url))
+                    break
+    except Exception:
+        pass
+    # 2. Try images list (detail pages)
+    if not urls:
+        try:
+            images = getattr(item, 'images', None)
+            if images:
+                for img in images:
+                    try:
+                        root = getattr(img, 'root', None)
+                        if not root:
+                            continue
+                        keys = list(root.keys())
+                        if not keys:
+                            continue
+                        best_key = max(
+                            keys,
+                            key=lambda k: int(k.split("x")[0]) * int(k.split("x")[1])
+                        )
+                        urls.append(str(root[best_key]))
+                    except Exception:
+                        continue
+        except Exception:
+            pass
+    return urls
+
+
 def item_to_dict(item) -> dict:
     price_raw = item.priceDetailed.value if item.priceDetailed else None
     description_raw = item.description or ''
@@ -40,6 +78,7 @@ def item_to_dict(item) -> dict:
         'is_promotion': item.isPromotion if item.isPromotion is not None else False,
         'total_views': item.total_views,
         'today_views': item.today_views,
+        'image_urls': _extract_image_urls(item),
     }
 
 def write_to_postgres(ads: list[dict]):
@@ -59,12 +98,16 @@ def write_to_postgres(ads: list[dict]):
                 ALTER TABLE avito_original.ads
                 ADD COLUMN IF NOT EXISTS description TEXT
             ''')
+            cur.execute('''
+                ALTER TABLE avito_original.ads
+                ADD COLUMN IF NOT EXISTS image_keys JSONB DEFAULT '[]'::jsonb
+            ''')
             execute_values(
                 cur,
                 '''
                 INSERT INTO avito_original.ads
                     (avito_id, title, price_rub, url, location, seller,
-                     description,
+                     description, image_keys,
                      is_reserved, is_promotion, total_views, today_views, parsed_at)
                 VALUES %s
                 ON CONFLICT (avito_id) DO UPDATE SET
@@ -95,6 +138,7 @@ def write_to_postgres(ads: list[dict]):
                         ad.get('location'),
                         ad.get('seller'),
                         ad.get('description'),
+                        json_lib.dumps(ad.get('image_keys', [])),
                         ad.get('is_reserved', False),
                         ad.get('is_promotion', False),
                         ad.get('total_views'),
@@ -124,6 +168,51 @@ while True:
         if items:
             ads = [item_to_dict(item) for item in items]
             print(f'Got {len(ads)} ads', flush=True)
+            # Image download
+            storage_type = os.environ.get('STORAGE_TYPE', 'none')
+            if storage_type in ('minio', 's3'):
+                from minio import Minio
+                from io import BytesIO
+                storage = Minio(
+                    os.environ.get('MINIO_ENDPOINT', 'minio:9000'),
+                    access_key=os.environ.get('MINIO_ACCESS_KEY', 'minioadmin'),
+                    secret_key=os.environ.get('MINIO_SECRET_KEY', 'minioadmin'),
+                    secure=False,
+                )
+                bucket = os.environ.get('MINIO_BUCKET', 'avito-images')
+                max_images = int(os.environ.get('MAX_IMAGES_PER_AD', '10'))
+                timeout = int(os.environ.get('DOWNLOAD_TIMEOUT', '30'))
+                max_size = int(os.environ.get('MAX_IMAGE_SIZE_MB', '10')) * 1024 * 1024
+
+                import requests as _requests
+                for ad in ads:
+                    image_urls = ad.pop('image_urls', [])
+                    image_keys = []
+                    for idx, url in enumerate(image_urls[:max_images]):
+                        try:
+                            resp = _requests.get(url, timeout=timeout, stream=True)
+                            resp.raise_for_status()
+                            content_type = resp.headers.get('Content-Type', 'image/jpeg')
+                            data = resp.content
+                            if len(data) > max_size:
+                                continue
+                            ext = content_type.split('/')[-1]
+                            if ext == 'jpeg':
+                                ext = 'jpg'
+                            key = str(ad['avito_id']) + '/' + str(idx) + '.' + ext
+                            storage.put_object(bucket, key, BytesIO(data), len(data), content_type=content_type)
+                            image_keys.append({
+                                'key': key,
+                                'url': os.environ.get('MINIO_ENDPOINT', 'minio:9000') + '/' + bucket + '/' + key,
+                                'original_url': url,
+                                'size_bytes': len(data),
+                                'content_type': content_type,
+                            })
+                        except Exception as e:
+                            print(f'Image download failed for {ad.get("avito_id")}: {e}', flush=True)
+                            continue
+                    ad['image_keys'] = image_keys
+
             write_to_postgres(ads)
         print('=== Pause ===', flush=True)
         time.sleep(config.pause_general)

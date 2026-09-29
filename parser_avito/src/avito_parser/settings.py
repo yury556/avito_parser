@@ -18,6 +18,20 @@ class ProxySplit:
 
 
 @dataclass
+class StorageConfig:
+    type: str = "none"
+    endpoint: str = ""
+    access_key: str = ""
+    secret_key: str = ""
+    bucket: str = "avito-images"
+    region: str = "us-east-1"
+    base_path: str = "images"  # for local storage
+    download_timeout: int = 30
+    max_image_size_mb: int = 10
+    max_images_per_ad: int = 10
+
+
+@dataclass
 class AvitoConfig:
     urls: List[str]
     proxy_string: Optional[str] = None
@@ -51,4 +65,5 @@ class AvitoConfig:
     timeout: int = 20
     block_threshold: int = 3
     user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+    storage: StorageConfig = field(default_factory=StorageConfig)
 

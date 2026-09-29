@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from contextlib import contextmanager
@@ -11,6 +12,9 @@ from loguru import logger
 
 from avito_parser.settings import AvitoConfig
 from avito_parser.core import AvitoParse
+from avito_parser.config import load_avito_config
+from avito_parser.image_downloader import ImageDownloader
+from avito_parser.storages import create_storage
 
 app = FastAPI(title="Avito Parser Service", version="3.2.16")
 
@@ -54,6 +58,22 @@ def _build_config(body: dict) -> AvitoConfig:
     )
 
 
+def _extract_image_urls(item) -> list[str]:
+    if not item.images:
+        return []
+    urls = []
+    for img in item.images:
+        try:
+            best_key = max(
+                img.root.keys(),
+                key=lambda k: int(k.split("x")[0]) * int(k.split("x")[1])
+            )
+            urls.append(str(img.root[best_key]))
+        except Exception:
+            continue
+    return urls
+
+
 def _item_to_dict(item) -> dict:
     price_raw = item.priceDetailed.value if item.priceDetailed else None
     description_raw = item.description or ""
@@ -74,6 +94,7 @@ def _item_to_dict(item) -> dict:
         "is_promotion": item.isPromotion if item.isPromotion is not None else False,
         "total_views": item.total_views,
         "today_views": item.today_views,
+        "image_urls": _extract_image_urls(item),
     }
 
 
@@ -111,6 +132,10 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                 ALTER TABLE avito_original.ads
                 ADD COLUMN IF NOT EXISTS description TEXT
             """)
+            cur.execute("""
+                ALTER TABLE avito_original.ads
+                ADD COLUMN IF NOT EXISTS image_keys JSONB DEFAULT '[]'::jsonb
+            """)
             if ads:
                 from psycopg2.extras import execute_values
                 execute_values(
@@ -118,7 +143,7 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                     """
                     INSERT INTO avito_original.ads
                         (avito_id, title, price_rub, url, location, seller,
-                         description,
+                         description, image_keys,
                          is_reserved, is_promotion, total_views, today_views, parsed_at)
                     VALUES %s
                     ON CONFLICT (avito_id) DO UPDATE SET
@@ -128,6 +153,7 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                         location = EXCLUDED.location,
                         seller = EXCLUDED.seller,
                         description = EXCLUDED.description,
+                        image_keys = EXCLUDED.image_keys,
                         is_reserved = EXCLUDED.is_reserved,
                         is_promotion = EXCLUDED.is_promotion,
                         total_views = EXCLUDED.total_views,
@@ -149,6 +175,7 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                             ad.get("location"),
                             ad.get("seller"),
                             ad.get("description"),
+                            json.dumps(ad.get("image_keys", [])),
                             ad.get("is_reserved", False),
                             ad.get("is_promotion", False),
                             ad.get("total_views"),
@@ -170,9 +197,18 @@ def parse_ads(body: dict):
     config = _build_config(body)
     parser = AvitoParse(config)
     items = parser.parse()
+    logger.info(f"Парсинг завершён: {len(items)} объявлений")
 
     ads = [_item_to_dict(item) for item in items]
-    logger.info(f"Парсинг завершён: {len(ads)} объявлений")
+
+    storage = create_storage(config.storage)
+    downloader = ImageDownloader(storage, config.storage)
+    for ad in ads:
+        if ad.get("image_urls"):
+            image_keys = downloader.download_and_store(ad["avito_id"], ad["image_urls"])
+            ad["image_keys"] = image_keys
+        else:
+            ad["image_keys"] = []
 
     pg_config = _get_postgres_config(body)
     if pg_config and ads:

@@ -156,4 +156,3 @@ def fetch_ads_from_original(config: PostgresConfig, since: datetime) -> list[Avi
                 )
                 for row in cur.fetchall()
             ]
-

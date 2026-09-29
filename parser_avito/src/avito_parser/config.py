@@ -3,13 +3,16 @@ from pathlib import Path
 
 import tomli_w
 
-from avito_parser.settings import AvitoConfig
+from avito_parser.settings import AvitoConfig, StorageConfig
 
 
 def load_avito_config(path: str = "config.toml") -> AvitoConfig:
     with open(path, "rb") as f:
         data = tomllib.load(f)
-    return AvitoConfig(**data["avito"])
+    storage = StorageConfig()
+    if "storage" in data:
+        storage = StorageConfig(**data["storage"])
+    return AvitoConfig(storage=storage, **data["avito"])
 
 
 def save_avito_config(config: dict):

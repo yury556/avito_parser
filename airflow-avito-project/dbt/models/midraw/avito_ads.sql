@@ -30,4 +30,3 @@ select
         else 'avito'
     end as source_system
 from parsed
-

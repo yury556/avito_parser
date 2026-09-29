@@ -27,3 +27,15 @@ parse_phone = false
 retry_delay = 5
 timeout = 20
 block_threshold = 3
+
+[storage]
+type = "none"
+endpoint = "minio:9000"
+access_key = ""
+secret_key = ""
+bucket = "avito-images"
+region = "us-east-1"
+base_path = "images"
+download_timeout = 30
+max_image_size_mb = 10
+max_images_per_ad = 10
