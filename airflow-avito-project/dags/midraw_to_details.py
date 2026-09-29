@@ -54,7 +54,7 @@ with DAG(
     dag_id="midraw_to_details",
     description="Call ai_enrich /batch to enrich all unprocessed midraw.avito_ads into detail.ads.",
     default_args=default_args,
-    schedule="*/30 * * * *",
+    schedule="*/5 * * * *",
     start_date=datetime(2026, 8, 1),
     catchup=False,
     max_active_runs=1,

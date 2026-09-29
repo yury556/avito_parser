@@ -192,6 +192,7 @@ def _call_openrouter(messages: list[dict], retries: int = 5) -> dict | None:
         "messages": messages,
         "temperature": 0.1,
         "max_tokens": 4096,
+        "reasoning": {"effort": "low"},
     }
 
     for attempt in range(retries):
