@@ -8,6 +8,7 @@ import json
 import os
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import httpx
@@ -27,6 +28,9 @@ DB_PORT = int(os.getenv("DB_PORT", "5433"))
 DB_NAME = os.getenv("DB_NAME", "avito_dwh")
 DB_USER = os.getenv("DB_USER", "avito")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "avito123")
+
+# ──── Параллелизм внутри батча ────
+PARALLEL_WORKERS = int(os.getenv("PARALLEL_WORKERS", "5"))
 
 # ──── Загрузка промпта ────
 PROMPT_DIR = Path(__file__).parent / "prompts"
@@ -108,44 +112,58 @@ def batch_process(req: BatchRequest):
     errors = 0
     results = []
 
-    for avito_id, title, desc, price_rub in rows:
-        time.sleep(0.5)
-        messages = _build_messages(title or "", desc or "")
-        result = _call_openrouter(messages)
-        if isinstance(result, dict) and "category" in result:
-            try:
-                cur.execute("""
-                    INSERT INTO detail.ads
-                        (avito_id, category, brand, model, tags,
-                         input_title, input_description,
-                         price_rub,
-                         ai_model, ai_version, ai_processed_at, ai_status)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), 'success')
-                    ON CONFLICT (avito_id) DO UPDATE SET
-                        category=EXCLUDED.category, brand=EXCLUDED.brand,
-                        model=EXCLUDED.model, tags=EXCLUDED.tags,
-                        price_rub=EXCLUDED.price_rub,
-                        ai_processed_at=NOW(), ai_status='success'
-                """, (
-                    avito_id,
-                    result.get("category"),
-                    result.get("brand"),
-                    result.get("model"),
-                    json.dumps(result.get("tags", [])),
-                    title, desc,
-                    result.get("price_rub") if result.get("price_rub") is not None else price_rub,
-                    AI_MODEL, PROMPT_VERSION,
-                ))
-                conn.commit()
-                processed += 1
-                results.append({"avito_id": avito_id, "status": "ok", "data": result})
-            except Exception as e:
-                conn.rollback()
+    def _process_one(job):
+        """Worker — тянет данные в OpenRouter (БД не касается)."""
+        avito_id, title, desc, price_rub = job
+        try:
+            messages = _build_messages(title or "", desc or "")
+            result = _call_openrouter(messages)
+            if isinstance(result, dict) and "category" in result:
+                return {"ok": True, "avito_id": avito_id, "data": result,
+                        "title": title, "desc": desc, "price_rub": price_rub}
+            return {"ok": False, "avito_id": avito_id, "error": "invalid AI response"}
+        except Exception as e:
+            return {"ok": False, "avito_id": avito_id, "error": str(e)}
+
+    jobs = [(r[0], r[1], r[2], r[3]) for r in rows]
+    with ThreadPoolExecutor(max_workers=PARALLEL_WORKERS) as executor:
+        futures = [executor.submit(_process_one, job) for job in jobs]
+        for fut in as_completed(futures):
+            out = fut.result()
+            if out["ok"]:
+                try:
+                    cur.execute("""
+                        INSERT INTO detail.ads
+                            (avito_id, category, brand, model, tags,
+                             input_title, input_description,
+                             price_rub,
+                             ai_model, ai_version, ai_processed_at, ai_status)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), 'success')
+                        ON CONFLICT (avito_id) DO UPDATE SET
+                            category=EXCLUDED.category, brand=EXCLUDED.brand,
+                            model=EXCLUDED.model, tags=EXCLUDED.tags,
+                            price_rub=EXCLUDED.price_rub,
+                            ai_processed_at=NOW(), ai_status='success'
+                    """, (
+                        out["avito_id"],
+                        out["data"].get("category"),
+                        out["data"].get("brand"),
+                        out["data"].get("model"),
+                        json.dumps(out["data"].get("tags", [])),
+                        out["title"], out["desc"],
+                        out["data"].get("price_rub") if out["data"].get("price_rub") is not None else out["price_rub"],
+                        AI_MODEL, PROMPT_VERSION,
+                    ))
+                    conn.commit()
+                    processed += 1
+                    results.append({"avito_id": out["avito_id"], "status": "ok", "data": out["data"]})
+                except Exception as e:
+                    conn.rollback()
+                    errors += 1
+                    results.append({"avito_id": out["avito_id"], "status": "error", "error": str(e)})
+            else:
                 errors += 1
-                results.append({"avito_id": avito_id, "status": "error", "error": str(e)})
-        else:
-            errors += 1
-            results.append({"avito_id": avito_id, "status": "error", "error": "invalid AI response"})
+                results.append({"avito_id": out["avito_id"], "status": "error", "error": out["error"]})
 
     conn.close()
     return BatchResult(processed=processed, errors=errors, items=results)

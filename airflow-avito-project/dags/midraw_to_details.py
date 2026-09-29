@@ -21,7 +21,7 @@ def call_ai_enrich_batch(**context) -> int:
         resp = requests.post(
             AI_ENRICH_URL,
             json=payload,
-            timeout=600,
+            timeout=3600,
         )
         resp.raise_for_status()
     except requests.exceptions.RequestException as e:
