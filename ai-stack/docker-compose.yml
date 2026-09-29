@@ -19,6 +19,9 @@ services:
       - DB_USER=${DB_USER:-avito}
       - DB_PASSWORD=${DB_PASSWORD:-avito123}
       - AI_PROMPT_VERSION=${AI_PROMPT_VERSION:-v1}
+      - WORKER_ENABLED=${WORKER_ENABLED:-false}
+      - PARALLEL_WORKERS=${PARALLEL_WORKERS:-5}
+      - IDLE_SLEEP=${IDLE_SLEEP:-30}
     networks:
       - ai-net
       - airflow-net

@@ -191,7 +191,7 @@ def _call_openrouter(messages: list[dict], retries: int = 5) -> dict | None:
         "model": AI_MODEL,
         "messages": messages,
         "temperature": 0.1,
-        "max_tokens": 1024,
+        "max_tokens": 4096,
     }
 
     for attempt in range(retries):
@@ -208,12 +208,15 @@ def _call_openrouter(messages: list[dict], retries: int = 5) -> dict | None:
                 continue
             resp.raise_for_status()
             msg = resp.json()["choices"][0]["message"]
-            text = msg.get("content") or msg.get("reasoning")
+            content = msg.get("content") or ""
+            reasoning = msg.get("reasoning") or ""
+            text = (content or reasoning).strip()
+            start = text.find("{")
+            end = text.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                text = text[start:end + 1]
             if not text:
                 continue
-            text = text.strip()
-            text = re.sub(r"^```(?:json)?\s*", "", text)
-            text = re.sub(r"\s*```$", "", text)
             return json.loads(text)
         except Exception:
             if attempt == retries - 1:
