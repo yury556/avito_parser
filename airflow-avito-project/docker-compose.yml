@@ -209,6 +209,7 @@ services:
       - "8001:8000"
     volumes:
       - ../parser_avito/result:/app/result
+      - ../parser_avito/storage:/app/storage
       - ../parser_avito/entrypoint.sh:/app/entrypoint.sh:ro
       - ../parser_avito/config.toml:/app/config.toml:ro
     environment:
@@ -235,6 +236,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  avito-antibot-client:
+    build:
+      context: ../avito-antibot-client
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    container_name: airflow-avito-project-avito-antibot-client-1
+    environment:
+      AVITO_CATALOG_URL: "https://www.avito.ru/sankt-peterburg/tovary_dlya_kompyutera"
+      OWN_COOKIES_PATH: "/shared/own_cookies.json"
+      STOP_AFTER_BOOTSTRAP: "1"
+      COOKIE_REFRESH_INTERVAL: "3600"
+      AVITO_PROXY_URL: ${AVITO_PROXY_URL:-}
+    volumes:
+      - ../parser_avito/storage:/shared
 
   image-downloader:
     build:

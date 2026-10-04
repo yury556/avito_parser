@@ -1,13 +1,22 @@
 """
-Клиент для запросов парсера (curl_cffi)
+Клиент для запросов парсера (curl_cffi) с обходом антибота Авито.
+
+Вместо новой сессии на каждый запрос используется одна долгоживущая сессия
+с фиксированным Firefox-профилем — это условие прохождения QRATOR/firewall
+верификации. При защитных ответах (439 PoW / 403 / 429) вызывается
+handle_firewall_response из firewall_client (портировано из avito-antibot-client).
 """
-import random
 import time
 from curl_cffi import requests
 from loguru import logger
 
 from avito_parser.cookies.base import CookiesProvider
 from avito_parser.proxies.proxy import Proxy
+from avito_parser.firewall_client.main import (
+    DOCUMENT_REQUEST_HEADERS,
+    HTTP_IMPERSONATE_PROFILE,
+    handle_firewall_response,
+)
 
 
 class HttpClient:
@@ -28,21 +37,11 @@ class HttpClient:
         self.block_threshold = block_threshold
 
         self._block_attempts = 0
+        self._session: requests.Session | None = None
 
-    def _build_client(self) -> requests.Session:
-        _impersonate = random.choice(["chrome", "edge", "firefox", "safari"])
-        session = requests.Session(
-            impersonate=_impersonate,
-        )
-
-        _chrome_version = str(random.randint(142, 147))
-        headers = {
-            "user-agent": f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                          f"AppleWebKit/537.36 (KHTML, like Gecko) "
-                          f"Chrome/{_chrome_version}.0.0.0 Safari/537.36",
-        }
-
-        session.headers.update(headers)
+    def _build_session(self) -> requests.Session:
+        session = requests.Session(impersonate=HTTP_IMPERSONATE_PROFILE)
+        session.headers.update(DOCUMENT_REQUEST_HEADERS)
 
         proxy = self.proxy.get_httpx_proxy()
         if proxy:
@@ -53,30 +52,36 @@ class HttpClient:
 
         return session
 
+    def _ensure_session(self) -> requests.Session:
+        if self._session is None:
+            self._session = self._build_session()
+        return self._session
+
     def request(self, method: str, url: str, **kwargs):
         last_exc = None
 
         for attempt in range(1, self.max_retries + 1):
             try:
-                with self._build_client() as client:
+                client = self._ensure_session()
 
-                    if self.cookies:
-                        kwargs.setdefault("cookies", self.cookies.get())
+                # Куки НЕ подставляем с диска: застрявший pow_challenge в
+                # own_cookies.json вызывает 439 на каждый запрос. Сессия
+                # сама накапливает cookie-jar из ответов (Set-Cookie).
 
-                    response = client.request(
-                        method,
-                        url,
-                        timeout=self.timeout,
-                        allow_redirects=True,
-                        **kwargs,
-                    )
+                response = client.request(
+                    method,
+                    url,
+                    timeout=self.timeout,
+                    allow_redirects=True,
+                    **kwargs,
+                )
 
-                # === обновление cookies ===
+                # === обновление cookies из ответа ===
                 if self.cookies:
                     self.cookies.update(response)
 
-                # === обработка блокировок ===
-                if response.status_code in (401, 403, 429):
+                # === обработка защитных ответов (firewall) ===
+                if response.status_code in (401, 403, 429, 439):
                     self._block_attempts += 1
 
                     logger.warning(
@@ -86,13 +91,31 @@ class HttpClient:
 
                     if self._block_attempts >= self.block_threshold:
                         logger.warning("Достигнут лимит блокировок, запускается обработка")
-
                         if self.cookies:
                             self.cookies.handle_block()
-
                         self.proxy.handle_block()
                         self._block_attempts = 0
 
+                    # Попытка пройти верификацию firewall (PoW / GeeTest)
+                    stage_cleared = None
+                    try:
+                        stage_cleared = handle_firewall_response(
+                            client, response, context=f"parser:{url[:80]}"
+                        )
+                    except RuntimeError as fw_err:
+                        logger.warning(f"Firewall-обработка не прошла: {fw_err}")
+                        if "проблема с IP" in str(fw_err):
+                            # IP-бан: быстрый ретрай только продлевает бан —
+                            # ждём долго (5 минут) между попытками.
+                            logger.warning("IP забанен Авито; пауза 300с")
+                            time.sleep(300)
+                            continue
+
+                    if stage_cleared is not None:
+                        logger.info(
+                            f"Firewall-верификация пройдена ({type(stage_cleared).__name__}); "
+                            f"повторяю запрос"
+                        )
                     time.sleep(self.retry_delay)
                     continue
 
@@ -104,6 +127,8 @@ class HttpClient:
             except requests.RequestsError as e:
                 last_exc = e
                 logger.warning(f"Request error (attempt {attempt}): {e}")
+                # Транспортная ошибка — пересоздаём сессию
+                self._session = None
                 time.sleep(self.retry_delay)
 
         raise RuntimeError("HTTP запросы были неуспешными") from last_exc
