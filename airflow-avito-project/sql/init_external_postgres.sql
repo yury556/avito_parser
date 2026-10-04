@@ -1,5 +1,24 @@
 CREATE SCHEMA IF NOT EXISTS raw;
 CREATE SCHEMA IF NOT EXISTS midraw;
+CREATE SCHEMA IF NOT EXISTS avito_original;
+
+CREATE TABLE IF NOT EXISTS avito_original.ads (
+    avito_id        bigint       PRIMARY KEY,
+    title           text,
+    price_rub       integer,
+    url             text,
+    location        varchar(64),
+    seller          varchar(64),
+    description     text,
+    image_keys      jsonb        DEFAULT '[]'::jsonb,
+    is_reserved     boolean      DEFAULT false,
+    is_promotion    boolean      DEFAULT false,
+    total_views     integer,
+    today_views     integer,
+    parsed_at       timestamptz
+);
+
+CREATE INDEX IF NOT EXISTS ix_ads_parsed_at ON avito_original.ads (parsed_at);
 
 CREATE TABLE IF NOT EXISTS raw.avito_ads_csv (
     run_id text NOT NULL,
