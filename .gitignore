@@ -26,3 +26,10 @@ airflow-avito-project/.env
 .DS_Store
 .idea/
 .vscode/
+# артефакты прогонов клиента/генератора
+avito-antibot-client/own_cookies.json
+avito-antibot-client/geetest_load_response.json
+avito-antibot-client/manifest.json
+avito-antibot-client/qrator-camoufox-*.json
+avito-antibot-client/qrator-fingerprint-*.json
+avito-antibot-client/firewall-debug*
