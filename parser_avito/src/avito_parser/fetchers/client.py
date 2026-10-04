@@ -6,6 +6,7 @@
 верификации. При защитных ответах (439 PoW / 403 / 429) вызывается
 handle_firewall_response из firewall_client (портировано из avito-antibot-client).
 """
+import os
 import time
 from curl_cffi import requests
 from loguru import logger
@@ -55,7 +56,27 @@ class HttpClient:
     def _ensure_session(self) -> requests.Session:
         if self._session is None:
             self._session = self._build_session()
+            self._warmup_session(self._session)
         return self._session
+
+    def _warmup_session(self, session: requests.Session) -> None:
+        """Прогрев: GET каталога с правильными заголовками — сессия получает
+        валидные куки Авито (как в генераторе), что снижает 439-трения
+        на рабочих запросах. Не критичен при неудаче."""
+        try:
+            warm_url = os.environ.get(
+                "AVITO_WARMUP_URL",
+                "https://www.avito.ru/sankt-peterburg/tovary_dlya_kompyutera",
+            )
+            r = session.get(warm_url, timeout=self.timeout, allow_redirects=True)
+            if self.cookies:
+                self.cookies.update(r)
+            logger.info(
+                f"Прогрев сессии: HTTP {r.status_code}, "
+                f"куки в jar: {len(session.cookies.jar)}"
+            )
+        except Exception as e:
+            logger.warning(f"Прогрев не удался (не критично): {e}")
 
     def request(self, method: str, url: str, **kwargs):
         last_exc = None
@@ -116,7 +137,9 @@ class HttpClient:
                             f"Firewall-верификация пройдена ({type(stage_cleared).__name__}); "
                             f"повторяю запрос"
                         )
-                    time.sleep(self.retry_delay)
+                    # Rate-лимит канала (429/439): мгновенные ретраи жгут квоту.
+                    # Пауза растёт с числом подряд идущих блокировок.
+                    time.sleep(min(60, 10 + 10 * self._block_attempts))
                     continue
 
                 # === успех ===
