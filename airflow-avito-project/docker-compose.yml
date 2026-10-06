@@ -237,6 +237,24 @@ services:
       timeout: 5s
       retries: 5
 
+
+  description-enricher:
+    build:
+      context: ../parser_avito
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    container_name: airflow-avito-project-description-enricher-1
+    environment:
+      POSTGRES_HOST: external-postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: avito_dwh
+      POSTGRES_USER: avito
+      POSTGRES_PASSWORD: avito123
+      ENRICH_INTERVAL: "60"
+    command: ["python", "/app/enricher.py"]
+    depends_on:
+      external-postgres:
+        condition: service_healthy
   avito-antibot-client:
     build:
       context: ../avito-antibot-client

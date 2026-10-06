@@ -266,6 +266,43 @@ class AvitoParse:
             )
         return ads
 
+    def enrich_new_ads(self, ads: list[Item]) -> list[Item]:
+        """Полное описание — только для новых лотов (не в viewed).
+
+        Новых за цикл обычно 20-50 шт: ходим на страницу каждого и вытаскиваем
+        полное описание. Старые лоты не трогаем — экономим rate-канал прокси.
+        """
+        new_ads = [
+            ad for ad in ads
+            if not self.is_viewed(ad)
+            and ad.location and "санкт-петербург" in (ad.location.name or "").lower()
+        ]
+        if not new_ads:
+            return ads
+
+        logger.info(f"Полное описание для {len(new_ads)} новых лотов")
+        fetched = 0
+        for ad in new_ads:
+            if not ad.urlPath:
+                continue
+            try:
+                html_code_full_page = self.fetch_data(
+                    url=f"https://www.avito.ru{ad.urlPath}"
+                )
+                if not html_code_full_page:
+                    continue
+                full_description = self._extract_description(html=html_code_full_page)
+                if full_description:
+                    ad.description = full_description
+                    fetched += 1
+                time.sleep(random.uniform(0.5, 1.5))
+            except Exception as err:
+                logger.warning(f"Полное описание {ad.urlPath}: {err}")
+                continue
+
+        logger.info(f"Полные описания получены: {fetched}/{len(new_ads)}")
+        return ads
+
     def parse_views(self, ads: list[Item]) -> list[Item]:
         if not self.config.parse_views:
             return ads
