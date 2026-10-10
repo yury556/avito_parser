@@ -25,7 +25,7 @@ DB = dict(
     password=os.environ.get("POSTGRES_PASSWORD", "avito123"),
 )
 INTERVAL = int(os.environ.get("ENRICH_INTERVAL", "60"))
-STATUS_INTERVAL = int(os.environ.get("STATUS_INTERVAL", "600"))  # проверка статуса раз в 10 мин
+STATUS_INTERVAL = int(os.environ.get("STATUS_INTERVAL", "180"))  # проверка статуса раз в 3 мин
 HEADLESS = os.environ.get("AVITO_HEADLESS", "1").lower() in ("1", "true", "yes")
 WARM_URL = os.environ.get(
     "AVITO_WARMUP_URL",
@@ -60,7 +60,8 @@ def insert_raw_snapshot(avito_id: int, title: str, price: float, url: str,
 
 
 def pick_status_candidate(skip: set[int]) -> tuple[int, str] | None:
-    """Приоритет: активные лоты НИЖЕ медианы своей категории (по свежей цене)."""
+    """Приоритет: 1) лоты ниже медианы категории 2) СПб 3) самые выгодные.
+    Ротация: лот не чаще раза в 12 часов."""
     with psycopg2.connect(**DB) as conn, conn.cursor() as cur:
         cur.execute(
             """
@@ -74,10 +75,13 @@ def pick_status_candidate(skip: set[int]) -> tuple[int, str] | None:
             JOIN midraw.avito_ads m ON m.avito_id = d.avito_id
             JOIN med ON med.category = d.category
             WHERE d.state = 'активно' AND d.price_rub > 0
-              AND d.price_rub < med.med
               AND d.avito_id <> ALL(%(skip)s)
-              AND (d.last_checked_at IS NULL OR d.last_checked_at < now() - interval '6 hours')
-            ORDER BY d.price_rub ASC
+              AND (d.last_checked_at IS NULL OR d.last_checked_at < now() - interval '12 hours')
+            ORDER BY
+                CASE WHEN d.price_rub < med.med THEN 0 ELSE 1 END,
+                CASE WHEN position(lower(m.url), 'sankt-peterburg') > 0 THEN 0 ELSE 1 END,
+                d.price_rub ASC,
+                d.last_checked_at ASC NULLS FIRST
             LIMIT 10
             """,
             {"skip": list(skip) or [0]},
