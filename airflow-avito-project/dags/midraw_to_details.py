@@ -53,7 +53,7 @@ def call_ai_enrich_batch(**context) -> int:
         resp = requests.post(
             AI_ENRICH_URL,
             json=payload,
-            timeout=3600,
+            timeout=900,
         )
         resp.raise_for_status()
     except requests.exceptions.RequestException as e:
@@ -86,7 +86,7 @@ with DAG(
     dag_id="midraw_to_details",
     description="Call ai_enrich /batch to enrich all unprocessed midraw.avito_ads into detail.ads.",
     default_args=default_args,
-    schedule="*/5 * * * *",
+    schedule="*/15 * * * *",
     start_date=datetime(2026, 8, 1),
     catchup=False,
     max_active_runs=1,
