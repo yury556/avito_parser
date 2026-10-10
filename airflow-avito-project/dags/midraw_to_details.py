@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from datetime import datetime, timedelta
 
@@ -7,6 +8,37 @@ import requests
 from airflow import DAG
 from airflow.exceptions import AirflowException
 from airflow.operators.python import PythonOperator
+
+
+def _update_ad_state():
+    """Пересчёт состояния: активные = видели в выдаче за 48 часов."""
+    import psycopg2
+    conn = psycopg2.connect(
+        host=os.getenv("POSTGRES_HOST", "external-postgres"),
+        port=os.getenv("POSTGRES_PORT", "5432"),
+        dbname=os.getenv("POSTGRES_DB", "avito_dwh"),
+        user=os.getenv("POSTGRES_USER", "avito"),
+        password=os.getenv("POSTGRES_PASSWORD", "avito123"),
+    )
+    try:
+        with conn, conn.cursor() as cur:
+            cur.execute(
+                "UPDATE detail.ads d SET state='активно' WHERE d.avito_id IN "
+                "(SELECT DISTINCT avito_id FROM midraw.avito_ads "
+                " WHERE parsed_at > now() - interval '24 hours') "
+                "AND NOT (d.last_checked_at > now() - interval '24 hours')"
+            )
+            cur.execute(
+                "UPDATE detail.ads d SET state='закрыто' WHERE d.avito_id NOT IN "
+                "(SELECT DISTINCT avito_id FROM midraw.avito_ads "
+                " WHERE parsed_at > now() - interval '24 hours') "
+                "AND NOT (d.last_checked_at > now() - interval '24 hours')"
+            )
+        cur = None
+        logger = logging.getLogger("airflow.task")
+        logger.info("state пересчитан")
+    finally:
+        conn.close()
 
 AI_ENRICH_URL = os.getenv(
     "AI_ENRICH_URL",
@@ -64,3 +96,12 @@ with DAG(
         task_id="ai_enrich_batch",
         python_callable=call_ai_enrich_batch,
     )
+
+    # Пересчёт состояния объявлений (активно/закрыто): активные = видели
+    # в выдаче (midraw) за последние 48 часов. Запускается после обогащения.
+    update_state = PythonOperator(
+        task_id="update_ad_state",
+        python_callable=_update_ad_state,
+    )
+
+    enrich_batch >> update_state

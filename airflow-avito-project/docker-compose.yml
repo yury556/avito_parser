@@ -251,6 +251,7 @@ services:
       POSTGRES_USER: avito
       POSTGRES_PASSWORD: avito123
       ENRICH_INTERVAL: "60"
+      AVITO_PROXY_URL: ${AVITO_PROXY_URL:-}
     command: ["python", "/app/enricher.py"]
     depends_on:
       external-postgres:
