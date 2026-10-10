@@ -33,6 +33,26 @@ WARM_URL = os.environ.get(
 )
 PROXY = os.environ.get("AVITO_PROXY_URL", "").strip() or None
 
+BLOCK_MARKERS = ("доступ ограничен", "проблема с ip")  # блокировка IP/челлендж — временно, НЕ закрытие лота
+LOT_TITLE_SELECTOR = '[data-marker="item-view/item-title"], h1'
+
+
+def page_is_blocked(page) -> bool:
+    """Признаки блокировки (IP-бан / челлендж), а не закрытия лота."""
+    title = (page.title() or "").lower()
+    return any(marker in title for marker in BLOCK_MARKERS)
+
+
+def lot_is_open(page) -> bool:
+    """Открытый лот: на странице есть заголовок товара, цена или описание.
+    Если нет ничего из этого — лот реально закрыт/удалён."""
+    return bool(
+        page.query_selector(LOT_TITLE_SELECTOR)
+        or read_price(page)
+        or extract_description(page)
+    )
+
+
 FAILED: dict[int, float] = {}  # avito_id -> retry_after_ts
 
 DESC_SELECTOR = '[data-marker="item-view/item-description"]'
@@ -230,11 +250,17 @@ def main() -> None:
                     avito_id, url = cand
                     try:
                         ok = goto(url, wait_selector=DESC_SELECTOR)
-                        title_txt = (page.title() or "").lower()
-                        if not ok or "доступ ограничен" in title_txt or "проблема с ip" in title_txt:
-                            logger.info("Проверка {}: лот закрыт/недоступен — помечаю", avito_id)
-                            mark_checked(avito_id, "закрыто")
-                        else:
+                        if not ok:
+                            # Страница не открылась (таймаут/прокси) — временное
+                            # состояние, помечать «закрыто» нельзя. Откладываем.
+                            logger.info("Проверка {}: страница не открылась — НЕ помечаю, откладываю на 30 мин", avito_id)
+                            FAILED[avito_id] = time.time() + 1800
+                        elif page_is_blocked(page):
+                            # «Доступ ограничен» / «проблема с IP» — блокировка,
+                            # а не закрытие лота. Раньше здесь было ложное «закрыто».
+                            logger.warning("Проверка {}: блокировка IP/челлендж — НЕ помечаю закрытым, откладываю на 30 мин", avito_id)
+                            FAILED[avito_id] = time.time() + 1800
+                        elif lot_is_open(page):
                             price = read_price(page)
                             desc = extract_description(page)
                             if desc and len(desc) > 260:
@@ -246,6 +272,11 @@ def main() -> None:
                                     desc or "", time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
                                 )
                             logger.info("Проверка {}: жив, цена {} ₽", avito_id, price)
+                        else:
+                            # Страница открылась, блокировки нет, но нет ни заголовка,
+                            # ни цены, ни описания — лот реально закрыт/удалён.
+                            logger.info("Проверка {}: лот закрыт (нет заголовка/цены) — помечаю", avito_id)
+                            mark_checked(avito_id, "закрыто")
                     except Exception as e:
                         logger.warning("Ошибка проверки {}: {}", avito_id, e)
                 time.sleep(10)
