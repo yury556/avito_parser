@@ -407,8 +407,13 @@ if __name__ == "__main__":
         logger.error(f"Ошибка загрузки конфига: {err}")
         exit(1)
 
+    # Экспоненциальный бэкофф: при систематической ошибке (БД, сеть, конфиг)
+    # пауза растёт 30→60→…→600 вместо долбёжки каждые 30 с. Успешный цикл
+    # сбрасывает шкалу — обычный режим (pause_general) не страдает.
+    backoff = 30
     while True:
         try:
+            config = load_avito_config("config.toml")  # перечитываем: правки URL/пауз подхватываются без рестарта
             parser = AvitoParse(config)
             parser.parse()
             if config.one_time_start:
@@ -416,7 +421,9 @@ if __name__ == "__main__":
                 break
             logger.info(f"Парсинг завершен. Пауза {config.pause_general} сек")
             time.sleep(config.pause_general)
+            backoff = 30
         except Exception as err:
             logger.exception(err)
-            logger.error(f"Произошла ошибка {err}. Будет повторный запуск через 30 сек.")
-            time.sleep(30)
+            logger.error(f"Произошла ошибка {err}. Будет повторный запуск через {backoff} сек.")
+            time.sleep(backoff)
+            backoff = min(600, backoff * 2)
