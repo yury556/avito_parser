@@ -164,7 +164,15 @@ while True:
         config.count = config.count or 1
         parser = AvitoParse(config)
         print('=== Parse cycle ===', flush=True)
-        items = parser.parse()
+        try:
+            items = parser.parse()
+        except Exception as parse_err:
+            # Частичный урожай: лоты уже собранных страниц не теряем.
+            # Postgres-запись идемпотентна (upsert по avito_id).
+            items = getattr(parser, 'collected', None) or []
+            if not items:
+                raise
+            print(f'Parse error: {parse_err}; сохраняю частичный урожай: {len(items)} ads', flush=True)
         if items:
             ads = [item_to_dict(item) for item in items]
             print(f'Got {len(ads)} ads', flush=True)

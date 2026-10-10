@@ -196,8 +196,17 @@ def parse_ads(body: dict):
 
     config = _build_config(body)
     parser = AvitoParse(config)
-    items = parser.parse()
-    logger.info(f"Парсинг завершён: {len(items)} объявлений")
+    try:
+        items = parser.parse()
+        partial = False
+    except Exception as parse_err:
+        # Частичный урожай уже собранных страниц — не теряем при падении.
+        items = getattr(parser, "collected", None) or []
+        partial = True
+        if not items:
+            raise
+        logger.warning(f"Парсинг упал ({parse_err}); отдаю частичный урожай: {len(items)} объявлений")
+    logger.info(f"Парсинг завершён: {len(items)} объявлений{' (частично)' if partial else ''}")
 
     ads = [_item_to_dict(item) for item in items]
 

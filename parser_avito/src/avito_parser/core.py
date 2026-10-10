@@ -38,6 +38,7 @@ class AvitoParse:
         self.cookies_provider = build_cookies_provider(config=config)
         self.db_handler = SQLiteDBHandler()
         self.result_storage = None
+        self.collected: list[Item] = []  # частичный урожай цикла — доступен при падении parse()
         self.stop_event = stop_event
         self.headers = HEADERS
         self.good_request_count = 0
@@ -171,16 +172,23 @@ class AvitoParse:
                 if filter_ads:
                     self.__save_viewed(ads=filter_ads)
                     ads_in_link.extend(filter_ads)
+                    self.collected.extend(filter_ads)
+                    # Инкрементальное сохранение постранично: падение на
+                    # следующей странице не теряет уже собранный урожай.
+                    # ExcelStorage и _save_ads_to_json append-безопасны,
+                    # upsert в Postgres идемпотентен (ON CONFLICT avito_id).
+                    if self.result_storage is not None:
+                        self.result_storage.save(filter_ads)
+                    if self.config.save_json:
+                        self._save_ads_to_json(filter_ads)
 
                 logger.info(f"Пауза {self.config.pause_between_links} сек.")
                 time.sleep(self.config.pause_between_links)
 
+            # Урожай уже сохранён постранично выше — здесь только сводка.
             if ads_in_link:
-                logger.info(f"Сохраняю {len(ads_in_link)} объявлений")
-                self.result_storage.save(ads_in_link)
                 all_ads.extend(ads_in_link)
-                if self.config.save_json:
-                    self._save_ads_to_json(ads_in_link)
+                logger.info(f"Собрано {len(ads_in_link)} объявлений")
             else:
                 logger.info("Сохранять нечего")
 
