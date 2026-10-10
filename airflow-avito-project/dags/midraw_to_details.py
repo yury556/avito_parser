@@ -18,7 +18,7 @@ def _update_ad_state():
         port=os.getenv("POSTGRES_PORT", "5432"),
         dbname=os.getenv("POSTGRES_DB", "avito_dwh"),
         user=os.getenv("POSTGRES_USER", "avito"),
-        password=os.getenv("POSTGRES_PASSWORD", "avito123"),
+        password=os.getenv("POSTGRES_PASSWORD", ""),
     )
     try:
         with conn, conn.cursor() as cur:

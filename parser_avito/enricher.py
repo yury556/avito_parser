@@ -22,7 +22,7 @@ DB = dict(
     port=os.environ.get("POSTGRES_PORT", "5432"),
     dbname=os.environ.get("POSTGRES_DB", "avito_dwh"),
     user=os.environ.get("POSTGRES_USER", "avito"),
-    password=os.environ.get("POSTGRES_PASSWORD", "avito123"),
+    password=os.environ.get("POSTGRES_PASSWORD", ""),
 )
 INTERVAL = int(os.environ.get("ENRICH_INTERVAL", "60"))
 STATUS_INTERVAL = int(os.environ.get("STATUS_INTERVAL", "180"))  # проверка статуса раз в 3 мин
