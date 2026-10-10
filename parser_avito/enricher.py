@@ -79,7 +79,7 @@ def pick_status_candidate(skip: set[int]) -> tuple[int, str] | None:
               AND (d.last_checked_at IS NULL OR d.last_checked_at < now() - interval '12 hours')
             ORDER BY
                 CASE WHEN d.price_rub < med.med THEN 0 ELSE 1 END,
-                CASE WHEN position(lower(m.url), 'sankt-peterburg') > 0 THEN 0 ELSE 1 END,
+                CASE WHEN strpos(lower(m.url), 'sankt-peterburg') > 0 THEN 0 ELSE 1 END,
                 d.price_rub ASC,
                 d.last_checked_at ASC NULLS FIRST
             LIMIT 10
