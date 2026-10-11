@@ -20,6 +20,14 @@ CREATE TABLE IF NOT EXISTS avito_original.ads (
 
 CREATE INDEX IF NOT EXISTS ix_ads_parsed_at ON avito_original.ads (parsed_at);
 
+-- Дедуп парсера (вместо SQLite в контейнере): какие лоты с какой ценой уже видели
+CREATE TABLE IF NOT EXISTS avito_original.viewed (
+    id        BIGINT,
+    price     NUMERIC,
+    seen_at   timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (id, price)
+);
+
 CREATE TABLE IF NOT EXISTS raw.avito_ads_csv (
     run_id text NOT NULL,
     row_number integer NOT NULL,

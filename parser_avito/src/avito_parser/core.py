@@ -13,6 +13,7 @@ from avito_parser.settings import Proxy, AvitoConfig
 from avito_parser.ads_filters.filters import AdsFilter
 from avito_parser.logging import log_config
 from avito_parser.config import load_avito_config
+from avito_parser.storages.viewed import build_viewed_handler
 from avito_parser.entities import ItemsResponse, Item
 from avito_parser.cookies.factory import build_cookies_provider
 from avito_parser.sheets.factory import build_result_storage
@@ -33,7 +34,7 @@ class AvitoParse:
         self.config = config
         self.proxy = build_proxy(self.config)
         self.cookies_provider = build_cookies_provider(config=config)
-        self.db_handler = SQLiteDBHandler()
+        self.db_handler = build_viewed_handler()  # Postgres (env), fallback SQLite
         self.result_storage = None
         self.collected: list[Item] = []  # частичный урожай цикла — доступен при падении parse()
         self.stop_event = stop_event
