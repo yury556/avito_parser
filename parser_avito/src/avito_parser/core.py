@@ -1,5 +1,4 @@
 import json
-import random
 import re
 import time
 from datetime import datetime, timedelta
@@ -21,8 +20,6 @@ from avito_parser.fetchers.client import HttpClient
 from avito_parser.proxies.factory import build_proxy
 from avito_parser.api.params import build_api_params
 from avito_parser.version import VERSION
-
-DEBUG_MODE = False
 
 logger.add("logs/app.log", rotation="5 MB", retention="5 days", level="DEBUG")
 
@@ -116,17 +113,14 @@ class AvitoParse:
                 logger.info(f"page={i + 1}")
                 if self.stop_event and self.stop_event.is_set():
                     return
-                if DEBUG_MODE:
-                    html_code = open("debug.txt", "r", encoding="utf-8").read()
+                if i == 0:
+                    html_code = self.fetch_data(url=url)
                 else:
-                    if i == 0:
-                        html_code = self.fetch_data(url=url)
+                    if api_params and context:
+                        json_data = self.fetch_api_data(api_params, page=i + 1, context=context)
                     else:
-                        if api_params and context:
-                            json_data = self.fetch_api_data(api_params, page=i + 1, context=context)
-                        else:
-                            logger.info("Т.к. 1-я страница была неудачной - дальше смотреть не можем")
-                            break
+                        logger.info("Т.к. 1-я страница была неудачной - дальше смотреть не можем")
+                        break
 
                 if not html_code:
                     logger.warning(
@@ -166,8 +160,6 @@ class AvitoParse:
                     break
 
                 filter_ads = self.filter_ads(ads=ads)
-
-                filter_ads = self.parse_views(ads=filter_ads)
 
                 if filter_ads:
                     self.__save_viewed(ads=filter_ads)
@@ -273,115 +265,6 @@ class AvitoParse:
                 for v in step.payload.get("vas", [])
             )
         return ads
-
-    def enrich_new_ads(self, ads: list[Item]) -> list[Item]:
-        """Полное описание — только для новых лотов (не в viewed).
-
-        Новых за цикл обычно 20-50 шт: ходим на страницу каждого и вытаскиваем
-        полное описание. Старые лоты не трогаем — экономим rate-канал прокси.
-        """
-        new_ads = [
-            ad for ad in ads
-            if not self.is_viewed(ad)
-            and ad.location and "санкт-петербург" in (ad.location.name or "").lower()
-        ]
-        if not new_ads:
-            return ads
-
-        logger.info(f"Полное описание для {len(new_ads)} новых лотов")
-        fetched = 0
-        for ad in new_ads:
-            if not ad.urlPath:
-                continue
-            try:
-                html_code_full_page = self.fetch_data(
-                    url=f"https://www.avito.ru{ad.urlPath}"
-                )
-                if not html_code_full_page:
-                    continue
-                full_description = self._extract_description(html=html_code_full_page)
-                if full_description:
-                    ad.description = full_description
-                    fetched += 1
-                time.sleep(random.uniform(0.5, 1.5))
-            except Exception as err:
-                logger.warning(f"Полное описание {ad.urlPath}: {err}")
-                continue
-
-        logger.info(f"Полные описания получены: {fetched}/{len(new_ads)}")
-        return ads
-
-    def parse_views(self, ads: list[Item]) -> list[Item]:
-        if not self.config.parse_views:
-            return ads
-
-        logger.info("Начинаю парсинг просмотров и описаний")
-
-        for ad in ads:
-            try:
-                html_code_full_page = self.fetch_data(url=f"https://www.avito.ru{ad.urlPath}")
-                if not html_code_full_page:
-                    continue
-                ad.total_views, ad.today_views = self._extract_views(html=html_code_full_page)
-                full_description = self._extract_description(html=html_code_full_page)
-                if full_description:
-                    ad.description = full_description
-                delay = random.uniform(0.1, 0.9)
-                time.sleep(delay)
-            except Exception as err:
-                logger.warning(f"Ошибка при парсинге {ad.urlPath}: {err}")
-                continue
-
-        return ads
-
-    @staticmethod
-    def _extract_description(html: str) -> str | None:
-        soup = BeautifulSoup(html, "html.parser")
-
-        desc_block = soup.select_one('[data-marker="item-view/item-description"]')
-        if desc_block:
-            text = desc_block.get_text(separator=" ", strip=True)
-            if text:
-                return text
-
-        import html as html_lib
-        for script in soup.select('script[type="application/ld+json"]'):
-            try:
-                data = json.loads(html_lib.unescape(script.text))
-                if isinstance(data, dict) and data.get("description"):
-                    return data["description"]
-                if isinstance(data, list):
-                    for entry in data:
-                        if isinstance(entry, dict) and entry.get("description"):
-                            return entry["description"]
-            except Exception:
-                continue
-
-        for script in soup.select('script'):
-            if script.get('type') == 'mime/invalid' and script.get('data-mfe-state') == 'true':
-                try:
-                    data = json.loads(html_lib.unescape(script.text))
-                    item_data = data.get("loaderData", {}).get("data", {})
-                    item_view = item_data.get("item", {})
-                    desc = item_view.get("description") or item_view.get("fullDescription")
-                    if desc:
-                        return desc
-                except Exception:
-                    continue
-
-        return None
-
-    @staticmethod
-    def _extract_views(html: str) -> tuple:
-        soup = BeautifulSoup(html, "html.parser")
-
-        def extract_digits(element):
-            return int(''.join(filter(str.isdigit, element.get_text()))) if element else None
-
-        total = extract_digits(soup.select_one('[data-marker="item-view/total-views"]'))
-        today = extract_digits(soup.select_one('[data-marker="item-view/today-views"]'))
-
-        return total, today
 
     @staticmethod
     def _extract_seller_slug(data):

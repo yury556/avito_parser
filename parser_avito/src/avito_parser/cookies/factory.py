@@ -1,9 +1,11 @@
 from avito_parser.cookies.base import CookiesProvider
-from avito_parser.cookies.external_api import ExternalApiCookiesProvider
 from avito_parser.cookies.own_cookies import OwnCookiesProvider
 
 def build_cookies_provider(config) -> CookiesProvider | None:
     if config.use_bypass_api:
+        # Ленивый импорт: spfa-провайдер нужен только в bypass-режиме,
+        # а грузить его на каждом старте не надо (модуль с API-логикой).
+        from avito_parser.cookies.external_api import ExternalApiCookiesProvider
         return ExternalApiCookiesProvider(config.cookies_api_key)
     elif config.use_own_cookies:
         return OwnCookiesProvider()

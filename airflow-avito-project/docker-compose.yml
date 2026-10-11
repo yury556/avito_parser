@@ -260,6 +260,9 @@ services:
     build:
       context: ../avito-antibot-client
       dockerfile: Dockerfile
+    # Сервис не нужен при встроенном solver — запускается только по явному
+    # запросу: docker compose --profile tools up avito-antibot-client
+    profiles: ["tools"]
     restart: unless-stopped
     container_name: airflow-avito-project-avito-antibot-client-1
     environment:
