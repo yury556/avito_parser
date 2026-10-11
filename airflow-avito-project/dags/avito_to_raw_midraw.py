@@ -43,7 +43,7 @@ with DAG(
     dag_id="avito_to_raw_midraw",
     description="Read Avito ads from avito_original.ads into raw CSV, then build dbt midraw.",
     default_args=default_args,
-    schedule="0 * * * *",
+    schedule="*/10 * * * *",
     start_date=datetime(2026, 7, 1),
     catchup=False,
     max_active_runs=1,
