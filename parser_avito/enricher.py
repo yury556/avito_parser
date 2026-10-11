@@ -17,6 +17,9 @@ import psycopg2
 from loguru import logger
 from playwright.sync_api import sync_playwright
 
+from tg_alerts import send_message  # noqa: F401 (единый модуль алертов)
+import alerts_worker
+
 DB = dict(
     host=os.environ.get("POSTGRES_HOST", "external-postgres"),
     port=os.environ.get("POSTGRES_PORT", "5432"),
@@ -237,6 +240,13 @@ def main() -> None:
         warmup.last = 0.0
         warmup(force=True)
 
+        # Алерты: ensured таблица + тик в каждом проходе цикла (сам решает, пора ли)
+        with psycopg2.connect(**DB) as _conn, _conn.cursor() as _cur:
+            _cur.execute(
+                "ALTER TABLE detail.ads ADD COLUMN IF NOT EXISTS alerted_at timestamptz"
+            )
+        _conn_ensured = True
+
         pause = float(INTERVAL)
         last_status_check = 0.0
         while True:
@@ -244,6 +254,11 @@ def main() -> None:
             now_ts = time.time()
             for expired_id in [k for k, v in FAILED.items() if v <= now_ts]:
                 del FAILED[expired_id]
+            # Алерты (батч лотов / молчание парсера) — сам решает, пора ли.
+            try:
+                alerts_worker.alert_tick(DB)
+            except Exception as _alert_err:
+                logger.warning("alert tick упал (не критично): {}", _alert_err)
             # --- приоритет: проверка статуса (раз в STATUS_INTERVAL секунд) ---
             if time.time() - last_status_check >= STATUS_INTERVAL:
                 last_status_check = time.time()

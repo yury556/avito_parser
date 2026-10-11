@@ -9,6 +9,8 @@ from airflow.operators.python import PythonOperator
 from avito_pipeline.config import postgres_config_from_env
 from avito_pipeline.postgres_io import write_ads_as_raw_csv, fetch_ads_from_original
 
+from tg_alerts import dag_failure_callback
+
 
 def fetch_from_original(**context) -> int:
     pg_config = postgres_config_from_env()
@@ -33,6 +35,7 @@ default_args = {
     "owner": "data-eng",
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
+    "on_failure_callback": dag_failure_callback,
 }
 
 

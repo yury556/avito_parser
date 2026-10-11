@@ -14,6 +14,9 @@ COPY src/ ./src/
 COPY avito_service.py .
 COPY image_downloader_service.py .
 COPY enricher.py .
+COPY tg_alerts.py .
+COPY alerts_worker.py .
+COPY bot_service.py .
 
 # Chromium для description-enricher (живой браузер: JS-челлендж исполняется сам)
 RUN python -m playwright install --with-deps chromium || \

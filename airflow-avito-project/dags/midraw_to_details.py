@@ -9,6 +9,8 @@ from airflow import DAG
 from airflow.exceptions import AirflowException
 from airflow.operators.python import PythonOperator
 
+from tg_alerts import dag_failure_callback
+
 
 def _update_ad_state():
     """Пересчёт состояния: активные = видели в выдаче за 48 часов."""
@@ -80,6 +82,7 @@ default_args = {
     "owner": "data-eng",
     "retries": 2,
     "retry_delay": timedelta(minutes=5),
+    "on_failure_callback": dag_failure_callback,
 }
 
 with DAG(
