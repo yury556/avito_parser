@@ -113,6 +113,30 @@ def fetch_description_http(avito_id: int) -> str | None | bool:
     return None  # страница получена, описания нет
 
 
+def _http_lot(avito_id: int):
+    """Быстрый чек лота через /fetch_lot: (title, price, desc) | None | False.
+
+    False — недоступен/лимит/блокировка → fallback Playwright.
+    None — страница получена, но пуста (нет ни цены, ни заголовка) → закрыт.
+    dict — живой лот.
+    """
+    if len([t for t in HTTP_DESC_TIMES if time.time() - t < 3600]) >= HTTP_DESC_LIMIT:
+        return False
+    try:
+        url = f"{PARSER_URL}/fetch_lot?avito_id={avito_id}"
+        with urllib.request.urlopen(url, timeout=90) as r:
+            data = json.loads(r.read())
+    except Exception as exc:
+        logger.warning("/fetch_lot недоступен ({}), fallback Playwright", exc)
+        return False
+    if data.get("ok") is False:
+        return False  # блокировка — есть смысл попробовать браузер
+    title, price, desc = data.get("title"), data.get("price"), data.get("description")
+    if not title and not price and not desc:
+        return None
+    return {"title": title, "price": price, "desc": desc if (desc and len(desc) > 260) else None}
+
+
 def pick_status_candidate(skip: set[int]) -> tuple[int, str] | None:
     """Приоритет: 1) лоты ниже медианы категории 2) СПб 3) самые выгодные.
     Ротация: лот не чаще раза в 12 часов."""
@@ -303,6 +327,27 @@ def main() -> None:
                 else:
                     avito_id, url = cand
                     try:
+                        # --- быстрый чек через парсер (лимит общий с описаниями) ---
+                        lot = _http_lot(avito_id)
+                        if isinstance(lot, dict):
+                            if lot["desc"]:
+                                save_description(avito_id, lot["desc"])
+                            mark_checked(avito_id, "активно")
+                            if lot["price"]:
+                                insert_raw_snapshot(
+                                    avito_id, lot["title"] or "", lot["price"], url,
+                                    lot["desc"] or "", time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+                                )
+                            logger.info("Проверка {}: жив (HTTP), цена {} ₽", avito_id, lot["price"])
+                            time.sleep(10)
+                            continue
+                        if lot is None:
+                            # страница получена чисто, но нет ни цены, ни заголовка — закрыт
+                            logger.info("Проверка {}: лот закрыт (HTTP: пустая страница) — помечаю", avito_id)
+                            mark_checked(avito_id, "закрыто")
+                            time.sleep(10)
+                            continue
+                        # lot is False → лимит/блокировка → браузерный путь ниже
                         ok = goto(url, wait_selector=DESC_SELECTOR)
                         if not ok:
                             # Страница не открылась (таймаут/прокси) — временное

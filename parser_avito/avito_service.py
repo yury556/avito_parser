@@ -295,7 +295,32 @@ def fetch_lot(avito_id: int):
     html_code = _lot_parser.fetch_data(url=url)
     if not html_code:
         return {"avito_id": avito_id, "ok": False, "description": None,
+                "price": None, "title": None,
                 "reason": "запрос не прошёл (блокировка/ретраи)"}
     desc = _extract_description(html_code)
-    return {"avito_id": avito_id, "ok": bool(desc), "description": desc,
+    price = _extract_price(html_code)
+    title = _extract_title(html_code)
+    return {"avito_id": avito_id, "ok": True, "description": desc,
+            "price": price, "title": title,
             "reason": None if desc else "страница получена, описание не извлеклось"}
+
+
+def _extract_price(html: str) -> float | None:
+    from bs4 import BeautifulSoup
+    el = BeautifulSoup(html, "html.parser").select_one(
+        '[data-marker="item-price"], [itemprop="price"]')
+    if el:
+        digits = "".join(ch for ch in el.get_text() if ch.isdigit())
+        if digits:
+            return float(digits)
+    return None
+
+
+def _extract_title(html: str) -> str | None:
+    from bs4 import BeautifulSoup
+    el = BeautifulSoup(html, "html.parser").select_one(
+        '[data-marker="item-view/item-title"], h1[data-marker="item-view/title"], h1')
+    if el:
+        text = el.get_text(separator=" ", strip=True)
+        return text or None
+    return None
