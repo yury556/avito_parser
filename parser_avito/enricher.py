@@ -10,8 +10,10 @@
 skip-лист на 30 минут, каталог-прогрев раз в 10 минут.
 """
 import os
+import json
 import random
 import time
+import urllib.request
 
 import psycopg2
 from loguru import logger
@@ -19,6 +21,9 @@ from playwright.sync_api import sync_playwright
 
 from tg_alerts import send_message  # noqa: F401 (единый модуль алертов)
 import alerts_worker
+
+PARSER_URL = os.environ.get("AVITO_PARSER_URL", "http://avito-parser-service:8000").rstrip("/")
+HTTP_DESC_LIMIT = int(os.environ.get("HTTP_DESC_LIMIT", "20"))  # лотов/час через парсер
 
 DB = dict(
     host=os.environ.get("POSTGRES_HOST", "external-postgres"),
@@ -80,6 +85,32 @@ def insert_raw_snapshot(avito_id: int, title: str, price: float, url: str,
             "VALUES (%s, 1, %s, %s, %s, now())",
             (f"browser_check_{time.strftime('%Y%m%d')}", "browser_check", CSV_HEADER, row),
         )
+
+
+HTTP_DESC_TIMES: list[float] = []  # timestamps использования быстрого пути
+
+
+def fetch_description_http(avito_id: int) -> str | None | bool:
+    """Описание через парсер (/fetch_lot, прогретая сессия + solver).
+
+    Возвращает: str — получено; None — страница получена, описания нет;
+    False — путь недоступен/лимит/блокировка → fallback Playwright.
+    """
+    if len([t for t in HTTP_DESC_TIMES if time.time() - t < 3600]) >= HTTP_DESC_LIMIT:
+        return False
+    try:
+        url = f"{PARSER_URL}/fetch_lot?avito_id={avito_id}"
+        with urllib.request.urlopen(url, timeout=60) as r:
+            data = json.loads(r.read())
+    except Exception as exc:
+        logger.warning("/fetch_lot недоступен ({}), fallback Playwright", exc)
+        return False
+    if data.get("description"):
+        HTTP_DESC_TIMES.append(time.time())
+        return data["description"]
+    if data.get("reason") and "не прошёл" in data["reason"]:
+        return False  # блокировка — есть смысл попробовать браузер
+    return None  # страница получена, описания нет
 
 
 def pick_status_candidate(skip: set[int]) -> tuple[int, str] | None:
@@ -240,10 +271,14 @@ def main() -> None:
         warmup.last = 0.0
         warmup(force=True)
 
-        # Алерты: ensured таблица + тик в каждом проходе цикла (сам решает, пора ли)
+        # Алерты: ensured таблицы + тик в каждом проходе цикла (сам решает, пора ли)
         with psycopg2.connect(**DB) as _conn, _conn.cursor() as _cur:
             _cur.execute(
                 "ALTER TABLE detail.ads ADD COLUMN IF NOT EXISTS alerted_at timestamptz"
+            )
+            _cur.execute(
+                "CREATE TABLE IF NOT EXISTS avito_original.bot_settings ("
+                "key text PRIMARY KEY, value text)"
             )
         _conn_ensured = True
 
@@ -309,6 +344,22 @@ def main() -> None:
                 continue
             avito_id, url = ad
             try:
+                # --- быстрый путь: через HTTP-клиент парсера (прогретая сессия) ---
+                desc_http = fetch_description_http(avito_id)
+                if isinstance(desc_http, str) and desc_http and len(desc_http) > 260:
+                    save_description(avito_id, desc_http)
+                    logger.info("OK {} (HTTP): {} симв.", avito_id, len(desc_http))
+                    pause = max(15.0, pause / 2)
+                    time.sleep(pause + random.uniform(0, 10))
+                    continue
+                if desc_http is None:
+                    # страница получена, описания нет — Playwright не поможет быстрее
+                    logger.info("SKIP {}: описание не извлеклось (HTTP)", avito_id)
+                    FAILED[avito_id] = time.time() + 1800
+                    pause = min(300.0, pause * 2 + 30)
+                    time.sleep(pause + random.uniform(0, 10))
+                    continue
+                # desc_http is False -> fallback Playwright
                 warmup()
                 ok = goto(url, wait_selector=DESC_SELECTOR)
                 if ok:

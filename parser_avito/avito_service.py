@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from loguru import logger
 
 from avito_parser.settings import AvitoConfig
@@ -231,3 +231,71 @@ def parse_ads(body: dict):
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "avito-parser", "version": "3.2.16"}
+
+
+# ---------------------------------------------------------------- /fetch_lot
+_lot_parser = None
+
+
+def _extract_description(html: str) -> str | None:
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html, "html.parser")
+    desc_block = soup.select_one('[data-marker="item-view/item-description"]')
+    if desc_block:
+        text = desc_block.get_text(separator=" ", strip=True)
+        if text:
+            return text
+    import html as html_lib
+    for script in soup.select('script[type="application/ld+json"]'):
+        try:
+            data = json.loads(html_lib.unescape(script.text))
+            entries = data if isinstance(data, list) else [data]
+            for entry in entries:
+                if isinstance(entry, dict) and entry.get("description"):
+                    return entry["description"]
+        except Exception:
+            continue
+    for script in soup.select('script'):
+        if script.get('type') == 'mime/invalid' and script.get('data-mfe-state') == 'true':
+            try:
+                data = json.loads(html_lib.unescape(script.text))
+                item_view = data.get("loaderData", {}).get("data", {}).get("item", {})
+                desc = item_view.get("description") or item_view.get("fullDescription")
+                if desc:
+                    return desc
+            except Exception:
+                continue
+    return None
+
+
+@app.get("/fetch_lot")
+def fetch_lot(avito_id: int):
+    """Описание лота через HTTP-клиент парсера (прогретая сессия + solver).
+
+    В 10-20 раз быстрее Playwright; используется enricher'ом как основной
+    путь, Playwright остаётся fallback. Возвращает ok=False при блокировке.
+    """
+    global _lot_parser
+    pg = _get_postgres_config({})
+    if pg is None:
+        raise HTTPException(status_code=503, detail="postgres config missing")
+    with _postgres_conn(pg) as conn, conn.cursor() as cur:
+        cur.execute("SELECT url FROM avito_original.ads WHERE avito_id = %s", (avito_id,))
+        row = cur.fetchone()
+    if not row or not row[0]:
+        raise HTTPException(status_code=404, detail=f"avito_id {avito_id} не найден")
+    url = row[0]
+
+    if _lot_parser is None:
+        from avito_parser.core import AvitoParse
+        from avito_parser.config import load_avito_config
+        _lot_parser = AvitoParse(load_avito_config("config.toml"))
+        logger.info("/fetch_lot: сессия парсера инициализирована")
+
+    html_code = _lot_parser.fetch_data(url=url)
+    if not html_code:
+        return {"avito_id": avito_id, "ok": False, "description": None,
+                "reason": "запрос не прошёл (блокировка/ретраи)"}
+    desc = _extract_description(html_code)
+    return {"avito_id": avito_id, "ok": bool(desc), "description": desc,
+            "reason": None if desc else "страница получена, описание не извлеклось"}
