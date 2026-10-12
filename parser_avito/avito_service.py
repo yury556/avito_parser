@@ -308,7 +308,7 @@ def fetch_lot(avito_id: int):
 def _extract_price(html: str) -> float | None:
     from bs4 import BeautifulSoup
     el = BeautifulSoup(html, "html.parser").select_one(
-        '[data-marker="item-price"], [itemprop="price"]')
+        '[data-marker="item-view/item-price"], [data-marker="item-price"], [itemprop="price"]')
     if el:
         digits = "".join(ch for ch in el.get_text() if ch.isdigit())
         if digits:

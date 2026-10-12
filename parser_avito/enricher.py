@@ -180,7 +180,8 @@ def mark_checked(avito_id: int, state: str) -> None:
 
 def read_price(page) -> float | None:
     """Цена прямо со страницы лота."""
-    el = page.query_selector('[data-marker="item-price"]') or \
+    el = page.query_selector('[data-marker="item-view/item-price"]') or \
+         page.query_selector('[data-marker="item-price"]') or \
          page.query_selector('[itemprop="price"]')
     if el:
         digits = "".join(ch for ch in el.inner_text() if ch.isdigit())
