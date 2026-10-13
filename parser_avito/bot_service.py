@@ -45,7 +45,9 @@ HELP = (
     "/urls — список URL и их сбор за 24 ч\n"
     "/remove N confirm — удалить URL номер N\n"
     "/mute N — пауза алертов лотов на N часов\n"
-    "/unmute — снять паузу"
+    "/unmute — снять паузу\n"
+    "/off — отключить ВСЕ уведомления (и кнопка под каждым сообщением)\n"
+    "/on — включить уведомления обратно"
 )
 
 
@@ -64,9 +66,14 @@ def api_call(method: str, payload: dict | None = None) -> dict | None:
         return None
 
 
-def reply(chat_id: int, text: str) -> None:
-    api_call("sendMessage", {"chat_id": chat_id, "text": text,
-                             "disable_web_page_preview": True})
+def reply(chat_id: int, text: str, mute_button: bool = False) -> None:
+    payload: dict = {"chat_id": chat_id, "text": text,
+                     "disable_web_page_preview": True}
+    if mute_button:
+        payload["reply_markup"] = {"inline_keyboard": [[
+            {"text": "🔊 Включить уведомления", "callback_data": "unmute_all"}
+        ]]}
+    api_call("sendMessage", payload)
 
 
 def sql(query: str, params=None):
@@ -146,7 +153,12 @@ def _backup_config() -> str:
 
 
 def _rewrite_config_urls(new_urls: list[str]) -> None:
-    """Атомарно заменяет блок urls = [ ... ] в секции [avito]."""
+    """Перезаписывает блок urls = [ ... ] в секции [avito].
+
+    ВАЖНО: записывает НА МЕСТЕ (truncate), без tmp+replace — контейнер
+    парсера держит bind-mount файла по inode, замена файла оторвала бы
+    маунт и парсер не увидел бы новые URL.
+    """
     with open(CONFIG_PATH, encoding="utf-8") as f:
         lines = f.readlines()
     start = next(i for i, l in enumerate(lines) if l.strip().startswith("urls = ["))
@@ -156,10 +168,8 @@ def _rewrite_config_urls(new_urls: list[str]) -> None:
         block.append(f'    "{u}",\n')
     block.append("]\n")
     lines[start:end + 1] = block
-    tmp = CONFIG_PATH + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
         f.writelines(lines)
-    os.replace(tmp, CONFIG_PATH)
 
 
 def cmd_add(url: str) -> str:
@@ -216,6 +226,19 @@ def cmd_urls() -> str:
 
 
 # ---------------------------------------------------------------- mute
+def _set_mute_all(on: bool) -> None:
+    with psycopg2.connect(**DB) as conn, conn.cursor() as cur:
+        cur.execute(
+            "CREATE TABLE IF NOT EXISTS avito_original.bot_settings ("
+            "key text PRIMARY KEY, value text)"
+        )
+        cur.execute(
+            "INSERT INTO avito_original.bot_settings (key, value) VALUES ('mute_all', %s)"
+            "ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value",
+            ("1" if on else "0",),
+        )
+
+
 def cmd_mute(hours: int) -> str:
     until = time.time() + hours * 3600
     with open(MUTE_FILE, "w") as f:
@@ -259,10 +282,29 @@ def handle(chat_id: int, text: str) -> None:
             reply(chat_id, cmd_mute(max(1, int(arg))))
         elif cmd == "/unmute":
             reply(chat_id, cmd_unmute())
+        elif cmd == "/off":
+            _set_mute_all(True)
+            reply(chat_id, "🔇 ВСЕ уведомления отключены (лоты, падения, системные).\n"
+                           "Включить: /on или кнопка в этом сообщении.",
+                  mute_button=True)
+        elif cmd == "/on":
+            _set_mute_all(False)
+            reply(chat_id, "🔊 Уведомления включены.")
         else:
             reply(chat_id, "Не понял. " + HELP)
     except Exception as exc:
         reply(chat_id, f"⚠️ Ошибка команды: {exc}")
+
+
+def _on_mute_all_callback(callback_id: str, chat_id: int) -> None:
+    """Нажатие кнопки «Отключить уведомления» под любым сообщением."""
+    _set_mute_all(True)
+    api_call("answerCallbackQuery", {
+        "callback_query_id": callback_id,
+        "text": "🔇 Все уведомления отключены. Включить: /on",
+        "show_alert": False,
+    })
+    reply(chat_id, "🔇 ВСЕ уведомления отключены.\nВключить: /on")
 
 
 def main() -> None:
@@ -273,13 +315,28 @@ def main() -> None:
             data = api_call(
                 "getUpdates",
                 {"offset": offset, "timeout": 50,
-                 "allowed_updates": ["message"]},
+                 "allowed_updates": ["message", "callback_query"]},
             )
             if not data or not data.get("ok"):
                 time.sleep(5)
                 continue
             for upd in data.get("result", []):
                 offset = upd["update_id"] + 1
+                cb = upd.get("callback_query")
+                if cb and cb.get("data") in ("mute_all", "unmute_all"):
+                    _set_mute_all(cb["data"] == "mute_all")
+                    answer = ("🔇 Все уведомления отключены. Включить: /on"
+                              if cb["data"] == "mute_all" else
+                              "🔊 Уведомления включены.")
+                    api_call("answerCallbackQuery", {
+                        "callback_query_id": cb["id"], "text": answer,
+                        "show_alert": False,
+                    })
+                    chat_id = (cb.get("message") or {}).get("chat", {}).get("id")
+                    if chat_id:
+                        reply(chat_id, answer + ("\nПроверить: /status" if cb["data"] == "unmute_all" else ""),
+                              mute_button=(cb["data"] == "mute_all"))
+                    continue
                 msg = upd.get("message") or {}
                 text = msg.get("text") or ""
                 chat = (msg.get("chat") or {}).get("id")
