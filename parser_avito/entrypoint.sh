@@ -18,7 +18,7 @@ sys.path.insert(0, '/app/src')
 from avito_parser.config import load_avito_config, AvitoConfig
 from avito_parser.core import AvitoParse
 
-CONFIG_PATH = os.environ.get('PARSER_CONFIG', '/app/config.toml')
+CONFIG_PATH = os.environ.get('PARSER_CONFIG', '/app/config/config.toml')
 
 def _extract_image_urls(item):
     urls = []
@@ -163,7 +163,7 @@ while True:
         config.one_time_start = False
         config.count = config.count or 1
         parser = AvitoParse(config)
-        print('=== Parse cycle ===', flush=True)
+        print(f'=== Parse cycle === {len(config.urls)} URL (config: {CONFIG_PATH}) ===', flush=True)
         try:
             items = parser.parse()
         except Exception as parse_err:

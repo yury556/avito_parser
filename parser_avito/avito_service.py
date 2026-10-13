@@ -289,7 +289,8 @@ def fetch_lot(avito_id: int):
     if _lot_parser is None:
         from avito_parser.core import AvitoParse
         from avito_parser.config import load_avito_config
-        _lot_parser = AvitoParse(load_avito_config("config.toml"))
+        _lot_parser = AvitoParse(load_avito_config(
+            os.environ.get("PARSER_CONFIG", "/app/config/config.toml")))
         logger.info("/fetch_lot: сессия парсера инициализирована")
 
     html_code = _lot_parser.fetch_data(url=url)

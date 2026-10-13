@@ -24,7 +24,7 @@ import psycopg2
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 API = f"https://api.telegram.org/bot{TOKEN}"
 ADMIN_CHAT_ID = os.environ.get("TELEGRAM_ALERT_CHAT_ID", "").strip()
-CONFIG_PATH = os.environ.get("PARSER_CONFIG", "/app/config.toml")
+CONFIG_PATH = os.environ.get("PARSER_CONFIG", "/app/config/config.toml")
 BACKUP_DIR = os.environ.get("BOT_BACKUP_DIR", "/shared")
 MUTE_FILE = os.environ.get("BOT_MUTE_FILE", "/shared/bot_mute_until.txt")
 MAX_URLS = 30

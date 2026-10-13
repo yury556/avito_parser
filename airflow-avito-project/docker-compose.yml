@@ -211,9 +211,11 @@ services:
       - ../parser_avito/result:/app/result
       - ../parser_avito/storage:/app/storage
       - ../parser_avito/entrypoint.sh:/app/entrypoint.sh:ro
-      - ../parser_avito/config.toml:/app/config.toml:ro
+      # каталог, а не файл: маунт по inode не отрывается при замене файла
+      - ../parser_avito/config:/app/config:ro
     environment:
       PYTHONPATH: /app
+      PARSER_CONFIG: /app/config/config.toml
       POSTGRES_HOST: external-postgres
       POSTGRES_PORT: "5432"
       POSTGRES_DB: avito_dwh
@@ -278,11 +280,12 @@ services:
       POSTGRES_DB: avito_dwh
       POSTGRES_USER: avito
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PARSER_CONFIG: /app/config/config.toml
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_ALERT_CHAT_ID: ${TELEGRAM_ALERT_CHAT_ID}
     volumes:
       # rw: бот правит config.toml (/add, /remove), бэкапы в /shared
-      - ../parser_avito/config.toml:/app/config.toml
+      - ../parser_avito/config:/app/config
       - ../parser_avito/storage:/shared
     command: ["python", "/app/bot_service.py"]
     depends_on:

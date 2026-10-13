@@ -34,3 +34,4 @@ avito-antibot-client/qrator-camoufox-*.json
 avito-antibot-client/qrator-fingerprint-*.json
 avito-antibot-client/firewall-debug*
 parser_avito/src/avito_parser/firewall_client/GeekedTest/
+config/
