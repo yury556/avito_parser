@@ -4,7 +4,7 @@ set +e
 if ! curl -sf http://localhost:8000/health > /dev/null 2>&1; then
     echo "Starting uvicorn..."
     cd /app
-    uvicorn avito_service:app --host 0.0.0.0 --port 8000 2>/dev/null &
+    uvicorn avito_service:app --host 0.0.0.0 --port 8000 >> /app/storage/uvicorn.log 2>&1 &
     sleep 3
 fi
 
