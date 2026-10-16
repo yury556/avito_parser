@@ -113,6 +113,30 @@ def fetch_description_http(avito_id: int) -> str | None | bool:
     return None  # страница получена, описания нет
 
 
+PROBE = {"fails": 0, "paused_until": 0.0, "alerted": False}  # режим экономии проверщика
+
+
+def mark_probe(db: dict, ok: bool) -> None:
+    """Учёт попыток проверщика: 5 провалов подряд -> пауза 30 мин + алерт."""
+    if ok:
+        if PROBE["alerted"]:
+            send_recovery("Проверщик возобновил работу — канал ожил")
+            PROBE["alerted"] = False
+        PROBE["fails"] = 0
+        return
+    PROBE["fails"] += 1
+    if PROBE["fails"] >= 5:
+        PROBE["paused_until"] = time.time() + 1800
+        if not PROBE["alerted"]:
+            if not alerts_worker._mute_all_on(db):
+                send_failure(
+                    "Проверщик приостановлен на 30 мин:\n"
+                    "5 проверок подряд не прошли (канал в бан-фазе).\n"
+                    "Очередь проверок сохранена, возобновим автоматически."
+                )
+            PROBE["alerted"] = True
+
+
 def _http_lot(avito_id: int):
     """Быстрый чек лота через /fetch_lot: (title, price, desc) | None | False.
 
@@ -314,6 +338,10 @@ def main() -> None:
             now_ts = time.time()
             for expired_id in [k for k, v in FAILED.items() if v <= now_ts]:
                 del FAILED[expired_id]
+            # Режим экономии: после 5 провалов подряд — пауза 30 мин
+            if time.time() < PROBE["paused_until"]:
+                time.sleep(60)
+                continue
             # Алерты (батч лотов / молчание парсера) — сам решает, пора ли.
             try:
                 alerts_worker.alert_tick(DB)
@@ -340,11 +368,13 @@ def main() -> None:
                                     lot["desc"] or "", time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
                                 )
                             logger.info("Проверка {}: жив (HTTP), цена {} ₽", avito_id, lot["price"])
+                            mark_probe(DB, True)
                             time.sleep(10)
                             continue
                         if lot is None:
                             # страница получена чисто, но нет ни цены, ни заголовка — закрыт
                             logger.info("Проверка {}: лот закрыт (HTTP: пустая страница) — помечаю", avito_id)
+                            mark_probe(DB, True)
                             mark_checked(avito_id, "закрыто")
                             time.sleep(10)
                             continue
@@ -354,11 +384,13 @@ def main() -> None:
                             # Страница не открылась (таймаут/прокси) — временное
                             # состояние, помечать «закрыто» нельзя. Откладываем.
                             logger.info("Проверка {}: страница не открылась — НЕ помечаю, откладываю на 30 мин", avito_id)
+                            mark_probe(DB, False)
                             FAILED[avito_id] = time.time() + 1800
                         elif page_is_blocked(page):
                             # «Доступ ограничен» / «проблема с IP» — блокировка,
                             # а не закрытие лота. Раньше здесь было ложное «закрыто».
                             logger.warning("Проверка {}: блокировка IP/челлендж — НЕ помечаю закрытым, откладываю на 30 мин", avito_id)
+                            mark_probe(DB, False)
                             FAILED[avito_id] = time.time() + 1800
                         elif lot_is_open(page):
                             price = read_price(page)
@@ -376,6 +408,7 @@ def main() -> None:
                             # Страница открылась, блокировки нет, но нет ни заголовка,
                             # ни цены, ни описания — лот реально закрыт/удалён.
                             logger.info("Проверка {}: лот закрыт (нет заголовка/цены) — помечаю", avito_id)
+                            mark_probe(DB, True)
                             mark_checked(avito_id, "закрыто")
                     except Exception as e:
                         logger.warning("Ошибка проверки {}: {}", avito_id, e)
@@ -409,6 +442,7 @@ def main() -> None:
                 warmup()
                 ok = goto(url, wait_selector=DESC_SELECTOR)
                 if ok:
+                    mark_probe(DB, True)
                     human_scroll(page)
                     desc = extract_description(page)
                     if desc and len(desc) > 260:
@@ -420,6 +454,7 @@ def main() -> None:
                         FAILED[avito_id] = time.time() + 1800
                         pause = min(300.0, pause * 2 + 30)
                 else:
+                    mark_probe(DB, False)
                     FAILED[avito_id] = time.time() + 1800
                     pause = min(300.0, pause * 2 + 30)
                     logger.info(
