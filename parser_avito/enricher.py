@@ -23,7 +23,7 @@ from tg_alerts import send_message  # noqa: F401 (единый модуль ал
 import alerts_worker
 
 PARSER_URL = os.environ.get("AVITO_PARSER_URL", "http://avito-parser-service:8000").rstrip("/")
-HTTP_DESC_LIMIT = int(os.environ.get("HTTP_DESC_LIMIT", "20"))  # лотов/час через парсер
+HTTP_DESC_LIMIT = int(os.environ.get("HTTP_DESC_LIMIT", "60"))  # лотов/час через парсер
 
 DB = dict(
     host=os.environ.get("POSTGRES_HOST", "external-postgres"),
@@ -161,9 +161,9 @@ def _http_lot(avito_id: int):
     return {"title": title, "price": price, "desc": desc if (desc and len(desc) > 260) else None}
 
 
-def pick_status_candidate(skip: set[int]) -> tuple[int, str] | None:
-    """Приоритет: 1) лоты ниже медианы категории 2) СПб 3) самые выгодные.
-    Ротация: лот не чаще раза в 12 часов."""
+def pick_status_candidates(skip: set[int]) -> list[tuple[int, str]]:
+    """Пачка кандидатов: приоритет 1) ниже медианы 2) устаревшая цена
+    (чем дольше цена не обновлялась, тем раньше) 3) СПб. Ротация 12 ч."""
     with psycopg2.connect(**DB) as conn, conn.cursor() as cur:
         cur.execute(
             """
@@ -171,16 +171,23 @@ def pick_status_candidate(skip: set[int]) -> tuple[int, str] | None:
                 SELECT category, percentile_cont(0.5) WITHIN GROUP (ORDER BY price_rub) AS med
                 FROM detail.ads WHERE state = 'активно' AND price_rub > 0
                 GROUP BY category
+            ),
+            last AS (
+                SELECT DISTINCT ON (avito_id) avito_id, price_rub, parsed_at
+                FROM midraw.avito_ads WHERE price_rub > 0
+                ORDER BY avito_id, parsed_at DESC
             )
             SELECT d.avito_id, m.url
             FROM detail.ads d
             JOIN midraw.avito_ads m ON m.avito_id = d.avito_id
+            JOIN last lp ON lp.avito_id = d.avito_id
             JOIN med ON med.category = d.category
             WHERE d.state = 'активно' AND d.price_rub > 0
               AND d.avito_id <> ALL(%(skip)s)
               AND (d.last_checked_at IS NULL OR d.last_checked_at < now() - interval '12 hours')
             ORDER BY
                 CASE WHEN d.price_rub < med.med THEN 0 ELSE 1 END,
+                lp.parsed_at ASC,
                 CASE WHEN strpos(lower(m.url), 'sankt-peterburg') > 0 THEN 0 ELSE 1 END,
                 d.price_rub ASC,
                 d.last_checked_at ASC NULLS FIRST
@@ -188,10 +195,7 @@ def pick_status_candidate(skip: set[int]) -> tuple[int, str] | None:
             """,
             {"skip": list(skip) or [0]},
         )
-        rows = cur.fetchall()
-    if not rows:
-        return None
-    return random.choice(rows)
+        return cur.fetchall()
 
 
 def mark_checked(avito_id: int, state: str) -> None:
@@ -350,68 +354,72 @@ def main() -> None:
             # --- приоритет: проверка статуса (раз в STATUS_INTERVAL секунд) ---
             if time.time() - last_status_check >= STATUS_INTERVAL:
                 last_status_check = time.time()
-                cand = pick_status_candidate({k for k, v in FAILED.items() if v > time.time()})
-                if cand is None:
+                cands = pick_status_candidates({k for k, v in FAILED.items() if v > time.time()})
+                if not cands:
                     logger.info("Проверка статуса: нет кандидатов ниже медианы")
                 else:
-                    avito_id, url = cand
-                    try:
-                        # --- быстрый чек через парсер (лимит общий с описаниями) ---
-                        lot = _http_lot(avito_id)
-                        if isinstance(lot, dict):
-                            if lot["desc"]:
-                                save_description(avito_id, lot["desc"])
-                            mark_checked(avito_id, "активно")
-                            if lot["price"]:
-                                insert_raw_snapshot(
-                                    avito_id, lot["title"] or "", lot["price"], url,
-                                    lot["desc"] or "", time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
-                                )
-                            logger.info("Проверка {}: жив (HTTP), цена {} ₽", avito_id, lot["price"])
-                            mark_probe(DB, True)
-                            time.sleep(10)
-                            continue
-                        if lot is None:
-                            # страница получена чисто, но нет ни цены, ни заголовка — закрыт
-                            logger.info("Проверка {}: лот закрыт (HTTP: пустая страница) — помечаю", avito_id)
-                            mark_probe(DB, True)
-                            mark_checked(avito_id, "закрыто")
-                            time.sleep(10)
-                            continue
-                        # lot is False → лимит/блокировка → браузерный путь ниже
-                        ok = goto(url, wait_selector=DESC_SELECTOR)
-                        if not ok:
-                            # Страница не открылась (таймаут/прокси) — временное
-                            # состояние, помечать «закрыто» нельзя. Откладываем.
-                            logger.info("Проверка {}: страница не открылась — НЕ помечаю, откладываю на 30 мин", avito_id)
-                            mark_probe(DB, False)
-                            FAILED[avito_id] = time.time() + 1800
-                        elif page_is_blocked(page):
-                            # «Доступ ограничен» / «проблема с IP» — блокировка,
-                            # а не закрытие лота. Раньше здесь было ложное «закрыто».
-                            logger.warning("Проверка {}: блокировка IP/челлендж — НЕ помечаю закрытым, откладываю на 30 мин", avito_id)
-                            mark_probe(DB, False)
-                            FAILED[avito_id] = time.time() + 1800
-                        elif lot_is_open(page):
-                            price = read_price(page)
-                            desc = extract_description(page)
-                            if desc and len(desc) > 260:
-                                save_description(avito_id, desc)
-                            mark_checked(avito_id, "активно")
-                            if price:
-                                insert_raw_snapshot(
-                                    avito_id, page.title(), price, url,
-                                    desc or "", time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
-                                )
-                            logger.info("Проверка {}: жив, цена {} ₽", avito_id, price)
-                        else:
-                            # Страница открылась, блокировки нет, но нет ни заголовка,
-                            # ни цены, ни описания — лот реально закрыт/удалён.
-                            logger.info("Проверка {}: лот закрыт (нет заголовка/цены) — помечаю", avito_id)
-                            mark_probe(DB, True)
-                            mark_checked(avito_id, "закрыто")
-                    except Exception as e:
-                        logger.warning("Ошибка проверки {}: {}", avito_id, e)
+                    logger.info("Пачка проверок: {} кандидатов", len(cands))
+                    for avito_id, url in cands:
+                        if time.time() < PROBE["paused_until"]:
+                            break
+                        try:
+                            # --- быстрый чек через парсер (лимит общий с описаниями) ---
+                            lot = _http_lot(avito_id)
+                            if isinstance(lot, dict):
+                                if lot["desc"]:
+                                    save_description(avito_id, lot["desc"])
+                                mark_checked(avito_id, "активно")
+                                if lot["price"]:
+                                    insert_raw_snapshot(
+                                        avito_id, lot["title"] or "", lot["price"], url,
+                                        lot["desc"] or "", time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+                                    )
+                                logger.info("Проверка {}: жив (HTTP), цена {} ₽", avito_id, lot["price"])
+                                mark_probe(DB, True)
+                                time.sleep(random.uniform(1, 3))
+                                continue
+                            if lot is None:
+                                # страница получена чисто, но нет ни цены, ни заголовка — закрыт
+                                logger.info("Проверка {}: лот закрыт (HTTP: пустая страница) — помечаю", avito_id)
+                                mark_probe(DB, True)
+                                mark_checked(avito_id, "закрыто")
+                                time.sleep(random.uniform(1, 3))
+                                continue
+                            # lot is False → лимит/блокировка → браузерный путь ниже
+                            ok = goto(url, wait_selector=DESC_SELECTOR)
+                            if not ok:
+                                # Страница не открылась (таймаут/прокси) — временное
+                                # состояние, помечать «закрыто» нельзя. Откладываем.
+                                logger.info("Проверка {}: страница не открылась — НЕ помечаю, откладываю на 30 мин", avito_id)
+                                mark_probe(DB, False)
+                                FAILED[avito_id] = time.time() + 1800
+                            elif page_is_blocked(page):
+                                # «Доступ ограничен» / «проблема с IP» — блокировка,
+                                # а не закрытие лота. Раньше здесь было ложное «закрыто».
+                                logger.warning("Проверка {}: блокировка IP/челлендж — НЕ помечаю закрытым, откладываю на 30 мин", avito_id)
+                                mark_probe(DB, False)
+                                FAILED[avito_id] = time.time() + 1800
+                            elif lot_is_open(page):
+                                price = read_price(page)
+                                desc = extract_description(page)
+                                if desc and len(desc) > 260:
+                                    save_description(avito_id, desc)
+                                mark_checked(avito_id, "активно")
+                                if price:
+                                    insert_raw_snapshot(
+                                        avito_id, page.title(), price, url,
+                                        desc or "", time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+                                    )
+                                logger.info("Проверка {}: жив, цена {} ₽", avito_id, price)
+                            else:
+                                # Страница открылась, блокировки нет, но нет ни заголовка,
+                                # ни цены, ни описания — лот реально закрыт/удалён.
+                                logger.info("Проверка {}: лот закрыт (нет заголовка/цены) — помечаю", avito_id)
+                                mark_probe(DB, True)
+                                mark_checked(avito_id, "закрыто")
+                        except Exception as e:
+                            logger.warning("Ошибка проверки {}: {}", avito_id, e)
+                        time.sleep(random.uniform(2, 5))
                 time.sleep(10)
                 continue
 
