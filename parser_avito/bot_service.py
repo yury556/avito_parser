@@ -239,6 +239,104 @@ def _set_mute_all(on: bool) -> None:
         )
 
 
+def _heartbeat() -> None:
+    try:
+        with open(os.environ.get("HEARTBEAT_FILE", "/shared/heartbeat_bot"), "w") as f:
+            f.write(str(time.time()))
+    except Exception:
+        pass
+
+
+def _get_setting(key: str) -> str | None:
+    with psycopg2.connect(**DB) as conn, conn.cursor() as cur:
+        cur.execute("SELECT value FROM avito_original.bot_settings WHERE key = %s", (key,))
+        row = cur.fetchone()
+    return row[0] if row else None
+
+
+def _set_setting(key: str, value: str) -> None:
+    with psycopg2.connect(**DB) as conn, conn.cursor() as cur:
+        cur.execute(
+            "CREATE TABLE IF NOT EXISTS avito_original.bot_settings ("
+            "key text PRIMARY KEY, value text)"
+        )
+        cur.execute(
+            "INSERT INTO avito_original.bot_settings (key, value) VALUES (%s, %s)"
+            "ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value",
+            (key, value),
+        )
+
+
+DIGEST_HOUR = int(os.environ.get("DIGEST_HOUR", "9"))
+
+
+def build_digest() -> str:
+    with psycopg2.connect(**DB) as conn, conn.cursor() as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS avito_original.alerts_log (
+                ts timestamptz NOT NULL DEFAULT now(), kind text, text text)
+        """)
+        cur.execute("""
+            SELECT
+              (SELECT count(*) FROM avito_original.ads
+                WHERE parsed_at > now() - interval '24 hours'),
+              (SELECT count(*) FROM midraw.avito_ads
+                WHERE parsed_at > now() - interval '24 hours'),
+              (SELECT count(*) FROM avito_original.ads WHERE length(description) > 260),
+              (SELECT count(*) FROM detail.ads WHERE state = 'активно'),
+              (SELECT count(*) FROM detail.ads WHERE state = 'закрыто'),
+              (SELECT count(*) FROM raw.avito_ads_csv
+                WHERE csv_header = 'browser_check' AND loaded_at > now() - interval '24 hours')
+        """)
+        collected, in_midraw, desc_total, active, closed, checked = cur.fetchone()
+    incidents = sql("""
+            SELECT kind, count(*) FROM avito_original.alerts_log
+            WHERE ts > now() - interval '24 hours'
+            GROUP BY kind ORDER BY kind
+        """)
+    prev_desc = int(_get_setting("prev_desc_total") or desc_total)
+    prev_active = int(_get_setting("prev_active") or active)
+    desc_delta = desc_total - prev_desc
+    act_delta = active - prev_active
+    _set_setting("prev_desc_total", str(desc_total))
+    _set_setting("prev_active", str(active))
+
+    inc_parts = {
+        "failure": "падений", "lots": "лот-алертов", "recovery": "восстановлений",
+        "system": "системных", "info": "инфо",
+    }
+    inc = ", ".join(f"{inc_parts.get(k, k)}: {n}" for k, n in incidents) or "не было"
+
+    return (
+        f"📰 СВОДКА за сутки\n\n"
+        f"📦 Сбор: {collected} лотов записано, {in_midraw} прошло в midraw\n"
+        f"🔄 Актуализация: {checked} лотов проверено напрямую\n"
+        f"📝 Описания: полных {desc_total} ({'+' if desc_delta >= 0 else ''}{desc_delta} за сутки)\n"
+        f"📊 Статусы: активных {active} ({'+' if act_delta >= 0 else ''}{act_delta}), закрыто {closed}\n"
+        f"🚨 Инциденты: {inc}\n"
+        f"🟢 Сейчас: парсер/enricher/бот на связи"
+    )
+
+
+def _maybe_digest() -> None:
+    """Раз в сутки в DIGEST_HOUR:00."""
+    today = time.strftime("%Y%m%d")
+    if _get_setting("last_digest") == today:
+        return
+    if time.strftime("%H") != f"{DIGEST_HOUR:02d}":
+        return
+    if _get_setting("mute_all") == "1":
+        return
+    try:
+        text = build_digest()
+        api_call("sendMessage", {"chat_id": ADMIN_CHAT_ID, "text": text,
+                                 "disable_web_page_preview": True})
+        _set_setting("last_digest", today)
+        print("дайджест отправлен", flush=True)
+    except Exception as exc:
+        print(f"digest failed: {exc}", flush=True)
+
+
 def cmd_mute(hours: int) -> str:
     until = time.time() + hours * 3600
     with open(MUTE_FILE, "w") as f:
@@ -312,6 +410,8 @@ def main() -> None:
     print("bot_service запущен, polling...", flush=True)
     while True:
         try:
+            _heartbeat()
+            _maybe_digest()
             data = api_call(
                 "getUpdates",
                 {"offset": offset, "timeout": 50,

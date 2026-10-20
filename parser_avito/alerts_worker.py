@@ -107,15 +107,65 @@ def _parser_silence_check(db: dict) -> None:
         _state["silence_alerted"] = False
 
 
+def _mute_all_on(db: dict) -> bool:
+    """Глобальное отключение ВСЕХ уведомлений (bot_settings.mute_all)."""
+    try:
+        with _db_conn(db) as conn, conn.cursor() as cur:
+            cur.execute("SELECT value FROM avito_original.bot_settings WHERE key = 'mute_all'")
+            row = cur.fetchone()
+            return bool(row and row[0] == "1")
+    except Exception:
+        return False
+
+
+def _collect_drop_check(db: dict) -> None:
+    """Сбор упал на 80% против предыдущих суток → алерт раз в сутки."""
+    try:
+        with _db_conn(db) as conn, conn.cursor() as cur:
+            cur.execute("""
+                SELECT
+                  (SELECT count(*) FROM avito_original.ads
+                    WHERE parsed_at > now() - interval '24 hours'),
+                  (SELECT count(*) FROM avito_original.ads
+                    WHERE parsed_at > now() - interval '48 hours'
+                      AND parsed_at <= now() - interval '24 hours')
+            """)
+            cur24, prev24 = cur.fetchone()
+    except Exception as exc:
+        print(f"alerts: drop check failed: {exc}", flush=True)
+        return
+    if prev24 >= 100 and cur24 < prev24 * 0.2:
+        if not _state.get("drop_alerted"):
+            send_failure(
+                f"Аномалия сбора: за сутки {cur24} лотов против {prev24} предыдущих\n"
+                f"(падение на {100 - int(cur24 / max(prev24,1) * 100)}%).\n"
+                "Проверь: канал, структуру выдачи, статус парсера."
+            )
+            _state["drop_alerted"] = True
+    elif cur24 >= prev24 * 0.5:
+        _state["drop_alerted"] = False
+
+
 def alert_tick(db: dict) -> None:
     """Вызывать каждый проход цикла enricher; сам решает, пора ли."""
     global _state
     now = time.time()
 
+    # heartbeat для внешнего watchdog
+    try:
+        with open(os.environ.get("HEARTBEAT_FILE", "/shared/heartbeat_enricher"), "w") as f:
+            f.write(str(now))
+    except Exception:
+        pass
+
+    if _mute_all_on(db):
+        return
+
     if now - _state["last_silence_check"] >= 900:  # раз в 15 мин
         _state["last_silence_check"] = now
         try:
             _parser_silence_check(db)
+            _collect_drop_check(db)
         except Exception as exc:
             print(f"alerts: silence check failed: {exc}", flush=True)
 

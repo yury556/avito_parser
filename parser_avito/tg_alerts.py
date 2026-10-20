@@ -21,20 +21,45 @@ MAX_LOT_MSGS_PER_HOUR = int(os.environ.get("ALERT_LOT_MSG_LIMIT", "10"))
 _lot_msg_times: list[float] = []
 
 
-def send_message(text: str, buttons: list[tuple[str, str]] | None = None) -> bool:
+def _log_alert(kind: str, text: str) -> None:
+    """История алертов в БД (для дайджеста). Ошибки — молча."""
+    try:
+        import psycopg2
+        conf = dict(
+            host=os.environ.get("POSTGRES_HOST", "external-postgres"),
+            port=os.environ.get("POSTGRES_PORT", "5432"),
+            dbname=os.environ.get("POSTGRES_DB", "avito_dwh"),
+            user=os.environ.get("POSTGRES_USER", "avito"),
+            password=os.environ.get("POSTGRES_PASSWORD", ""),
+        )
+        with psycopg2.connect(**conf) as conn, conn.cursor() as cur:
+            cur.execute(
+                "CREATE TABLE IF NOT EXISTS avito_original.alerts_log ("
+                "ts timestamptz NOT NULL DEFAULT now(), kind text, text text)"
+            )
+            cur.execute("INSERT INTO avito_original.alerts_log (kind, text) VALUES (%s, %s)",
+                        (kind, text[:500]))
+    except Exception as exc:
+        print(f"tg_alerts: log failed: {exc}", flush=True)
+
+
+def send_message(text: str, buttons: list[tuple[str, str]] | None = None, kind: str = "info") -> bool:
     """Отправка в чат. buttons: [(label, url)]. Возвращает True/False, не бросает."""
+    _log_alert(kind, text)
     if not TOKEN or not CHAT_ID:
         return False
+    keyboard: list[list[dict]] = []
+    if buttons:
+        keyboard = [[{"text": label, "url": url} for label, url in buttons]]
+    # кнопка полного отключения уведомлений под каждым сообщением
+    keyboard.append([{"text": "🔇 Отключить уведомления", "callback_data": "mute_all"}])
     payload: dict = {
         "chat_id": CHAT_ID,
         "text": text,
         "parse_mode": "HTML",
         "disable_web_page_preview": True,
+        "reply_markup": {"inline_keyboard": keyboard},
     }
-    if buttons:
-        payload["reply_markup"] = {
-            "inline_keyboard": [[{"text": label, "url": url}] for label, url in buttons]
-        }
     try:
         req = urllib.request.Request(
             API + "/sendMessage",
@@ -89,7 +114,7 @@ def send_lots_batch(items: list[dict]) -> bool:
     text = (
         f"🔥 ЛОТЫ ({used}/{MAX_LOT_MSGS_PER_HOUR} за час)\n\n" + "\n\n".join(lines)
     )
-    ok = send_message(text, buttons)
+    ok = send_message(text, buttons, kind="lots")
     if ok:
         _lot_msg_times.append(time.time())
     return ok
@@ -97,13 +122,13 @@ def send_lots_batch(items: list[dict]) -> bool:
 
 def send_system(text: str) -> bool:
     """ℹ️ системное сообщение (не глушится мьютом)."""
-    return send_message(f"ℹ️ СИСТЕМА\n{text}")
+    return send_message(f"ℹ️ СИСТЕМА\n{text}", kind="system")
 
 
 def send_recovery(text: str) -> bool:
-    return send_message(f"🟢 ВОССТАНОВЛЕНИЕ\n{text}")
+    return send_message(f"🟢 ВОССТАНОВЛЕНИЕ\n{text}", kind="recovery")
 
 
 def send_failure(text: str) -> bool:
     """🚨 падения — всегда, мьют не действует."""
-    return send_message(f"🚨 ПАДЕНИЕ\n{text}")
+    return send_message(f"🚨 ПАДЕНИЕ\n{text}", kind="failure")
