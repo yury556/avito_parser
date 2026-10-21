@@ -116,6 +116,16 @@ def fetch_description_http(avito_id: int) -> str | None | bool:
 PROBE = {"fails": 0, "paused_until": 0.0, "alerted": False}  # режим экономии проверщика
 
 
+def _touch_heartbeat() -> None:
+    """Heartbeat перед каждой потенциально долгой операцией (goto/fetch).
+    Иначе долгий проход пачки выглядел для watchdog'а как смерть."""
+    try:
+        with open(os.environ.get("HEARTBEAT_FILE", "/shared/heartbeat_enricher"), "w") as f:
+            f.write(str(time.time()))
+    except Exception:
+        pass
+
+
 def mark_probe(db: dict, ok: bool) -> None:
     """Учёт попыток проверщика: 5 провалов подряд -> пауза 30 мин + алерт."""
     if ok:
@@ -144,6 +154,7 @@ def _http_lot(avito_id: int):
     None — страница получена, но пуста (нет ни цены, ни заголовка) → закрыт.
     dict — живой лот.
     """
+    _touch_heartbeat()
     if len([t for t in HTTP_DESC_TIMES if time.time() - t < 3600]) >= HTTP_DESC_LIMIT:
         return False
     try:
@@ -296,6 +307,7 @@ def main() -> None:
 
         def goto(url: str, wait_selector: str | None = None) -> bool:
             """Навигация как человек: goto + пауза + опционально ждём селектор."""
+            _touch_heartbeat()
             try:
                 page.goto(url, timeout=45000, wait_until="domcontentloaded")
                 human_pause(page)

@@ -87,7 +87,7 @@ def check():
             problems[name.split("avito-project-")[-1]] = "контейнер не Up"
 
     # 2) heartbeat'ы
-    checks = [("heartbeat_enricher", 20, "enricher"), ("heartbeat_bot", 8, "бот")]
+    checks = [("heartbeat_enricher", 60, "enricher"), ("heartbeat_bot", 8, "бот")]
     for fname, max_age_min, label in checks:
         path = os.path.join(storage, fname)
         try:
