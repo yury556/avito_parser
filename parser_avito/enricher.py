@@ -209,6 +209,24 @@ def pick_status_candidates(skip: set[int]) -> list[tuple[int, str]]:
         return cur.fetchall()
 
 
+def _log_check(avito_id: int, method: str, started: float, result: str, price=None) -> None:
+    """Журнал проверок: каждый чек — строка (для /checks и статистики)."""
+    try:
+        with psycopg2.connect(**DB) as conn, conn.cursor() as cur:
+            cur.execute(
+                "CREATE TABLE IF NOT EXISTS avito_original.check_log ("
+                "ts timestamptz NOT NULL DEFAULT now(), avito_id BIGINT, "
+                "method text, duration_s real, result text, price numeric)"
+            )
+            cur.execute(
+                "INSERT INTO avito_original.check_log (avito_id, method, duration_s, result, price) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (avito_id, method, round(time.time() - started, 2), result, price),
+            )
+    except Exception as e:
+        logger.warning("check_log failed: {}", e)
+
+
 def mark_checked(avito_id: int, state: str) -> None:
     with psycopg2.connect(**DB) as conn, conn.cursor() as cur:
         cur.execute(
@@ -374,6 +392,7 @@ def main() -> None:
                     for avito_id, url in cands:
                         if time.time() < PROBE["paused_until"]:
                             break
+                        t_start = time.time()
                         try:
                             # --- быстрый чек через парсер (лимит общий с описаниями) ---
                             lot = _http_lot(avito_id)
@@ -387,12 +406,14 @@ def main() -> None:
                                         lot["desc"] or "", time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
                                     )
                                 logger.info("Проверка {}: жив (HTTP), цена {} ₽", avito_id, lot["price"])
+                                _log_check(avito_id, "http", t_start, "жив", lot["price"])
                                 mark_probe(DB, True)
                                 time.sleep(random.uniform(1, 3))
                                 continue
                             if lot is None:
                                 # страница получена чисто, но нет ни цены, ни заголовка — закрыт
                                 logger.info("Проверка {}: лот закрыт (HTTP: пустая страница) — помечаю", avito_id)
+                                _log_check(avito_id, "http", t_start, "закрыт")
                                 mark_probe(DB, True)
                                 mark_checked(avito_id, "закрыто")
                                 time.sleep(random.uniform(1, 3))
@@ -403,12 +424,14 @@ def main() -> None:
                                 # Страница не открылась (таймаут/прокси) — временное
                                 # состояние, помечать «закрыто» нельзя. Откладываем.
                                 logger.info("Проверка {}: страница не открылась — НЕ помечаю, откладываю на 30 мин", avito_id)
+                                _log_check(avito_id, "браузер", t_start, "таймаут")
                                 mark_probe(DB, False)
                                 FAILED[avito_id] = time.time() + 1800
                             elif page_is_blocked(page):
                                 # «Доступ ограничен» / «проблема с IP» — блокировка,
                                 # а не закрытие лота. Раньше здесь было ложное «закрыто».
                                 logger.warning("Проверка {}: блокировка IP/челлендж — НЕ помечаю закрытым, откладываю на 30 мин", avito_id)
+                                _log_check(avito_id, "браузер", t_start, "блокировка")
                                 mark_probe(DB, False)
                                 FAILED[avito_id] = time.time() + 1800
                             elif lot_is_open(page):
@@ -423,14 +446,17 @@ def main() -> None:
                                         desc or "", time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
                                     )
                                 logger.info("Проверка {}: жив, цена {} ₽", avito_id, price)
+                                _log_check(avito_id, "браузер", t_start, "жив", price)
                             else:
                                 # Страница открылась, блокировки нет, но нет ни заголовка,
                                 # ни цены, ни описания — лот реально закрыт/удалён.
                                 logger.info("Проверка {}: лот закрыт (нет заголовка/цены) — помечаю", avito_id)
+                                _log_check(avito_id, "браузер", t_start, "закрыт")
                                 mark_probe(DB, True)
                                 mark_checked(avito_id, "закрыто")
                         except Exception as e:
                             logger.warning("Ошибка проверки {}: {}", avito_id, e)
+                            _log_check(avito_id, "?", t_start, f"ошибка: {str(e)[:60]}")
                         time.sleep(random.uniform(2, 5))
                 time.sleep(10)
                 continue

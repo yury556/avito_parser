@@ -109,12 +109,34 @@ def send_lots_batch(items: list[dict]) -> bool:
             f"(<b>{ad['benefit_pct']:+d}%</b> от медианы {ad['median']:,.0f} ₽)\n"
             f"ID {ad['avito_id']} · {html_mod.escape(str(ad.get('location') or '—'))}"
         )
-        buttons.append((f"🛒 {model}", ad["url"]))
+        buttons.append([{"text": f"🛒 {model}", "url": ad["url"]}])
+        buttons.append([{"text": "👁 Карточка / проверка", "callback_data": f"card:{ad['avito_id']}"}])
     used = min(len(items), 5)
     text = (
         f"🔥 ЛОТЫ ({used}/{MAX_LOT_MSGS_PER_HOUR} за час)\n\n" + "\n\n".join(lines)
     )
-    ok = send_message(text, buttons, kind="lots")
+    keyboard = buttons + [[{"text": "🔇 Отключить уведомления", "callback_data": "mute_all"}]]
+    payload: dict = {
+        "chat_id": CHAT_ID,
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+        "reply_markup": {"inline_keyboard": keyboard},
+    }
+    try:
+        req = urllib.request.Request(
+            API + "/sendMessage",
+            data=json.dumps(payload).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=15) as r:
+            ok = r.status == 200
+    except urllib.error.HTTPError as exc:
+        print(f"tg_alerts: send failed: HTTP {exc.code}: {exc.read().decode()[:200]}", flush=True)
+        return False
+    except Exception as exc:
+        print(f"tg_alerts: send failed: {exc}", flush=True)
+        return False
     if ok:
         _lot_msg_times.append(time.time())
     return ok

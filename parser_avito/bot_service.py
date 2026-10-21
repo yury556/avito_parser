@@ -41,6 +41,8 @@ HELP = (
     "Команды бота:\n"
     "/status — сводка системы\n"
     "/top — топ-5 самых выгодных активных лотов\n"
+    "/lot <ID> — карточка объявления по ID\n"
+    "/checks — последние 20 проверок лотов\n"
     "/add <url> — добавить URL мониторинга\n"
     "/urls — список URL и их сбор за 24 ч\n"
     "/remove N confirm — удалить URL номер N\n"
@@ -49,6 +51,85 @@ HELP = (
     "/off — отключить ВСЕ уведомления (и кнопка под каждым сообщением)\n"
     "/on — включить уведомления обратно"
 )
+
+RESULT_MARKS = {"жив": "✅", "закрыт": "⚫", "таймаут": "❌", "блокировка": "🚫"}
+
+
+def _lot_card(avito_id: int, refresh: bool = False) -> str:
+    """Карточка объявления из БД (обновляет через /fetch_lot при refresh)."""
+    if refresh:
+        try:
+            req = urllib.request.Request(
+                f"http://localhost:8000/fetch_lot" if False else
+                f"{os.environ.get('PARSER_URL', 'http://avito-parser-service:8000')}/fetch_lot?avito_id={avito_id}")
+            with urllib.request.urlopen(req, timeout=120) as r:
+                data = json.loads(r.read())
+            if data.get("description") and len(data["description"]) > 260:
+                with psycopg2.connect(**DB) as conn, conn.cursor() as cur:
+                    cur.execute("UPDATE avito_original.ads SET description=%s WHERE avito_id=%s",
+                                (data["description"], avito_id))
+                    cur.execute("UPDATE detail.ads SET last_checked_at=now() WHERE avito_id=%s", (avito_id,))
+            fresh = "🔄 Свежая проверка: " + (
+                f"цена {data['price']:,.0f} ₽, живой" if data.get("price") else
+                f"{data.get('reason') or 'нет данных'}")
+        except Exception as exc:
+            fresh = f"🔄 Проверка не удалась: {exc}"
+    else:
+        fresh = None
+    with psycopg2.connect(**DB) as conn, conn.cursor() as cur:
+        cur.execute("""
+            WITH last AS (
+                SELECT DISTINCT ON (avito_id) avito_id, price_rub, parsed_at
+                FROM midraw.avito_ads WHERE price_rub > 0
+                ORDER BY avito_id, parsed_at DESC)
+            SELECT d.model, d.brand, d.state, l.price_rub, l.parsed_at,
+                   m.description, m.url, m.location, d.category
+            FROM detail.ads d
+            JOIN last l ON l.avito_id = d.avito_id
+            JOIN midraw.avito_ads m ON m.avito_id = d.avito_id
+            WHERE d.avito_id = %s AND m.avito_id = %s
+            LIMIT 1""", (avito_id, avito_id))
+        row = cur.fetchone()
+    if not row:
+        return f"⚠️ Лот {avito_id} не найден в базе."
+    model, brand, state, price, seen, desc, url, location, category = row
+    med = sql("""
+        SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY price_rub)
+        FROM detail.ads WHERE category = %s AND state='активно' AND price_rub > 0
+    """, (category,))
+    med = med[0][0] if med else None
+    pct = f" ({(float(price)/float(med)-1)*100:+.0f}% от медианы {float(med):,.0f} ₽)" if med and price else ""
+    desc_txt = (desc or "").strip()
+    if len(desc_txt) > 2200:
+        desc_txt = desc_txt[:2200] + "…"
+    text = (
+        f"📦 <b>{(brand or '')} {(model or '')[:80]}</b>\n"
+        f"🟡 Категория: {category or '?'} · {location or '?'}\n"
+        f"💰 Цена: <b>{float(price):,.0f} ₽</b>{pct}\n"
+        f"🏷 Статус: {state} · видели {seen:%d.%m %H:%M}\n"
+        f"\n📝 <b>Описание</b> ({len(desc or '')} симв.):\n"
+        f"{desc_txt or '(описание ещё не собрано)'}\n"
+    )
+    if fresh:
+        text = fresh + "\n\n" + text
+    return text, url
+
+
+def cmd_checks() -> str:
+    rows = sql("""
+        SELECT c.avito_id, c.method, c.duration_s, c.result, c.price,
+               to_char(c.ts, 'HH24:MI')
+        FROM avito_original.check_log c
+        ORDER BY c.ts DESC LIMIT 20
+    """)
+    if not rows:
+        return "Журнал проверок пуст (check_log ещё не заполнялся)."
+    lines = []
+    for avito_id, method, dur, result, price, tm in rows:
+        mark = RESULT_MARKS.get(result, "•")
+        pr = f" · {float(price):,.0f} ₽" if price else ""
+        lines.append(f"{mark} {avito_id} · {method} · {dur:.1f}с · {tm} · {result}{pr}")
+    return "🔍 Последние проверки:\n\n" + "\n".join(lines)
 
 
 def api_call(method: str, payload: dict | None = None) -> dict | None:
@@ -66,13 +147,22 @@ def api_call(method: str, payload: dict | None = None) -> dict | None:
         return None
 
 
-def reply(chat_id: int, text: str, mute_button: bool = False) -> None:
+def reply(chat_id: int, text: str, mute_button: bool = False, url_button: str | None = None,
+         check_button: int | None = None) -> None:
     payload: dict = {"chat_id": chat_id, "text": text,
+                     "parse_mode": "HTML" if text.startswith(("📦", "🔄", "⚠️")) else None,
                      "disable_web_page_preview": True}
+    payload = {k: v for k, v in payload.items() if v is not None}
+    kb = []
+    if url_button:
+        kb.append([{"text": "🛒 Открыть на Авито", "url": url_button}])
+    if check_button:
+        kb.append([{"text": "🔄 Проверить сейчас", "callback_data": f"lot:{check_button}"},
+                   {"text": "👁 Карточка", "callback_data": f"card:{check_button}"}])
     if mute_button:
-        payload["reply_markup"] = {"inline_keyboard": [[
-            {"text": "🔊 Включить уведомления", "callback_data": "unmute_all"}
-        ]]}
+        kb.append([{"text": "🔊 Включить уведомления", "callback_data": "unmute_all"}])
+    if kb:
+        payload["reply_markup"] = {"inline_keyboard": kb}
     api_call("sendMessage", payload)
 
 
@@ -370,6 +460,15 @@ def handle(chat_id: int, text: str) -> None:
             out = cmd_top()
             if out:
                 reply(chat_id, out)
+        elif cmd == "/lot" and arg:
+            out = _lot_card(int(arg), refresh=False)
+            if isinstance(out, tuple):
+                text, url = out
+                reply(chat_id, text, url_button=url, check_button=int(arg))
+            else:
+                reply(chat_id, out)
+        elif cmd == "/checks":
+            reply(chat_id, cmd_checks())
         elif cmd == "/add" and arg:
             reply(chat_id, cmd_add(arg))
         elif cmd == "/urls":
@@ -436,6 +535,21 @@ def main() -> None:
                     if chat_id:
                         reply(chat_id, answer + ("\nПроверить: /status" if cb["data"] == "unmute_all" else ""),
                               mute_button=(cb["data"] == "mute_all"))
+                    continue
+                if cb and cb.get("data", "").startswith(("lot:", "card:")):
+                    action, _, avito_id = cb["data"].partition(":")
+                    api_call("answerCallbackQuery", {
+                        "callback_query_id": cb["id"],
+                        "text": "Проверяю лот..." if action == "lot" else "Карточка...",
+                        "show_alert": False})
+                    chat_id = (cb.get("message") or {}).get("chat", {}).get("id")
+                    if chat_id:
+                        out = _lot_card(int(avito_id), refresh=(action == "lot"))
+                        if isinstance(out, tuple):
+                            text, url = out
+                            reply(chat_id, text, url_button=url, check_button=int(avito_id))
+                        else:
+                            reply(chat_id, out)
                     continue
                 msg = upd.get("message") or {}
                 text = msg.get("text") or ""
