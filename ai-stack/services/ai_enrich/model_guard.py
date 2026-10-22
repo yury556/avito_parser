@@ -41,6 +41,11 @@ def _canon_ram(m):
     return f"ddr{m.group(1)} {m.group(2)}gb"
 
 
+def _canon_ram_rev(m):
+    """Для порядка "32gb ... ddr4" (объём раньше типа)."""
+    return f"ddr{m.group(2)} {m.group(1)}gb"
+
+
 # (тип, regex, канонизатор). Порядок важен: GPU -> CPU -> RAM
 _CHIP_PATTERNS = (
     ("gpu-nv", re.compile(r"\b(rtx|gtx)[\s_-]*(\d{4})(?:\s?(ti|super))?\b"), _canon_nv),
@@ -52,6 +57,8 @@ _CHIP_PATTERNS = (
     ("cpu-amd", re.compile(r"\bryzen[\s_-]*([579])[\s_-]*(\d{4})(?:\s?(x3d|xe|g))?(?![0-9])"), _canon_ryzen),
     # DDR: между "ddr4" и объёмом может стоять слово ("DDR4 Fury 32GB")
     ("ram", re.compile(r"\bddr([345])\b[^0-9]{0,20}?(\d{1,2})\s?gb\b"), _canon_ram),
+    # ...или объём раньше типа ("kingston 32gb ddr4 pc4-2400t")
+    ("ram", re.compile(r"\b(\d{1,2})\s?gb\b[^0-9]{0,20}?\bddr([345])\b"), _canon_ram_rev),
 )
 
 # Суффиксы, разница в которых не меняет товар (i5-13600 vs i5-13600KF)

@@ -45,9 +45,11 @@ def main() -> None:
             if len(samples) < 15:
                 samples.append((avito_id, model, new_model, note))
             if not DRY:
+                # model_ai заполняется только если пуст — оригинал не затираем
                 cur.execute(
-                    "UPDATE detail.ads SET model=%s, model_ai=%s, chip=%s WHERE avito_id=%s",
-                    (new_model, model_ai, chip, avito_id))
+                    "UPDATE detail.ads SET model=%s, chip=%s, "
+                    "model_ai=coalesce(model_ai, %s) WHERE avito_id=%s",
+                    (new_model, chip, model_ai, avito_id))
         if not DRY:
             conn.commit()
 
