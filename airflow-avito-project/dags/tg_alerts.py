@@ -18,6 +18,24 @@ def send_alert(text: str) -> None:
     if not TOKEN or not CHAT_ID:
         return
     try:
+        # глобальный мьют из bot_settings (ставится кнопкой бота или /off);
+        # если таблицы нет/БД недоступна — шлём как обычно
+        try:
+            import psycopg2
+            conn_conf = dict(
+                host=os.environ.get("POSTGRES_HOST", "external-postgres"),
+                port=os.environ.get("POSTGRES_PORT", "5432"),
+                dbname=os.environ.get("POSTGRES_DB", "avito_dwh"),
+                user=os.environ.get("POSTGRES_USER", "avito"),
+                password=os.environ.get("POSTGRES_PASSWORD", ""),
+            )
+            with psycopg2.connect(**conn_conf) as conn, conn.cursor() as cur:
+                cur.execute("SELECT value FROM avito_original.bot_settings WHERE key='mute_all'")
+                row = cur.fetchone()
+                if row and row[0] == "1":
+                    return
+        except Exception:
+            pass
         payload = {
             "chat_id": CHAT_ID,
             "text": f"🚨 ПАДЕНИЕ\n{text}",
