@@ -107,6 +107,10 @@ def fetch_description_http(avito_id: int) -> str | None | bool:
         return False
     if data.get("description"):
         HTTP_DESC_TIMES.append(time.time())
+        # дата публикации и просмотры приехали вместе с описанием
+        meta = {k: data.get(k) for k in ("published_at", "views_total", "views_today")}
+        if any(meta.values()):
+            _save_lot_meta(avito_id, meta)
         return data["description"]
     if data.get("reason") and "не прошёл" in data["reason"]:
         return False  # блокировка — есть смысл попробовать браузер
@@ -169,7 +173,8 @@ def _http_lot(avito_id: int):
     title, price, desc = data.get("title"), data.get("price"), data.get("description")
     if not title and not price and not desc:
         return None
-    return {"title": title, "price": price, "desc": desc if (desc and len(desc) > 260) else None}
+    return {"title": title, "price": price, "desc": desc if (desc and len(desc) > 260) else None,
+            "meta": {k: data.get(k) for k in ("published_at", "views_total", "views_today")}}
 
 
 def pick_status_candidates(skip: set[int]) -> list[tuple[int, str]]:
@@ -225,6 +230,43 @@ def _log_check(avito_id: int, method: str, started: float, result: str, price=No
             )
     except Exception as e:
         logger.warning("check_log failed: {}", e)
+
+
+def _log_fetch(avito_id: int, method: str, kind: str, started: float,
+               ok: bool, note: str = "") -> None:
+    """Журнал запросов к странице объявления (для тех. сводки в боте)."""
+    try:
+        with psycopg2.connect(**DB) as conn, conn.cursor() as cur:
+            cur.execute(
+                "CREATE TABLE IF NOT EXISTS avito_original.fetch_log ("
+                "ts timestamptz NOT NULL DEFAULT now(), avito_id BIGINT, "
+                "method text, kind text, duration_s real, ok boolean, note text)"
+            )
+            cur.execute(
+                "INSERT INTO avito_original.fetch_log "
+                "(avito_id, method, kind, duration_s, ok, note) "
+                "VALUES (%s, %s, %s, %s, %s, %s)",
+                (avito_id, method, kind, round(time.time() - started, 2), ok, note[:200]),
+            )
+    except Exception as e:
+        logger.warning("fetch_log failed: {}", e)
+
+
+def _save_lot_meta(avito_id: int, meta: dict) -> None:
+    """Дата публикации и просмотры со страницы лота -> в БД."""
+    if not meta:
+        return
+    try:
+        with psycopg2.connect(**DB) as conn, conn.cursor() as cur:
+            cur.execute(
+                "UPDATE avito_original.ads SET "
+                "published_at=COALESCE(published_at, %s), "
+                "views_total=COALESCE(views_total, %s), "
+                "views_today=COALESCE(views_today, %s) WHERE avito_id=%s",
+                (meta.get("published_at"), meta.get("views_total"),
+                 meta.get("views_today"), avito_id))
+    except Exception as e:
+        logger.warning("save_lot_meta failed: {}", e)
 
 
 def mark_checked(avito_id: int, state: str) -> None:
@@ -399,6 +441,8 @@ def main() -> None:
                             if isinstance(lot, dict):
                                 if lot["desc"]:
                                     save_description(avito_id, lot["desc"])
+                                _save_lot_meta(avito_id, lot.get("meta") or {})
+                                _log_fetch(avito_id, "http", "check", t_start, True)
                                 mark_checked(avito_id, "активно")
                                 if lot["price"]:
                                     insert_raw_snapshot(
@@ -414,6 +458,7 @@ def main() -> None:
                                 # страница получена чисто, но нет ни цены, ни заголовка — закрыт
                                 logger.info("Проверка {}: лот закрыт (HTTP: пустая страница) — помечаю", avito_id)
                                 _log_check(avito_id, "http", t_start, "закрыт")
+                                _log_fetch(avito_id, "http", "check", t_start, True, "пустая страница")
                                 mark_probe(DB, True)
                                 mark_checked(avito_id, "закрыто")
                                 time.sleep(random.uniform(1, 3))
@@ -425,6 +470,7 @@ def main() -> None:
                                 # состояние, помечать «закрыто» нельзя. Откладываем.
                                 logger.info("Проверка {}: страница не открылась — НЕ помечаю, откладываю на 30 мин", avito_id)
                                 _log_check(avito_id, "браузер", t_start, "таймаут")
+                                _log_fetch(avito_id, "браузер", "check", t_start, False, "таймаут")
                                 mark_probe(DB, False)
                                 FAILED[avito_id] = time.time() + 1800
                             elif page_is_blocked(page):
@@ -432,6 +478,7 @@ def main() -> None:
                                 # а не закрытие лота. Раньше здесь было ложное «закрыто».
                                 logger.warning("Проверка {}: блокировка IP/челлендж — НЕ помечаю закрытым, откладываю на 30 мин", avito_id)
                                 _log_check(avito_id, "браузер", t_start, "блокировка")
+                                _log_fetch(avito_id, "браузер", "check", t_start, False, "блокировка")
                                 mark_probe(DB, False)
                                 FAILED[avito_id] = time.time() + 1800
                             elif lot_is_open(page):
@@ -439,6 +486,7 @@ def main() -> None:
                                 desc = extract_description(page)
                                 if desc and len(desc) > 260:
                                     save_description(avito_id, desc)
+                                _log_fetch(avito_id, "браузер", "check", t_start, True)
                                 mark_checked(avito_id, "активно")
                                 if price:
                                     insert_raw_snapshot(

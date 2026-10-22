@@ -119,11 +119,13 @@ def batch_process(req: BatchRequest):
         avito_id, title, desc, price_rub, url = job
         try:
             messages = _build_messages(title or "", desc or "")
-            result = _call_openrouter(messages)
+            result, duration_ms, attempts = _call_openrouter(messages)
             if isinstance(result, dict) and "category" in result:
                 return {"ok": True, "avito_id": avito_id, "data": result,
-                        "title": title, "desc": desc, "price_rub": price_rub, "url": url}
-            return {"ok": False, "avito_id": avito_id, "error": "invalid AI response"}
+                        "title": title, "desc": desc, "price_rub": price_rub, "url": url,
+                        "duration_ms": duration_ms, "attempts": attempts}
+            return {"ok": False, "avito_id": avito_id, "error": "invalid AI response",
+                    "duration_ms": duration_ms, "attempts": attempts}
         except Exception as e:
             return {"ok": False, "avito_id": avito_id, "error": str(e)}
 
@@ -146,14 +148,18 @@ def batch_process(req: BatchRequest):
                             (avito_id, category, brand, model, model_ai, chip, tags,
                              input_title, input_description,
                              price_rub,
-                             ai_model, ai_version, ai_processed_at, ai_status)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), 'success')
+                             ai_model, ai_version, ai_processed_at, ai_status,
+                             ai_duration_ms, ai_attempts)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), 'success',
+                                %s, %s)
                         ON CONFLICT (avito_id) DO UPDATE SET
                             category=EXCLUDED.category, brand=EXCLUDED.brand,
                             model=EXCLUDED.model, model_ai=EXCLUDED.model_ai,
                             chip=EXCLUDED.chip, tags=EXCLUDED.tags,
                             price_rub=EXCLUDED.price_rub,
-                            ai_processed_at=NOW(), ai_status='success'
+                            ai_processed_at=NOW(), ai_status='success',
+                            ai_duration_ms=EXCLUDED.ai_duration_ms,
+                            ai_attempts=EXCLUDED.ai_attempts
                     """, (
                         out["avito_id"],
                         out["data"].get("category"),
@@ -165,6 +171,7 @@ def batch_process(req: BatchRequest):
                         out["title"], out["desc"],
                         out["data"].get("price_rub") if out["data"].get("price_rub") is not None else out["price_rub"],
                         AI_MODEL, PROMPT_VERSION,
+                        out.get("duration_ms"), out.get("attempts"),
                     ))
                     conn.commit()
                     processed += 1
@@ -194,7 +201,8 @@ def _build_messages(title: str, description: str) -> list[dict]:
     ]
 
 
-def _call_openrouter(messages: list[dict], retries: int = 5) -> dict | None:
+def _call_openrouter(messages: list[dict], retries: int = 5) -> tuple[dict | None, int, int]:
+    """Возвращает (данные, длительность_мс, попыток) — для метрик в detail.ads."""
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
@@ -207,6 +215,7 @@ def _call_openrouter(messages: list[dict], retries: int = 5) -> dict | None:
         "reasoning": {"effort": "low"},
     }
 
+    t0 = time.time()
     for attempt in range(retries):
         try:
             resp = httpx.post(
@@ -230,9 +239,9 @@ def _call_openrouter(messages: list[dict], retries: int = 5) -> dict | None:
                 text = text[start:end + 1]
             if not text:
                 continue
-            return json.loads(text)
+            return json.loads(text), int((time.time() - t0) * 1000), attempt + 1
         except Exception:
             if attempt == retries - 1:
-                return None
+                return None, int((time.time() - t0) * 1000), attempt + 1
             time.sleep(2 ** (attempt + 1))
-    return None
+    return None, int((time.time() - t0) * 1000), retries

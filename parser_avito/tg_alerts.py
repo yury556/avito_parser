@@ -11,6 +11,7 @@ import os
 import time
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 CHAT_ID = os.environ.get("TELEGRAM_ALERT_CHAT_ID", "").strip()
@@ -107,16 +108,61 @@ def _city(ad: dict) -> str:
     return "—"
 
 
+def _fmt_published(published_at) -> str:
+    """Дата создания объявления -> человекочитаемый вид."""
+    if not published_at:
+        return "дата публикации неизвестна"
+    try:
+        dt = datetime.fromisoformat(str(published_at))
+    except Exception:
+        return str(published_at)
+    months = ("января", "февраля", "марта", "апреля", "мая", "июня", "июля",
+              "августа", "сентября", "октября", "ноября", "декабря")
+    age_days = (datetime.now(timezone.utc) - dt).days
+    stamp = f"{dt.day} {months[dt.month - 1]} в {dt:%H:%M}"
+    if age_days <= 0:
+        return f"сегодня в {dt:%H:%M}"
+    if age_days == 1:
+        return f"вчера в {dt:%H:%M}"
+    if age_days < 7:
+        return f"{age_days} дн. назад ({dt.day} {months[dt.month - 1]})"
+    return stamp
+
+
 def send_lot(ad: dict) -> bool:
-    """Одно сообщение на один лот. Кнопки: открыть на Авито + карточка/проверка."""
+    """Одно сообщение на один лот: название, цена, медиана, локация, теги,
+    описание, дата создания. Кнопки: Авито / тех. свойства / карточка."""
     model = html_mod.escape((ad["model"] or "?")[:60])
     loc = html_mod.escape(_city(ad))
-    text = (
-        f"🔥 <b>{model}</b>\n"
+
+    lines = [
+        f"🔥 <b>{model}</b>",
         f"💰 {ad['price']:,.0f} ₽ — на <b>{ad['benefit_pct']:+d}%</b> "
-        f"ниже медианы ({ad['median']:,.0f} ₽)\n"
-        f"📍 {loc} · ID {ad['avito_id']}"
-    )
+        f"ниже медианы ({ad['median']:,.0f} ₽)",
+        f"📍 {loc} · ID {ad['avito_id']}",
+    ]
+    if ad.get("published_at"):
+        lines.append(f"🕐 Опубликовано: {html_mod.escape(_fmt_published(ad['published_at']))}")
+
+    tags = ad.get("tags") or []
+    if tags:
+        if isinstance(tags, str):
+            try:
+                tags = json.loads(tags)
+            except Exception:
+                tags = [tags]
+        clean = [html_mod.escape(str(t))[:30] for t in tags if str(t).strip()][:6]
+        if clean:
+            lines.append("🏷 " + " · ".join(clean))
+
+    desc = (ad.get("description") or "").strip()
+    if desc:
+        snippet = desc[:300].rstrip()
+        if len(desc) > 300:
+            snippet += "…"
+        lines.append(f"\n📝 {html_mod.escape(snippet)}")
+
+    text = "\n".join(lines)
     payload: dict = {
         "chat_id": CHAT_ID,
         "text": text,
@@ -124,7 +170,8 @@ def send_lot(ad: dict) -> bool:
         "disable_web_page_preview": True,
         "reply_markup": {"inline_keyboard": [
             [{"text": "🛒 Открыть на Авито", "url": ad["url"]}],
-            [{"text": "👁 Карточка / проверка", "callback_data": f"card:{ad['avito_id']}"}],
+            [{"text": "🔧 Тех. свойства", "callback_data": f"tech:{ad['avito_id']}"},
+             {"text": "👁 Карточка", "callback_data": f"card:{ad['avito_id']}"}],
             [{"text": "🔇 Отключить уведомления", "callback_data": "mute_all"}],
         ]},
     }

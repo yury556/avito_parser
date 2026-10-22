@@ -43,6 +43,7 @@ HELP = (
     "/top — топ-5 самых выгодных активных лотов\n"
     "/lot <ID> — карточка объявления по ID\n"
     "/checks — последние 20 проверок лотов\n"
+    "/tech <ID> — технические свойства лота (обогащение, запросы, цена)\n"
     "/add <url> — добавить URL мониторинга\n"
     "/urls — список URL и их сбор за 24 ч\n"
     "/remove N confirm — удалить URL номер N\n"
@@ -150,7 +151,7 @@ def api_call(method: str, payload: dict | None = None) -> dict | None:
 def reply(chat_id: int, text: str, mute_button: bool = False, url_button: str | None = None,
          check_button: int | None = None) -> None:
     payload: dict = {"chat_id": chat_id, "text": text,
-                     "parse_mode": "HTML" if text.startswith(("📦", "🔄", "⚠️")) else None,
+                     "parse_mode": "HTML" if text.startswith(("📦", "🔄", "⚠️", "🔧")) else None,
                      "disable_web_page_preview": True}
     payload = {k: v for k, v in payload.items() if v is not None}
     kb = []
@@ -191,6 +192,123 @@ def cmd_status() -> str:
         f"🟡 Enricher: проверка {enricher_min} назад\n"
         f"📦 База: {total} лотов, активных {active}"
     )
+
+
+def cmd_tech(avito_id: int) -> str:
+    """Техническая сводка по лоту: обогащение, проверки, запросы, цена, просмотры."""
+    row = sql("""
+        SELECT d.model, d.model_ai, d.chip, d.category, d.brand, d.state,
+               d.ai_model, d.ai_version, d.ai_processed_at, d.ai_status,
+               d.ai_duration_ms, d.ai_attempts, d.price_rub, d.last_checked_at,
+               a.published_at, a.views_total, a.views_today,
+               length(coalesce(a.description,'')) AS desc_len
+        FROM detail.ads d
+        LEFT JOIN avito_original.ads a ON a.avito_id = d.avito_id
+        WHERE d.avito_id = %s
+    """, (avito_id,))
+    if not row:
+        return f"⚠️ Лот {avito_id} не найден в базе."
+    (model, model_ai, chip, category, brand, state, ai_model, ai_version,
+     ai_at, ai_status, ai_ms, ai_attempts, price, last_checked, published_at,
+     v_total, v_today, desc_len) = row[0]
+
+    # проверки
+    checks = sql("""
+        SELECT count(*), max(ts) FROM avito_original.check_log WHERE avito_id = %s
+    """, (avito_id,))[0]
+    n_checks, last_check = checks
+    last_one = sql("""
+        SELECT method, duration_s, result FROM avito_original.check_log
+        WHERE avito_id = %s ORDER BY ts DESC LIMIT 1
+    """, (avito_id,))
+    last_method, last_dur, last_result = (last_one[0] if last_one else (None, None, None))
+
+    # запросы к странице лота
+    fetches = sql("""
+        SELECT count(*), count(*) FILTER (WHERE ok),
+               count(*) FILTER (WHERE kind='description'),
+               count(*) FILTER (WHERE kind='check'),
+               max(ts), round(avg(duration_s)::numeric, 1)
+        FROM avito_original.fetch_log WHERE avito_id = %s
+    """, (avito_id,))[0]
+    n_fetch, n_fetch_ok, n_desc, n_chk, last_fetch, avg_dur = fetches
+
+    # сколько раз видели в выдаче + история цен
+    seen = sql("""
+        SELECT count(*), min(parsed_at), max(parsed_at)
+        FROM midraw.avito_ads WHERE avito_id = %s
+    """, (avito_id,))[0]
+    n_seen, first_seen, last_seen = seen
+
+    prices = sql("""
+        SELECT min(price_rub), max(price_rub), count(*)
+        FROM midraw.avito_ads WHERE avito_id = %s AND price_rub > 0
+    """, (avito_id,))[0]
+    p_min, p_max, n_prices = prices
+
+    hist = sql("""
+        SELECT price_rub FROM midraw.avito_ads
+        WHERE avito_id = %s AND price_rub > 0
+        ORDER BY parsed_at DESC LIMIT 5
+    """, (avito_id,))
+    hist_txt = " → ".join(f"{float(p):,.0f}" for p, in hist) if hist else "—"
+
+    def ago(ts):
+        if not ts:
+            return "—"
+        m = (time.time() - ts.timestamp()) / 60
+        if m < 60:
+            return f"{m:.0f} мин назад"
+        if m < 1440:
+            return f"{m / 60:.0f} ч назад"
+        return f"{m / 1440:.0f} дн назад"
+
+    L = [f"🔧 <b>Лот {avito_id}</b> — тех. свойства", ""]
+    L.append("<b>🤖 Обогащение (AI)</b>")
+    L.append(f"   модель AI: {ai_model or '—'} · промпт: {ai_version or '—'}")
+    L.append(f"   обработано: {ai_at:%d.%m %H:%M} ({ago(ai_at)}) · статус: {ai_status or '—'}")
+    L.append(f"   длительность запроса: {(ai_ms / 1000):.1f} с · попыток: {ai_attempts or '—'}"
+             if ai_ms else "   длительность запроса: нет данных")
+    L.append(f"   модель товара: {model or '—'}" + (f" (из slug: {chip})" if chip else ""))
+    if model_ai and model_ai != model:
+        L.append(f"   было от AI: {model_ai}")
+    L.append(f"   категория: {category or '—'} · бренд: {brand or '—'}")
+    L.append(f"   описание собрано: {desc_len or 0} симв.")
+
+    L.append("")
+    L.append("<b>📡 Проверки</b>")
+    L.append(f"   всего проверок: {n_checks}")
+    if n_checks:
+        L.append(f"   последняя: {last_check:%d.%m %H:%M} ({ago(last_check)}) · "
+                 f"{last_method} · {last_dur:.1f} с → {last_result}")
+    L.append(f"   запросов к странице лота: {n_fetch} (успешных {n_fetch_ok}, "
+             f"описаний {n_desc}, проверок {n_chk})")
+    if last_fetch:
+        L.append(f"   последний запрос: {last_fetch:%d.%m %H:%M} ({ago(last_fetch)})"
+                 + (f" · в среднем {avg_dur} с" if avg_dur else ""))
+    L.append(f"   видно в выдаче: {n_seen} раз"
+             + (f" (первое {first_seen:%d.%m}, последнее {last_seen:%d.%m})"
+                if n_seen else ""))
+
+    L.append("")
+    L.append("<b>💰 Цена</b>")
+    L.append(f"   сейчас: {float(price):,.0f} ₽" if price else "   сейчас: —")
+    L.append(f"   диапазон: {float(p_min):,.0f} – {float(p_max):,.0f} ₽ · замеров: {n_prices}"
+             if p_min else "   диапазон: нет данных")
+    L.append(f"   история: {hist_txt}")
+
+    L.append("")
+    L.append("<b>👁 Просмотры</b>")
+    if v_total is not None:
+        L.append(f"   всего: {v_total}" + (f" (+{v_today} сегодня)" if v_today else ""))
+    else:
+        L.append("   нет данных (страница лота ещё не открывалась)")
+    L.append(f"   статус: {state}"
+             + (f" · проверено {ago(last_checked)}" if last_checked else ""))
+    if published_at:
+        L.append(f"   опубликовано: {published_at}")
+
+    return "\n".join(L)
 
 
 # ---------------------------------------------------------------- /top
@@ -469,6 +587,8 @@ def handle(chat_id: int, text: str) -> None:
                 reply(chat_id, out)
         elif cmd == "/checks":
             reply(chat_id, cmd_checks())
+        elif cmd == "/tech" and arg:
+            reply(chat_id, cmd_tech(int(arg)))
         elif cmd == "/add" and arg:
             reply(chat_id, cmd_add(arg))
         elif cmd == "/urls":
@@ -536,14 +656,17 @@ def main() -> None:
                         reply(chat_id, answer + ("\nПроверить: /status" if cb["data"] == "unmute_all" else ""),
                               mute_button=(cb["data"] == "mute_all"))
                     continue
-                if cb and cb.get("data", "").startswith(("lot:", "card:")):
+                if cb and cb.get("data", "").startswith(("lot:", "card:", "tech:")):
                     action, _, avito_id = cb["data"].partition(":")
                     api_call("answerCallbackQuery", {
                         "callback_query_id": cb["id"],
-                        "text": "Проверяю лот..." if action == "lot" else "Карточка...",
+                        "text": "Проверяю лот..." if action == "lot" else "Собираю данные...",
                         "show_alert": False})
                     chat_id = (cb.get("message") or {}).get("chat", {}).get("id")
                     if chat_id:
+                        if action == "tech":
+                            reply(chat_id, cmd_tech(int(avito_id)))
+                            continue
                         out = _lot_card(int(avito_id), refresh=(action == "lot"))
                         if isinstance(out, tuple):
                             text, url = out

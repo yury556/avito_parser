@@ -268,6 +268,71 @@ def _extract_description(html: str) -> str | None:
     return None
 
 
+def _extract_lot_meta(html: str) -> dict:
+    """Дата создания объявления и просмотры со страницы лота.
+
+    data-marker="item-view/item-date"      -> "23 сентября в 14:25"
+    data-marker="item-view/total-views"    -> "1251 просмотр"
+    data-marker="item-view/today-views"    -> "(+7 сегодня)"
+    """
+    from bs4 import BeautifulSoup
+    out: dict = {"published_at": None, "views_total": None, "views_today": None}
+    soup = BeautifulSoup(html, "html.parser")
+
+    node = soup.select_one('[data-marker="item-view/item-date"]')
+    if node:
+        out["published_at"] = _parse_avito_date(node.get_text(" ", strip=True))
+
+    node = soup.select_one('[data-marker="item-view/total-views"]')
+    if node:
+        m = re.search(r"(\d[\d\s ]*)", node.get_text(" ", strip=True))
+        if m:
+            out["views_total"] = int(re.sub(r"\D", "", m.group(1)))
+
+    node = soup.select_one('[data-marker="item-view/today-views"]')
+    if node:
+        m = re.search(r"\+(\d+)", node.get_text(" ", strip=True))
+        if m:
+            out["views_today"] = int(m.group(1))
+    return out
+
+
+_MONTHS = {
+    "января": 1, "февраля": 2, "марта": 3, "апреля": 4, "мая": 5, "июня": 6,
+    "июля": 7, "августа": 8, "сентября": 9, "октября": 10, "ноября": 11,
+    "декабря": 12,
+}
+
+
+def _parse_avito_date(text: str) -> str | None:
+    """'23 сентября в 14:25' -> ISO-строка (год угадывается по месяцу)."""
+    if not text:
+        return None
+    low = text.lower().replace("·", " ")
+    m = re.search(r"(\d{1,2})\s+([а-яё]+)\s+в\s+(\d{1,2}):(\d{2})", low)
+    if not m:
+        m = re.search(r"(\d{1,2})\s+([а-яё]+)\s+(\d{4})", low)
+        if not m:
+            return None
+        day, month_name, year = int(m.group(1)), m.group(2), int(m.group(3))
+        hh = mm = 0
+    else:
+        day, month_name = int(m.group(1)), m.group(2)
+        hh, mm = int(m.group(3)), int(m.group(4))
+        now = datetime.now(timezone.utc)
+        year = now.year
+        # если месяц в будущем — значит прошлый год
+        if month_name in _MONTHS and _MONTHS[month_name] > now.month:
+            year -= 1
+    if month_name not in _MONTHS:
+        return None
+    try:
+        dt = datetime(year, _MONTHS[month_name], day, hh, mm, tzinfo=timezone.utc)
+    except ValueError:
+        return None
+    return dt.isoformat()
+
+
 @app.get("/fetch_lot")
 def fetch_lot(avito_id: int):
     """Описание лота через HTTP-клиент парсера (прогретая сессия + solver).
@@ -297,12 +362,30 @@ def fetch_lot(avito_id: int):
     if not html_code:
         return {"avito_id": avito_id, "ok": False, "description": None,
                 "price": None, "title": None,
+                "published_at": None, "views_total": None, "views_today": None,
                 "reason": "запрос не прошёл (блокировка/ретраи)"}
     desc = _extract_description(html_code)
     price = _extract_price(html_code)
     title = _extract_title(html_code)
+    meta = _extract_lot_meta(html_code)
+
+    # сохраняем дату публикации и просмотры в БД (для карточки и тех. сводки)
+    try:
+        with _postgres_conn(pg) as conn, conn.cursor() as cur:
+            cur.execute(
+                "UPDATE avito_original.ads SET published_at=COALESCE(published_at, %s), "
+                "views_total=COALESCE(views_total, %s), views_today=COALESCE(views_today, %s) "
+                "WHERE avito_id=%s",
+                (meta["published_at"], meta["views_total"], meta["views_today"], avito_id))
+            conn.commit()
+    except Exception as exc:
+        logger.warning(f"/fetch_lot: не сохранил метаданные лота: {exc}")
+
     return {"avito_id": avito_id, "ok": True, "description": desc,
             "price": price, "title": title,
+            "published_at": meta["published_at"],
+            "views_total": meta["views_total"],
+            "views_today": meta["views_today"],
             "reason": None if desc else "страница получена, описание не извлеклось"}
 
 

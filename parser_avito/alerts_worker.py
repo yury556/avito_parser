@@ -43,7 +43,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                 r"""
                 WITH base AS (
                     SELECT d.avito_id, d.price_rub, d.state, d.category, d.model,
-                           d.alerted_at, coalesce(d.chip, '') AS b_chip,
+                           d.alerted_at, coalesce(d.chip, '') AS b_chip, d.tags,
                            lower(d.model) AS lmodel,
                            coalesce(
                                nullif(coalesce(d.chip, ''), ''),
@@ -87,14 +87,22 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                              (coalesce(location, '') = '') ASC,
                              (coalesce(title, '') = '') ASC,
                              parsed_at DESC
+                ),
+                lot_meta AS (
+                    -- дата публикации, просмотры и описание из avito_original.ads
+                    SELECT avito_id, published_at, views_total, views_today, description
+                    FROM avito_original.ads
                 )
                 SELECT b.avito_id, b.model, b.price_rub, m.url,
                        m.location,
-                       COALESCE(med_fam.med, med_cat.med) AS ref_med
+                       COALESCE(med_fam.med, med_cat.med) AS ref_med,
+                       b.tags, lm.published_at, lm.views_total, lm.views_today,
+                       lm.description
                 FROM base b
                 JOIN med_cat ON med_cat.category = b.category
                 LEFT JOIN med_fam ON med_fam.family = b.family
                 JOIN seen m ON m.avito_id = b.avito_id
+                LEFT JOIN lot_meta lm ON lm.avito_id = b.avito_id
                 WHERE b.state = 'активно' AND b.price_rub > 0
                   AND b.alerted_at IS NULL
                   AND m.last_seen > now() - interval '48 hours'
@@ -129,12 +137,17 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
     return [
         {
             "avito_id": r[0],
-            "model": (r[1] or "?")[:40],
+            "model": (r[1] or "?")[:60],
             "price": float(r[2]),
             "url": r[3],
             "location": r[4],
             "median": float(r[5]),
             "benefit_pct": int(round((float(r[2]) / float(r[5]) - 1) * 100)),
+            "tags": r[6] or [],
+            "published_at": r[7],
+            "views_total": r[8],
+            "views_today": r[9],
+            "description": r[10] or "",
         }
         for r in rows
     ]
