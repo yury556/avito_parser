@@ -27,33 +27,77 @@ def _db_conn(db: dict):
 
 
 def _scan_good_lots(db: dict) -> list[dict] | None:
-    """Активные лоты дешевле медианы модели на DISCOUNT_PCT%+, не алерченные."""
+    """Активные лоты дешевле медианы на DISCOUNT_PCT%+.
+
+    Медиана считается ПО КОНКРЕТНОЙ МОДЕЛИ (если ≥3 активных лотов модели),
+    иначе — по категории (fallback). Фильтры: непустая модель, чёрный список
+    аксессуаров в заголовке, только СПб/Лен область, цена не ниже 30% медианы
+    (отсекает заглушки/обман за 350 ₽).
+    """
     try:
         with _db_conn(db) as conn, conn.cursor() as cur:
             cur.execute(
-                """
-                WITH med AS (
-                    SELECT d2.category, percentile_cont(0.5)
-                           WITHIN GROUP (ORDER BY d2.price_rub) AS med
-                    FROM detail.ads d2
-                    WHERE d2.state = 'активно' AND d2.price_rub > 0
-                    GROUP BY d2.category
+                r"""
+                WITH base AS (
+                    SELECT d.avito_id, d.price_rub, d.state, d.category, d.model,
+                           d.alerted_at,
+                           lower(d.model) AS lmodel,
+                           coalesce(
+                               substring(lower(d.model) from '((rtx|gtx)\s?[0-9]{4}(\s?(ti|super))*)'),
+                               substring(lower(d.model) from '(rx\s?[0-9]{4}(\s?xt)*)'),
+                               substring(lower(d.model) from '(i[3579]-[0-9]{4,5}[fk]?)'),
+                               substring(lower(d.model) from '(ryzen\s?[0-9]\s?[0-9]{4}[x3df]*)'),
+                               substring(lower(d.model) from '(ddr[345]\s?[0-9]{1,2}\s?gb)'),
+                               'rtx ' || substring(lower(d.model) from '(^(\d{4}\s?(ti|super)))'),
+                               CASE WHEN lower(d.model) ~ '(прицеп|титан|оптима|optima|бортов|аккума|мзса|кузов|тралер|trailer)'
+                                         OR lower(d.category) LIKE '%прицеп%'
+                                    THEN 'прицеп' END,
+                               d.category
+                           ) AS family
+                    FROM detail.ads d
+                ),
+                med_fam AS (
+                    SELECT family, percentile_cont(0.5)
+                           WITHIN GROUP (ORDER BY price_rub) AS med
+                    FROM base
+                    WHERE state = 'активно' AND price_rub > 0
+                      AND model IS NOT NULL AND model != ''
+                    GROUP BY family
+                    HAVING count(*) >= 3
+                ),
+                med_cat AS (
+                    SELECT category, percentile_cont(0.5)
+                           WITHIN GROUP (ORDER BY price_rub) AS med
+                    FROM base
+                    WHERE state = 'активно' AND price_rub > 0
+                      AND model IS NOT NULL AND model != ''
+                    GROUP BY category
                 ),
                 seen AS (
                     SELECT avito_id, max(parsed_at) AS last_seen
                     FROM midraw.avito_ads GROUP BY avito_id
                 )
-                SELECT d.avito_id, d.model, d.price_rub, m.url,
-                       m.location, med.med
-                FROM detail.ads d
-                JOIN midraw.avito_ads m ON m.avito_id = d.avito_id
-                JOIN med ON med.category = d.category
-                JOIN seen ON seen.avito_id = d.avito_id
-                WHERE d.state = 'активно' AND d.price_rub > 0
-                  AND d.alerted_at IS NULL
+                SELECT b.avito_id, b.model, b.price_rub, m.url,
+                       m.location,
+                       COALESCE(med_fam.med, med_cat.med) AS ref_med
+                FROM base b
+                JOIN midraw.avito_ads m ON m.avito_id = b.avito_id
+                JOIN med_cat ON med_cat.category = b.category
+                LEFT JOIN med_fam ON med_fam.family = b.family
+                JOIN seen ON seen.avito_id = b.avito_id
+                WHERE b.state = 'активно' AND b.price_rub > 0
+                  AND b.alerted_at IS NULL
                   AND seen.last_seen > now() - interval '48 hours'
-                  AND d.price_rub < med.med * %(k)s
-                ORDER BY (d.price_rub / med.med) ASC
+                  AND b.model IS NOT NULL AND b.model != ''
+                  AND (m.title IS NULL OR m.title !~*
+                       '(переходник|кабел|кронштейн|подставк|заглушк|адаптер|шлейф|креплени|держател)')
+                  AND (position('петербург' in lower(coalesce(m.location,''))) > 0
+                       OR position('ленинград' in lower(coalesce(m.location,''))) > 0
+                       OR position('sankt-peterburg' in lower(coalesce(m.url,''))) > 0
+                       OR position('leningradskaya' in lower(coalesce(m.url,''))) > 0)
+                  AND b.price_rub >= COALESCE(med_fam.med, med_cat.med) * 0.30
+                  AND b.price_rub < COALESCE(med_fam.med, med_cat.med) * %(k)s
+                ORDER BY (b.price_rub / COALESCE(med_fam.med, med_cat.med)) ASC
                 LIMIT 5
                 """,
                 {"k": 1 - DISCOUNT_PCT / 100.0},
