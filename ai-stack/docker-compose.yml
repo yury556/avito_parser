@@ -18,7 +18,7 @@ services:
       - DB_NAME=${DB_NAME:-avito_dwh}
       - DB_USER=${DB_USER:-avito}
       - DB_PASSWORD=${DB_PASSWORD:-avito123}
-      - AI_PROMPT_VERSION=${AI_PROMPT_VERSION:-v1}
+      - AI_PROMPT_VERSION=${AI_PROMPT_VERSION:-v2}
       - WORKER_ENABLED=${WORKER_ENABLED:-false}
       - PARALLEL_WORKERS=${PARALLEL_WORKERS:-5}
       - IDLE_SLEEP=${IDLE_SLEEP:-30}

@@ -21,14 +21,41 @@ ddr4 32gb) в slug — главный товар объявления.
 import re
 from typing import NamedTuple, Optional
 
-# (тип, regex). Порядок важен: GPU -> CPU -> RAM
+def _canon_nv(m):
+    return f"{m.group(1)} {m.group(2)}{m.group(3) or ''}"
+
+
+def _canon_amd_gpu(m):
+    return f"rx {m.group(1)}{m.group(2) or ''}"
+
+
+def _canon_intel(m):
+    return f"{m.group(1)}-{m.group(2)}{m.group(3) or ''}"
+
+
+def _canon_ryzen(m):
+    return f"ryzen {m.group(1)} {m.group(2)}{m.group(3) or ''}"
+
+
+def _canon_ram(m):
+    return f"ddr{m.group(1)} {m.group(2)}gb"
+
+
+# (тип, regex, канонизатор). Порядок важен: GPU -> CPU -> RAM
 _CHIP_PATTERNS = (
-    ("gpu-nv", re.compile(r"\b(rtx|gtx)[\s_-]*(\d{4})(?:\s?(ti|super))?\b")),
-    ("gpu-amd", re.compile(r"\brx[\s_-]*(\d{4})(?:\s?xt)?\b")),
-    ("cpu-intel", re.compile(r"\b(i[3579])[\s_-]*(\d{4,5})([a-z]{1,2})?\b")),
-    ("cpu-amd", re.compile(r"\bryzen[\s_-]*([579])[\s_-]*(\d{4})(?:\s?([a-z0-9]{0,4}))?\b")),
-    ("ram", re.compile(r"\bddr([345])[\s_-]*(\d{1,2})[\s_-]*gb\b")),
+    ("gpu-nv", re.compile(r"\b(rtx|gtx)[\s_-]*(\d{4})(?:\s?(ti|super))?\b"), _canon_nv),
+    ("gpu-amd", re.compile(r"\brx[\s_-]*(\d{4})(?:\s?(xt))?\b"), _canon_amd_gpu),
+    # суффикс Intel только из известных (иначе "13600 oem" -> "13600 o");
+    # (?![0-9]) вместо \b: в "13850HX" между цифрой и буквой нет границы слова
+    ("cpu-intel", re.compile(r"\b(i[3579])[\s_-]*(\d{4,5})(?:\s?(kf|ks|xe|k|f))?(?![0-9])"), _canon_intel),
+    # суффикс Ryzen только x/x3d/xe/g (иначе "7700 b650" цепляет плату)
+    ("cpu-amd", re.compile(r"\bryzen[\s_-]*([579])[\s_-]*(\d{4})(?:\s?(x3d|xe|g))?(?![0-9])"), _canon_ryzen),
+    # DDR: между "ddr4" и объёмом может стоять слово ("DDR4 Fury 32GB")
+    ("ram", re.compile(r"\bddr([345])\b[^0-9]{0,20}?(\d{1,2})\s?gb\b"), _canon_ram),
 )
+
+# Суффиксы, разница в которых не меняет товар (i5-13600 vs i5-13600KF)
+_COMPAT_SUFFIXES = ("kf", "ks", "xe", "k", "f", "x3d", "x", "g")
 
 # Человекочитаемые названия типов (для логов)
 _CHIP_KIND_RU = {
@@ -42,12 +69,22 @@ _CHIP_KIND_RU = {
 
 class Chip(NamedTuple):
     kind: str
-    raw: str      # как написано в тексте
+    raw: str      # канонический вид: "i7-14700k", "rtx 5060 ti", "ddr4 32gb"
     key: str      # нормализованный ключ для сравнения
+    src: str      # как написано в исходном тексте (для точечной замены)
 
 
 def _key(text: str) -> str:
     return re.sub(r"[^a-z0-9]", "", text.lower())
+
+
+def _compatible(key_a: str, key_b: str) -> bool:
+    """Совместимы ли чипы: совпадение или разница только в суффиксе
+    (i5-13600 vs i5-13600KF — один и тот же товар)."""
+    if key_a == key_b:
+        return True
+    short, long_ = (key_a, key_b) if len(key_a) < len(key_b) else (key_b, key_a)
+    return long_.startswith(short) and long_[len(short):] in _COMPAT_SUFFIXES
 
 
 def find_chips(text: str) -> list[Chip]:
@@ -56,9 +93,10 @@ def find_chips(text: str) -> list[Chip]:
         return []
     low = text.lower()
     hits = []
-    for kind, pat in _CHIP_PATTERNS:
+    for kind, pat, canon in _CHIP_PATTERNS:
         for m in pat.finditer(low):
-            hits.append((m.start(), m.end(), Chip(kind, m.group(0), _key(m.group(0)))))
+            raw = canon(m)
+            hits.append((m.start(), m.end(), Chip(kind, raw, _key(raw), m.group(0))))
     hits.sort()
     # убираем пересечения (например, один чип найден двумя паттернами)
     out: list[Chip] = []
@@ -118,12 +156,19 @@ def validate_model(model: Optional[str], url: Optional[str]) -> tuple[str, str, 
         return new_model, model_ai, slug_chip.raw, note
 
     m_chip = model_chips[0]
-    if m_chip.kind == slug_chip.kind and m_chip.key != slug_chip.key:
-        # LLM назвал другой чип того же типа -> заменяем чип в модели,
-        # сохраняя бренд и прочие слова названия
-        new_model = re.sub(re.escape(m_chip.raw), slug_chip.raw, model_ai, count=1, flags=re.I)
-        note = (f"модель исправлена по slug: {m_chip.raw} -> {slug_chip.raw} "
-                f"({_CHIP_KIND_RU.get(m_chip.kind, m_chip.kind)})")
+    if m_chip.kind == slug_chip.kind and not _compatible(m_chip.key, slug_chip.key):
+        # LLM назвал другой чип того же типа. Чип (для медиан) берём из slug —
+        # он надёжнее. Саму модель правим только если чип в ней написан буквально
+        # (иначе не рискуем испортить название вроде «DDR4 Fury 32GB»).
+        if m_chip.src.lower() in model_ai.lower():
+            new_model = re.sub(re.escape(m_chip.src), slug_chip.raw, model_ai,
+                               count=1, flags=re.I)
+            note = (f"модель исправлена по slug: {m_chip.raw} -> {slug_chip.raw} "
+                    f"({_CHIP_KIND_RU.get(m_chip.kind, m_chip.kind)})")
+        else:
+            new_model = model_ai
+            note = (f"чип уточнён по slug: {m_chip.raw} -> {slug_chip.raw} "
+                    f"({_CHIP_KIND_RU.get(m_chip.kind, m_chip.kind)})")
         return new_model, model_ai, slug_chip.raw, note
 
     # чипы совпали или типы разные (комплект: i5 + плата + 32GB) -> не трогаем

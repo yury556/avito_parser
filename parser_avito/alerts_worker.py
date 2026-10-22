@@ -40,15 +40,15 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                 r"""
                 WITH base AS (
                     SELECT d.avito_id, d.price_rub, d.state, d.category, d.model,
-                           d.alerted_at,
+                           d.alerted_at, coalesce(d.chip, '') AS b_chip,
                            lower(d.model) AS lmodel,
                            coalesce(
+                               nullif(coalesce(d.chip, ''), ''),
                                substring(lower(d.model) from '((rtx|gtx)\s?[0-9]{4}(\s?(ti|super))*)'),
                                substring(lower(d.model) from '(rx\s?[0-9]{4}(\s?xt)*)'),
                                substring(lower(d.model) from '(i[3579]-[0-9]{4,5}[fk]?)'),
                                substring(lower(d.model) from '(ryzen\s?[0-9]\s?[0-9]{4}[x3df]*)'),
                                substring(lower(d.model) from '(ddr[345]\s?[0-9]{1,2}\s?gb)'),
-                               'rtx ' || substring(lower(d.model) from '(^(\d{4}\s?(ti|super)))'),
                                CASE WHEN lower(d.model) ~ '(прицеп|титан|оптима|optima|бортов|аккума|мзса|кузов|тралер|trailer)'
                                          OR lower(d.category) LIKE '%прицеп%'
                                     THEN 'прицеп' END,
