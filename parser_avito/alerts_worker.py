@@ -7,7 +7,10 @@ import time
 
 import psycopg2
 
-from tg_alerts import send_lots_batch, send_failure, send_recovery
+from tg_alerts import send_lots_batch, send_failure, send_recovery, send_system
+
+# Троттлинг алерта «скан выгодных лотов упал»: не чаще раза в час
+_SCAN_FAIL_ALERTED_AT = 0.0
 
 SILENCE_THRESHOLD_MIN = int(os.environ.get("SILENCE_THRESHOLD_MIN", "90"))
 ALERT_SCAN_INTERVAL = int(os.environ.get("ALERT_SCAN_INTERVAL", "300"))  # 5 мин
@@ -50,7 +53,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                                substring(lower(d.model) from '(ryzen\s?[0-9]\s?[0-9]{4}[x3df]*)'),
                                substring(lower(d.model) from '(ddr[345]\s?[0-9]{1,2}\s?gb)'),
                                CASE WHEN lower(d.model) ~ '(прицеп|титан|оптима|optima|бортов|аккума|мзса|кузов|тралер|trailer)'
-                                         OR lower(d.category) LIKE '%прицеп%'
+                                         OR lower(d.category) LIKE '%%прицеп%%'
                                     THEN 'прицеп' END,
                                d.category
                            ) AS family
@@ -105,6 +108,16 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
             rows = cur.fetchall()
     except Exception as exc:
         print(f"alerts: scan failed: {exc}", flush=True)
+        # Молчащий отказ скана хуже падения: система перестаёт присылать лоты.
+        # Сообщаем в Telegram (не чаще раза в час).
+        global _SCAN_FAIL_ALERTED_AT
+        if time.time() - _SCAN_FAIL_ALERTED_AT > 3600:
+            _SCAN_FAIL_ALERTED_AT = time.time()
+            try:
+                send_system(f"⚠️ Скан выгодных лотов упал: {exc}\n"
+                            f"Лоты не присылаются, пока не починим.")
+            except Exception:
+                pass
         return None
     return [
         {
