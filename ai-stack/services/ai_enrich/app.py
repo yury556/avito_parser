@@ -16,6 +16,8 @@ import psycopg2
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+from model_guard import validate_model
+
 app = FastAPI(title="AI Enrich", version="1.0.0")
 
 # ──── Конфигурация ────
@@ -100,7 +102,7 @@ def batch_process(req: BatchRequest):
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT a.avito_id, a.title, a.description, a.price_rub
+        SELECT a.avito_id, a.title, a.description, a.price_rub, a.url
         FROM midraw.avito_ads a
         LEFT JOIN detail.ads d ON a.avito_id = d.avito_id
         WHERE d.avito_id IS NULL
@@ -114,41 +116,51 @@ def batch_process(req: BatchRequest):
 
     def _process_one(job):
         """Worker — тянет данные в OpenRouter (БД не касается)."""
-        avito_id, title, desc, price_rub = job
+        avito_id, title, desc, price_rub, url = job
         try:
             messages = _build_messages(title or "", desc or "")
             result = _call_openrouter(messages)
             if isinstance(result, dict) and "category" in result:
                 return {"ok": True, "avito_id": avito_id, "data": result,
-                        "title": title, "desc": desc, "price_rub": price_rub}
+                        "title": title, "desc": desc, "price_rub": price_rub, "url": url}
             return {"ok": False, "avito_id": avito_id, "error": "invalid AI response"}
         except Exception as e:
             return {"ok": False, "avito_id": avito_id, "error": str(e)}
 
-    jobs = [(r[0], r[1], r[2], r[3]) for r in rows]
+    jobs = [(r[0], r[1], r[2], r[3], r[4]) for r in rows]
     with ThreadPoolExecutor(max_workers=PARALLEL_WORKERS) as executor:
         futures = [executor.submit(_process_one, job) for job in jobs]
         for fut in as_completed(futures):
             out = fut.result()
             if out["ok"]:
                 try:
+                    # Детерминированная валидация модели по URL-slug: LLM иногда
+                    # называет не тот чип (i5-13600KF -> "i5-14400F").
+                    model_fixed, model_ai, chip, note = validate_model(
+                        out["data"].get("model"), out.get("url"))
+                    if note:
+                        print(f"ai_enrich: {out['avito_id']}: {note} "
+                              f"('{model_ai}' -> '{model_fixed}')", flush=True)
                     cur.execute("""
                         INSERT INTO detail.ads
-                            (avito_id, category, brand, model, tags,
+                            (avito_id, category, brand, model, model_ai, chip, tags,
                              input_title, input_description,
                              price_rub,
                              ai_model, ai_version, ai_processed_at, ai_status)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), 'success')
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), 'success')
                         ON CONFLICT (avito_id) DO UPDATE SET
                             category=EXCLUDED.category, brand=EXCLUDED.brand,
-                            model=EXCLUDED.model, tags=EXCLUDED.tags,
+                            model=EXCLUDED.model, model_ai=EXCLUDED.model_ai,
+                            chip=EXCLUDED.chip, tags=EXCLUDED.tags,
                             price_rub=EXCLUDED.price_rub,
                             ai_processed_at=NOW(), ai_status='success'
                     """, (
                         out["avito_id"],
                         out["data"].get("category"),
                         out["data"].get("brand"),
-                        out["data"].get("model"),
+                        model_fixed,
+                        model_ai,
+                        chip,
                         json.dumps(out["data"].get("tags", [])),
                         out["title"], out["desc"],
                         out["data"].get("price_rub") if out["data"].get("price_rub") is not None else out["price_rub"],
