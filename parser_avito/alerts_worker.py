@@ -7,13 +7,16 @@ import time
 
 import psycopg2
 
-from tg_alerts import send_lots_batch, send_failure, send_recovery, send_system
+from tg_alerts import (send_lots_batch, send_failure, send_recovery, send_system,
+                      send_new_lot)
 
 # Троттлинг алерта «скан выгодных лотов упал»: не чаще раза в час
 _SCAN_FAIL_ALERTED_AT = 0.0
 
 SILENCE_THRESHOLD_MIN = int(os.environ.get("SILENCE_THRESHOLD_MIN", "90"))
 ALERT_SCAN_INTERVAL = int(os.environ.get("ALERT_SCAN_INTERVAL", "300"))  # 5 мин
+NEW_SCAN_INTERVAL = int(os.environ.get("NEW_SCAN_INTERVAL", "300"))  # 5 мин
+NEW_PER_HOUR = int(os.environ.get("NEW_LOTS_PER_HOUR", "20"))  # новых объявлений за раз
 DISCOUNT_PCT = int(os.environ.get("ALERT_DISCOUNT_PCT", "20"))
 
 # состояние между тиками (в процессе enricher)
@@ -44,6 +47,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                 WITH base AS (
                     SELECT d.avito_id, d.price_rub, d.state, d.category, d.model,
                            d.alerted_at, coalesce(d.chip, '') AS b_chip, d.tags,
+                           d.alerted_price,
                            lower(d.model) AS lmodel,
                            coalesce(
                                nullif(coalesce(d.chip, ''), ''),
@@ -89,22 +93,24 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                              parsed_at DESC
                 ),
                 lot_meta AS (
-                    -- дата публикации, просмотры и описание из avito_original.ads
-                    SELECT avito_id, published_at, views_total, views_today, description
+                    -- дата публикации, просмотры, описание и название из avito_original.ads
+                    SELECT avito_id, published_at, views_total, views_today, description, title
                     FROM avito_original.ads
                 )
                 SELECT b.avito_id, b.model, b.price_rub, m.url,
                        m.location,
                        COALESCE(med_fam.med, med_cat.med) AS ref_med,
                        b.tags, lm.published_at, lm.views_total, lm.views_today,
-                       lm.description
+                       lm.description, coalesce(NULLIF(lm.title, ''), m.title) AS lot_title
                 FROM base b
                 JOIN med_cat ON med_cat.category = b.category
                 LEFT JOIN med_fam ON med_fam.family = b.family
                 JOIN seen m ON m.avito_id = b.avito_id
                 LEFT JOIN lot_meta lm ON lm.avito_id = b.avito_id
                 WHERE b.state = 'активно' AND b.price_rub > 0
-                  AND b.alerted_at IS NULL
+                  AND (b.alerted_at IS NULL
+                       OR b.price_rub <= COALESCE(b.alerted_price, b.price_rub) * 0.97
+                       OR b.alerted_at < now() - interval '24 hours')
                   AND m.last_seen > now() - interval '48 hours'
                   AND b.model IS NOT NULL AND b.model != ''
                   AND (m.title IS NULL OR m.title !~*
@@ -138,6 +144,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
         {
             "avito_id": r[0],
             "model": (r[1] or "?")[:60],
+            "title": (r[11] or "")[:120],
             "price": float(r[2]),
             "url": r[3],
             "location": r[4],
@@ -153,12 +160,86 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
     ]
 
 
-def _mark_alerted(db: dict, ids: list[int]) -> None:
+def _scan_new_lots(db: dict, limit: int = 20) -> list[dict]:
+    """Новые объявления из выдачи (появились за последние 2 часа) —
+    приходят отдельными уведомлениями, независимо от выгоды цены."""
+    try:
+        with _db_conn(db) as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                WITH fresh AS (
+                    SELECT DISTINCT ON (avito_id)
+                           avito_id, url, location, title,
+                           max(parsed_at) OVER (PARTITION BY avito_id) AS seen_at
+                    FROM midraw.avito_ads
+                    WHERE parsed_at > now() - interval '2 hours'
+                    ORDER BY avito_id,
+                             (coalesce(location,'') = '') ASC,
+                             (coalesce(title,'') = '') ASC,
+                             parsed_at DESC
+                )
+                SELECT f.avito_id, coalesce(NULLIF(d.model,''), '?') AS model,
+                       d.price_rub, f.url, f.location, f.title,
+                       lm.published_at, lm.views_total, lm.views_today,
+                       lm.description, d.tags, d.category
+                FROM fresh f
+                JOIN detail.ads d ON d.avito_id = f.avito_id
+                LEFT JOIN avito_original.ads lm ON lm.avito_id = f.avito_id
+                WHERE d.new_notified_at IS NULL
+                  AND d.state = 'активно'
+                  AND d.price_rub > 0
+                  AND coalesce(NULLIF(d.model,''), NULLIF(f.title,'')) IS NOT NULL
+                ORDER BY f.seen_at DESC
+                LIMIT %s
+                """,
+                (limit,),
+            )
+            rows = cur.fetchall()
+    except Exception as exc:
+        print(f"alerts: scan new failed: {exc}", flush=True)
+        return []
+    return [
+        {
+            "avito_id": r[0],
+            "model": (r[1] or "?")[:60],
+            "title": (r[5] or "")[:120],
+            "price": float(r[2]),
+            "url": r[3],
+            "location": r[4],
+            "published_at": r[6],
+            "views_total": r[7],
+            "views_today": r[8],
+            "description": r[9] or "",
+            "tags": r[10] or [],
+            "category": r[11],
+        }
+        for r in rows
+    ]
+
+
+def _mark_new_notified(db: dict, ids: list[int]) -> None:
+    if not ids:
+        return
     with _db_conn(db) as conn, conn.cursor() as cur:
         cur.execute(
-            "UPDATE detail.ads SET alerted_at = now() WHERE avito_id = ANY(%s)",
+            "UPDATE detail.ads SET new_notified_at = now() WHERE avito_id = ANY(%s)",
             (ids,),
         )
+        conn.commit()
+
+
+def _mark_alerted(db: dict, items: list[dict]) -> None:
+    """Пометить отправленные лоты. alerted_price — цена на момент алерта:
+    если цена упадёт ещё на 3%+ — лот придёт снова."""
+    if not items:
+        return
+    with _db_conn(db) as conn, conn.cursor() as cur:
+        for it in items:
+            cur.execute(
+                "UPDATE detail.ads SET alerted_at = now(), alerted_price = %s "
+                "WHERE avito_id = %s",
+                (it.get("price"), it["avito_id"]),
+            )
         conn.commit()
 
 
@@ -252,8 +333,30 @@ def alert_tick(db: dict) -> None:
         if items:
             sent = send_lots_batch(items)
             if sent:
-                _mark_alerted(db, sent)
+                sent_ids = set(sent)
+                _mark_alerted(db, [it for it in items if it["avito_id"] in sent_ids])
                 print(f"alerts: отправлено {len(sent)} выгодных лотов "
                       f"(отдельными сообщениями)", flush=True)
             else:
                 print("alerts: лот-алерт не отправлен (мьют/бюджет/ошибка)", flush=True)
+
+    # --- новые объявления из выдачи (отдельный поток уведомлений) ---
+    if now - _state.get("last_new_scan", 0) >= NEW_SCAN_INTERVAL:
+        _state["last_new_scan"] = now
+        try:
+            new_items = _scan_new_lots(db, limit=NEW_PER_HOUR)
+            sent_new = []
+            for ad in new_items:
+                if len(sent_new) >= NEW_PER_HOUR:
+                    break
+                try:
+                    if send_new_lot(ad):
+                        sent_new.append(ad["avito_id"])
+                        time.sleep(0.7)
+                except Exception as exc:
+                    print(f"alerts: new lot send failed: {exc}", flush=True)
+            if sent_new:
+                _mark_new_notified(db, sent_new)
+                print(f"alerts: отправлено {len(sent_new)} новых объявлений", flush=True)
+        except Exception as exc:
+            print(f"alerts: new scan failed: {exc}", flush=True)

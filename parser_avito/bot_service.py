@@ -12,6 +12,7 @@
 
 Long-polling через urllib — без внешних зависимостей.
 """
+import html as html_mod
 import json
 import os
 import time
@@ -84,16 +85,18 @@ def _lot_card(avito_id: int, refresh: bool = False) -> str:
                 FROM midraw.avito_ads WHERE price_rub > 0
                 ORDER BY avito_id, parsed_at DESC)
             SELECT d.model, d.brand, d.state, l.price_rub, l.parsed_at,
-                   m.description, m.url, m.location, d.category
+                   m.description, m.url, m.location, d.category,
+                   coalesce(NULLIF(a.title,''), m.title) AS lot_title
             FROM detail.ads d
             JOIN last l ON l.avito_id = d.avito_id
             JOIN midraw.avito_ads m ON m.avito_id = d.avito_id
+            LEFT JOIN avito_original.ads a ON a.avito_id = d.avito_id
             WHERE d.avito_id = %s AND m.avito_id = %s
             LIMIT 1""", (avito_id, avito_id))
         row = cur.fetchone()
     if not row:
         return f"⚠️ Лот {avito_id} не найден в базе."
-    model, brand, state, price, seen, desc, url, location, category = row
+    model, brand, state, price, seen, desc, url, location, category, lot_title = row
     med = sql("""
         SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY price_rub)
         FROM detail.ads WHERE category = %s AND state='активно' AND price_rub > 0
@@ -104,8 +107,10 @@ def _lot_card(avito_id: int, refresh: bool = False) -> str:
     if len(desc_txt) > 2200:
         desc_txt = desc_txt[:2200] + "…"
     text = (
-        f"📦 <b>{(brand or '')} {(model or '')[:80]}</b>\n"
-        f"🟡 Категория: {category or '?'} · {location or '?'}\n"
+        f"📦 <b>{(lot_title or brand or '')[:90]}</b>\n"
+        + (f"<i>{html_mod.escape((brand or '') + ' ' + (model or ''))[:90]}</i>\n"
+           if (brand or model) else "")
+        + f"🟡 Категория: {category or '?'} · {location or '?'}\n"
         f"💰 Цена: <b>{float(price):,.0f} ₽</b>{pct}\n"
         f"🏷 Статус: {state} · видели {seen:%d.%m %H:%M}\n"
         f"\n📝 <b>Описание</b> ({len(desc or '')} симв.):\n"
@@ -201,7 +206,8 @@ def cmd_tech(avito_id: int) -> str:
                d.ai_model, d.ai_version, d.ai_processed_at, d.ai_status,
                d.ai_duration_ms, d.ai_attempts, d.price_rub, d.last_checked_at,
                a.published_at, a.views_total, a.views_today,
-               length(coalesce(a.description,'')) AS desc_len
+               length(coalesce(a.description,'')) AS desc_len,
+               coalesce(NULLIF(a.title,''), d.input_title) AS lot_title
         FROM detail.ads d
         LEFT JOIN avito_original.ads a ON a.avito_id = d.avito_id
         WHERE d.avito_id = %s
@@ -210,7 +216,7 @@ def cmd_tech(avito_id: int) -> str:
         return f"⚠️ Лот {avito_id} не найден в базе."
     (model, model_ai, chip, category, brand, state, ai_model, ai_version,
      ai_at, ai_status, ai_ms, ai_attempts, price, last_checked, published_at,
-     v_total, v_today, desc_len) = row[0]
+     v_total, v_today, desc_len, lot_title) = row[0]
 
     # проверки
     checks = sql("""
@@ -264,6 +270,9 @@ def cmd_tech(avito_id: int) -> str:
         return f"{m / 1440:.0f} дн назад"
 
     L = [f"🔧 <b>Лот {avito_id}</b> — тех. свойства", ""]
+    if lot_title:
+        L.insert(0, f"📌 {lot_title}")
+        L.insert(1, "")
     L.append("<b>🤖 Обогащение (AI)</b>")
     L.append(f"   модель AI: {ai_model or '—'} · промпт: {ai_version or '—'}")
     L.append(f"   обработано: {ai_at:%d.%m %H:%M} ({ago(ai_at)}) · статус: {ai_status or '—'}")

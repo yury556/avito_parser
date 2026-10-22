@@ -8,6 +8,7 @@ send_message — тонкая обёртка (никогда не роняет �
 import html as html_mod
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
@@ -134,9 +135,16 @@ def send_lot(ad: dict) -> bool:
     описание, дата создания. Кнопки: Авито / тех. свойства / карточка."""
     model = html_mod.escape((ad["model"] or "?")[:60])
     loc = html_mod.escape(_city(ad))
+    title = html_mod.escape((ad.get("title") or "").strip()[:120])
 
-    lines = [
-        f"🔥 <b>{model}</b>",
+    lines = []
+    if title and title.lower() != model.lower():
+        lines.append(f"🔥 <b>{title}</b>")
+        if ad.get("model") and ad["model"] != "?":
+            lines.append(f"<i>{model}</i>")
+    else:
+        lines.append(f"🔥 <b>{model}</b>")
+    lines += [
         f"💰 {ad['price']:,.0f} ₽ — на <b>{ad['benefit_pct']:+d}%</b> "
         f"ниже медианы ({ad['median']:,.0f} ₽)",
         f"📍 {loc} · ID {ad['avito_id']}",
@@ -175,6 +183,21 @@ def send_lot(ad: dict) -> bool:
             [{"text": "🔇 Отключить уведомления", "callback_data": "mute_all"}],
         ]},
     }
+    if _send(payload) is False:
+        # Telegram не понял HTML (например, в тексте остался «<»):
+        # отправляем без разметки, чтобы лот не потерялся
+        plain = re.sub(r"<[^>]+>", "", text)
+        payload["text"] = plain
+        payload["parse_mode"] = None
+        if _send(payload) is False:
+            return False
+    _lot_msg_times.append(time.time())
+    _log_alert("lots", f"{model} — {ad['price']:.0f} ₽ ({ad['benefit_pct']:+d}%)")
+    return True
+
+
+def _send(payload: dict) -> bool | None:
+    """Отправка одного сообщения. True — ок, False — ошибка, None — сетевая."""
     try:
         req = urllib.request.Request(
             API + "/sendMessage",
@@ -182,17 +205,71 @@ def send_lot(ad: dict) -> bool:
             headers={"Content-Type": "application/json"},
         )
         with urllib.request.urlopen(req, timeout=15) as r:
-            ok = r.status == 200
+            return r.status == 200
     except urllib.error.HTTPError as exc:
-        print(f"tg_alerts: send failed: HTTP {exc.code}: {exc.read().decode()[:200]}", flush=True)
+        body = exc.read().decode()[:300]
+        print(f"tg_alerts: send failed: HTTP {exc.code}: {body}", flush=True)
+        if exc.code == 400:
+            print(f"tg_alerts: текст сообщения: {payload.get('text', '')[:300]!r}", flush=True)
         return False
     except Exception as exc:
         print(f"tg_alerts: send failed: {exc}", flush=True)
-        return False
-    if ok:
-        _lot_msg_times.append(time.time())
-        _log_alert("lots", f"{model} — {ad['price']:.0f} ₽ ({ad['benefit_pct']:+d}%)")
-    return ok
+        return None
+
+
+def send_new_lot(ad: dict) -> bool:
+    """Уведомление о НОВОМ объявлении (появилось в выдаче) — без сравнения
+    с медианой. Название, цена, локация, теги, описание, дата создания."""
+    title = html_mod.escape((ad.get("title") or ad.get("model") or "?").strip()[:120])
+    model = html_mod.escape((ad.get("model") or "")[:60])
+    loc = html_mod.escape(_city(ad))
+
+    lines = [f"🆕 <b>{title}</b>"]
+    if model and model.lower() != title.lower():
+        lines.append(f"<i>{model}</i>")
+    lines.append(f"💰 {ad['price']:,.0f} ₽")
+    lines.append(f"📍 {loc} · ID {ad['avito_id']}")
+    if ad.get("published_at"):
+        lines.append(f"🕐 Опубликовано: {html_mod.escape(_fmt_published(ad['published_at']))}")
+
+    tags = ad.get("tags") or []
+    if isinstance(tags, str):
+        try:
+            tags = json.loads(tags)
+        except Exception:
+            tags = [tags]
+    clean = [html_mod.escape(str(t))[:30] for t in tags if str(t).strip()][:6]
+    if clean:
+        lines.append("🏷 " + " · ".join(clean))
+
+    desc = (ad.get("description") or "").strip()
+    if desc:
+        snippet = desc[:300].rstrip()
+        if len(desc) > 300:
+            snippet += "…"
+        lines.append(f"\n📝 {html_mod.escape(snippet)}")
+
+    text = "\n".join(lines)
+    payload: dict = {
+        "chat_id": CHAT_ID,
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+        "reply_markup": {"inline_keyboard": [
+            [{"text": "🛒 Открыть на Авито", "url": ad["url"]}],
+            [{"text": "🔧 Тех. свойства", "callback_data": f"tech:{ad['avito_id']}"},
+             {"text": "👁 Карточка", "callback_data": f"card:{ad['avito_id']}"}],
+            [{"text": "🔇 Отключить уведомления", "callback_data": "mute_all"}],
+        ]},
+    }
+    if _send(payload) is False:
+        plain = re.sub(r"<[^>]+>", "", text)
+        payload["text"] = plain
+        payload["parse_mode"] = None
+        if _send(payload) is False:
+            return False
+    _log_alert("new", f"{title} — {ad['price']:.0f} ₽")
+    return True
 
 
 def send_lots_batch(items: list[dict]) -> list[int]:
