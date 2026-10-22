@@ -261,6 +261,8 @@ services:
       SILENCE_THRESHOLD_MIN: "90"
       ALERT_DISCOUNT_PCT: "20"
       ALERT_SCAN_INTERVAL: "300"
+      # лимит сообщений о лотах в час (теперь 1 сообщение = 1 лот)
+      ALERT_LOT_MSG_LIMIT: "30"
     volumes:
       - ../parser_avito/storage:/shared
     command: ["python", "/app/enricher.py"]

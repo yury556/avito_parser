@@ -92,36 +92,41 @@ def lot_budget_left() -> int:
     return max(0, MAX_LOT_MSGS_PER_HOUR - len(_lot_msg_times))
 
 
-def send_lots_batch(items: list[dict]) -> bool:
-    """Батч выгодных лотов одним сообщением с кнопками. Учитывает мьют и бюджет.
+def _city(ad: dict) -> str:
+    """Город: из location, а если он пуст — по URL."""
+    loc = str(ad.get("location") or "").strip()
+    if loc:
+        return loc
+    url = (ad.get("url") or "").lower()
+    if "sankt-peterburg" in url:
+        return "Санкт-Петербург"
+    if "leningradskaya" in url:
+        return "Ленобласть"
+    if "moskva" in url:
+        return "Москва"
+    return "—"
 
-    items: [{"model","price","median","benefit_pct","avito_id","url","location"}]
-    """
-    if lots_muted() or not items:
-        return False
-    if lot_budget_left() <= 0:
-        return False
-    lines, buttons = [], []
-    for ad in items[:5]:
-        model = html_mod.escape((ad["model"] or "?")[:40])
-        lines.append(
-            f"<b>{model}</b> — {ad['price']:,.0f} ₽ "
-            f"(<b>{ad['benefit_pct']:+d}%</b> от медианы {ad['median']:,.0f} ₽)\n"
-            f"ID {ad['avito_id']} · {html_mod.escape(str(ad.get('location') or '—'))}"
-        )
-        buttons.append([{"text": f"🛒 {model}", "url": ad["url"]}])
-        buttons.append([{"text": "👁 Карточка / проверка", "callback_data": f"card:{ad['avito_id']}"}])
-    used = min(len(items), 5)
+
+def send_lot(ad: dict) -> bool:
+    """Одно сообщение на один лот. Кнопки: открыть на Авито + карточка/проверка."""
+    model = html_mod.escape((ad["model"] or "?")[:60])
+    loc = html_mod.escape(_city(ad))
     text = (
-        f"🔥 ЛОТЫ ({used}/{MAX_LOT_MSGS_PER_HOUR} за час)\n\n" + "\n\n".join(lines)
+        f"🔥 <b>{model}</b>\n"
+        f"💰 {ad['price']:,.0f} ₽ — на <b>{ad['benefit_pct']:+d}%</b> "
+        f"ниже медианы ({ad['median']:,.0f} ₽)\n"
+        f"📍 {loc} · ID {ad['avito_id']}"
     )
-    keyboard = buttons + [[{"text": "🔇 Отключить уведомления", "callback_data": "mute_all"}]]
     payload: dict = {
         "chat_id": CHAT_ID,
         "text": text,
         "parse_mode": "HTML",
         "disable_web_page_preview": True,
-        "reply_markup": {"inline_keyboard": keyboard},
+        "reply_markup": {"inline_keyboard": [
+            [{"text": "🛒 Открыть на Авито", "url": ad["url"]}],
+            [{"text": "👁 Карточка / проверка", "callback_data": f"card:{ad['avito_id']}"}],
+            [{"text": "🔇 Отключить уведомления", "callback_data": "mute_all"}],
+        ]},
     }
     try:
         req = urllib.request.Request(
@@ -139,7 +144,26 @@ def send_lots_batch(items: list[dict]) -> bool:
         return False
     if ok:
         _lot_msg_times.append(time.time())
+        _log_alert("lots", f"{model} — {ad['price']:.0f} ₽ ({ad['benefit_pct']:+d}%)")
     return ok
+
+
+def send_lots_batch(items: list[dict]) -> list[int]:
+    """Каждый лот — отдельным сообщением. Возвращает ID отправленных.
+
+    items: [{"model","price","median","benefit_pct","avito_id","url","location"}]
+    """
+    if lots_muted() or not items:
+        return []
+    sent: list[int] = []
+    for ad in items:
+        if lot_budget_left() <= 0:
+            print(f"tg_alerts: бюджет исчерпан ({MAX_LOT_MSGS_PER_HOUR}/час)", flush=True)
+            break
+        if send_lot(ad):
+            sent.append(ad["avito_id"])
+            time.sleep(0.7)  # пауза между сообщениями, чтобы не ловить 429
+    return sent
 
 
 def send_system(text: str) -> bool:

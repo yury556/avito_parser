@@ -77,20 +77,27 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                     GROUP BY category
                 ),
                 seen AS (
-                    SELECT avito_id, max(parsed_at) AS last_seen
-                    FROM midraw.avito_ads GROUP BY avito_id
+                    -- в midraw несколько строк на лот (история цен) — берём свежую,
+                    -- но с непустыми location/title (в свежих снимках они бывают пусты)
+                    SELECT DISTINCT ON (avito_id)
+                           avito_id, url, location, title,
+                           max(parsed_at) OVER (PARTITION BY avito_id) AS last_seen
+                    FROM midraw.avito_ads
+                    ORDER BY avito_id,
+                             (coalesce(location, '') = '') ASC,
+                             (coalesce(title, '') = '') ASC,
+                             parsed_at DESC
                 )
                 SELECT b.avito_id, b.model, b.price_rub, m.url,
                        m.location,
                        COALESCE(med_fam.med, med_cat.med) AS ref_med
                 FROM base b
-                JOIN midraw.avito_ads m ON m.avito_id = b.avito_id
                 JOIN med_cat ON med_cat.category = b.category
                 LEFT JOIN med_fam ON med_fam.family = b.family
-                JOIN seen ON seen.avito_id = b.avito_id
+                JOIN seen m ON m.avito_id = b.avito_id
                 WHERE b.state = 'активно' AND b.price_rub > 0
                   AND b.alerted_at IS NULL
-                  AND seen.last_seen > now() - interval '48 hours'
+                  AND m.last_seen > now() - interval '48 hours'
                   AND b.model IS NOT NULL AND b.model != ''
                   AND (m.title IS NULL OR m.title !~*
                        '(переходник|кабел|кронштейн|подставк|заглушк|адаптер|шлейф|креплени|держател)')
@@ -101,7 +108,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                   AND b.price_rub >= COALESCE(med_fam.med, med_cat.med) * 0.30
                   AND b.price_rub < COALESCE(med_fam.med, med_cat.med) * %(k)s
                 ORDER BY (b.price_rub / COALESCE(med_fam.med, med_cat.med)) ASC
-                LIMIT 5
+                LIMIT 10
                 """,
                 {"k": 1 - DISCOUNT_PCT / 100.0},
             )
@@ -230,8 +237,10 @@ def alert_tick(db: dict) -> None:
         _state["last_scan"] = now
         items = _scan_good_lots(db)
         if items:
-            if send_lots_batch(items):
-                _mark_alerted(db, [it["avito_id"] for it in items[:5]])
-                print(f"alerts: отправлено {len(items[:5])} выгодных лотов", flush=True)
+            sent = send_lots_batch(items)
+            if sent:
+                _mark_alerted(db, sent)
+                print(f"alerts: отправлено {len(sent)} выгодных лотов "
+                      f"(отдельными сообщениями)", flush=True)
             else:
                 print("alerts: лот-алерт не отправлен (мьют/бюджет/ошибка)", flush=True)
