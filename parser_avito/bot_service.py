@@ -43,6 +43,7 @@ HELP = (
     "/status — сводка системы\n"
     "/top — топ-5 самых выгодных активных лотов\n"
     "/lot <ID> — карточка объявления по ID\n"
+    "/menu — настройки бота (регион, уведомления)\n"
     "/checks — последние 20 проверок лотов\n"
     "/tech <ID> — технические свойства лота (обогащение, запросы, цена)\n"
     "/add <url> — добавить URL мониторинга\n"
@@ -106,15 +107,16 @@ def _lot_card(avito_id: int, refresh: bool = False) -> str:
     desc_txt = (desc or "").strip()
     if len(desc_txt) > 2200:
         desc_txt = desc_txt[:2200] + "…"
+    esc = lambda s: html_mod.escape(str(s or "?"))
     text = (
-        f"📦 <b>{(lot_title or brand or '')[:90]}</b>\n"
+        f"📦 <b>{html_mod.escape((lot_title or brand or '')[:90])}</b>\n"
         + (f"<i>{html_mod.escape((brand or '') + ' ' + (model or ''))[:90]}</i>\n"
            if (brand or model) else "")
-        + f"🟡 Категория: {category or '?'} · {location or '?'}\n"
+        + f"🟡 Категория: {esc(category)} · {esc(location)}\n"
         f"💰 Цена: <b>{float(price):,.0f} ₽</b>{pct}\n"
-        f"🏷 Статус: {state} · видели {seen:%d.%m %H:%M}\n"
+        f"🏷 Статус: {esc(state)} · видели {seen:%d.%m %H:%M}\n"
         f"\n📝 <b>Описание</b> ({len(desc or '')} симв.):\n"
-        f"{desc_txt or '(описание ещё не собрано)'}\n"
+        f"{html_mod.escape(desc_txt) if desc_txt else '<i>(описание ещё не собрано)</i>'}\n"
     )
     if fresh:
         text = fresh + "\n\n" + text
@@ -154,19 +156,18 @@ def api_call(method: str, payload: dict | None = None) -> dict | None:
 
 
 def reply(chat_id: int, text: str, mute_button: bool = False, url_button: str | None = None,
-         check_button: int | None = None) -> None:
+         markup: dict | None = None) -> None:
     payload: dict = {"chat_id": chat_id, "text": text,
-                     "parse_mode": "HTML" if text.startswith(("📦", "🔄", "⚠️", "🔧")) else None,
+                     "parse_mode": "HTML",
                      "disable_web_page_preview": True}
     payload = {k: v for k, v in payload.items() if v is not None}
     kb = []
     if url_button:
         kb.append([{"text": "🛒 Открыть на Авито", "url": url_button}])
-    if check_button:
-        kb.append([{"text": "🔄 Проверить сейчас", "callback_data": f"lot:{check_button}"},
-                   {"text": "👁 Карточка", "callback_data": f"card:{check_button}"}])
     if mute_button:
         kb.append([{"text": "🔊 Включить уведомления", "callback_data": "unmute_all"}])
+    if markup:
+        kb = markup
     if kb:
         payload["reply_markup"] = {"inline_keyboard": kb}
     api_call("sendMessage", payload)
@@ -269,58 +270,90 @@ def cmd_tech(avito_id: int) -> str:
             return f"{m / 60:.0f} ч назад"
         return f"{m / 1440:.0f} дн назад"
 
-    L = [f"🔧 <b>Лот {avito_id}</b> — тех. свойства", ""]
+    def esc(s) -> str:
+        return html_mod.escape(str(s or "—"))
+
+    L = []
     if lot_title:
-        L.insert(0, f"📌 {lot_title}")
-        L.insert(1, "")
-    L.append("<b>🤖 Обогащение (AI)</b>")
-    L.append(f"   модель AI: {ai_model or '—'} · промпт: {ai_version or '—'}")
-    L.append(f"   обработано: {ai_at:%d.%m %H:%M} ({ago(ai_at)}) · статус: {ai_status or '—'}")
-    L.append(f"   длительность запроса: {(ai_ms / 1000):.1f} с · попыток: {ai_attempts or '—'}"
-             if ai_ms else "   длительность запроса: нет данных")
-    L.append(f"   модель товара: {model or '—'}" + (f" (из slug: {chip})" if chip else ""))
+        L.append(f"📌 <b>{html_mod.escape(str(lot_title)[:100])}</b>")
+    L.append(f"🔧 <b>Лот {avito_id}</b> — тех. свойства")
+    L.append("")
+
+    L.append("🤖 <b>Обогащение (AI)</b>")
+    L.append(f"Модель AI: <b>{esc(ai_model)}</b> · промпт: <code>{esc(ai_version)}</code>")
+    L.append(f"Обработано: {ai_at:%d.%m %H:%M} ({ago(ai_at)}) · статус: <b>{esc(ai_status)}</b>")
+    if ai_ms:
+        L.append(f"Длительность запроса: <b>{ai_ms / 1000:.1f} с</b> · попыток: {ai_attempts or 1}")
+    else:
+        L.append("Длительность запроса: <i>нет данных</i>")
+    L.append(f"Модель товара: <b>{esc(model)}</b>"
+             + (f" <i>(из slug: {esc(chip)})</i>" if chip else ""))
     if model_ai and model_ai != model:
-        L.append(f"   было от AI: {model_ai}")
-    L.append(f"   категория: {category or '—'} · бренд: {brand or '—'}")
-    L.append(f"   описание собрано: {desc_len or 0} симв.")
+        L.append(f"Было от AI: <s>{esc(model_ai)}</s>")
+    L.append(f"Категория: {esc(category)} · Бренд: {esc(brand)}")
+    L.append(f"Описание собрано: {desc_len or 0} симв.")
 
     L.append("")
-    L.append("<b>📡 Проверки</b>")
-    L.append(f"   всего проверок: {n_checks}")
+    L.append("📡 <b>Проверки</b>")
+    L.append(f"Всего проверок: <b>{n_checks}</b>")
     if n_checks:
-        L.append(f"   последняя: {last_check:%d.%m %H:%M} ({ago(last_check)}) · "
-                 f"{last_method} · {last_dur:.1f} с → {last_result}")
-    L.append(f"   запросов к странице лота: {n_fetch} (успешных {n_fetch_ok}, "
+        L.append(f"Последняя: {last_check:%d.%m %H:%M} ({ago(last_check)}) · "
+                 f"{esc(last_method)} · {last_dur:.1f} с → <b>{esc(last_result)}</b>")
+    L.append(f"Запросов к странице: <b>{n_fetch}</b> (успешных {n_fetch_ok}, "
              f"описаний {n_desc}, проверок {n_chk})")
     if last_fetch:
-        L.append(f"   последний запрос: {last_fetch:%d.%m %H:%M} ({ago(last_fetch)})"
+        L.append(f"Последний запрос: {last_fetch:%d.%m %H:%M} ({ago(last_fetch)})"
                  + (f" · в среднем {avg_dur} с" if avg_dur else ""))
-    L.append(f"   видно в выдаче: {n_seen} раз"
+    L.append(f"Видно в выдаче: <b>{n_seen}</b> раз"
              + (f" (первое {first_seen:%d.%m}, последнее {last_seen:%d.%m})"
                 if n_seen else ""))
 
     L.append("")
-    L.append("<b>💰 Цена</b>")
-    L.append(f"   сейчас: {float(price):,.0f} ₽" if price else "   сейчас: —")
-    L.append(f"   диапазон: {float(p_min):,.0f} – {float(p_max):,.0f} ₽ · замеров: {n_prices}"
-             if p_min else "   диапазон: нет данных")
-    L.append(f"   история: {hist_txt}")
+    L.append("💰 <b>Цена</b>")
+    L.append(f"Сейчас: <b>{float(price):,.0f} ₽</b>" if price else "Сейчас: —")
+    L.append(f"Диапазон: {float(p_min):,.0f} – {float(p_max):,.0f} ₽ · замеров: {n_prices}"
+             if p_min else "Диапазон: <i>нет данных</i>")
+    L.append(f"История: {hist_txt}")
 
     L.append("")
-    L.append("<b>👁 Просмотры</b>")
+    L.append("👁 <b>Просмотры</b>")
     if v_total is not None:
-        L.append(f"   всего: {v_total}" + (f" (+{v_today} сегодня)" if v_today else ""))
+        L.append(f"Всего: <b>{v_total}</b>" + (f" (+{v_today} сегодня)" if v_today else ""))
     else:
-        L.append("   нет данных (страница лота ещё не открывалась)")
-    L.append(f"   статус: {state}"
+        L.append("Нет данных (страница лота ещё не открывалась)")
+    L.append(f"Статус: <b>{esc(state)}</b>"
              + (f" · проверено {ago(last_checked)}" if last_checked else ""))
     if published_at:
-        L.append(f"   опубликовано: {published_at}")
+        L.append(f"Опубликовано: {published_at}")
 
     return "\n".join(L)
 
 
 # ---------------------------------------------------------------- /top
+def cmd_menu() -> str:
+    """Меню бота: фильтр региона, уведомления, статус."""
+    region = _get_setting("region_filter") or "all"
+    muted = _get_setting("mute_all") == "1"
+    region_txt = "📍 Только СПб" if region == "spb" else "🌐 Все города"
+    mute_txt = "🔇 Уведомления выключены" if muted else "🔔 Уведомления включены"
+    return (f"⚙️ <b>Настройки бота</b>\n\n"
+            f"Регион: <b>{'📍 Только СПб' if region == 'spb' else '🌐 Все города'}</b>\n"
+            f"Уведомления: <b>{'🔇 выключены' if muted else '🔔 включены'}</b>\n\n"
+            f"Нажми кнопку, чтобы переключить:")
+
+
+def _menu_markup() -> list:
+    """Inline-кнопки для меню."""
+    region = _get_setting("region_filter") or "all"
+    muted = _get_setting("mute_all") == "1"
+    region_btn = "🌐 Все города" if region == "spb" else "📍 Только СПб"
+    mute_btn = "🔊 Включить уведомления" if muted else "🔇 Отключить уведомления"
+    return [
+        [{"text": region_btn, "callback_data": "toggle_region"}],
+        [{"text": mute_btn, "callback_data": "toggle_mute" if muted else "mute_all"}],
+    ]
+
+
 def cmd_top() -> str:
     rows = sql("""
         WITH med AS (
@@ -591,11 +624,13 @@ def handle(chat_id: int, text: str) -> None:
             out = _lot_card(int(arg), refresh=False)
             if isinstance(out, tuple):
                 text, url = out
-                reply(chat_id, text, url_button=url, check_button=int(arg))
+                reply(chat_id, text, url_button=url)
             else:
                 reply(chat_id, out)
         elif cmd == "/checks":
             reply(chat_id, cmd_checks())
+        elif cmd == "/menu":
+            reply(chat_id, cmd_menu(), markup=_menu_markup())
         elif cmd == "/tech" and arg:
             reply(chat_id, cmd_tech(int(arg)))
         elif cmd == "/add" and arg:
@@ -665,23 +700,37 @@ def main() -> None:
                         reply(chat_id, answer + ("\nПроверить: /status" if cb["data"] == "unmute_all" else ""),
                               mute_button=(cb["data"] == "mute_all"))
                     continue
-                if cb and cb.get("data", "").startswith(("lot:", "card:", "tech:")):
+                if cb and cb.get("data") in ("toggle_region", "toggle_mute"):
+                    if cb["data"] == "toggle_region":
+                        cur = _get_setting("region_filter") or "all"
+                        new = "all" if cur == "spb" else "spb"
+                        _set_setting("region_filter", new)
+                        answer = "📍 Только СПб" if new == "spb" else "🌐 Все города"
+                    else:
+                        cur = _get_setting("mute_all") or "0"
+                        new = "0" if cur == "1" else "1"
+                        _set_setting("mute_all", new)
+                        answer = "🔇 Уведомления выключены" if new == "1" else "🔔 Уведомления включены"
+                    api_call("answerCallbackQuery", {
+                        "callback_query_id": cb["id"], "text": answer,
+                        "show_alert": False,
+                    })
+                    chat_id = (cb.get("message") or {}).get("chat", {}).get("id")
+                    if chat_id:
+                        reply(chat_id, cmd_menu(), markup=_menu_markup())
+                    continue
+                if cb and cb.get("data", "").startswith("tech:"):
                     action, _, avito_id = cb["data"].partition(":")
                     api_call("answerCallbackQuery", {
                         "callback_query_id": cb["id"],
-                        "text": "Проверяю лот..." if action == "lot" else "Собираю данные...",
+                        "text": "Собираю данные...",
                         "show_alert": False})
                     chat_id = (cb.get("message") or {}).get("chat", {}).get("id")
                     if chat_id:
-                        if action == "tech":
+                        try:
                             reply(chat_id, cmd_tech(int(avito_id)))
-                            continue
-                        out = _lot_card(int(avito_id), refresh=(action == "lot"))
-                        if isinstance(out, tuple):
-                            text, url = out
-                            reply(chat_id, text, url_button=url, check_button=int(avito_id))
-                        else:
-                            reply(chat_id, out)
+                        except Exception as exc:
+                            reply(chat_id, f"⚠️ Ошибка: {html_mod.escape(str(exc)[:100])}")
                     continue
                 msg = upd.get("message") or {}
                 text = msg.get("text") or ""

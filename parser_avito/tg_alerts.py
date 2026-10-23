@@ -178,8 +178,7 @@ def send_lot(ad: dict) -> bool:
         "disable_web_page_preview": True,
         "reply_markup": {"inline_keyboard": [
             [{"text": "🛒 Открыть на Авито", "url": ad["url"]}],
-            [{"text": "🔧 Тех. свойства", "callback_data": f"tech:{ad['avito_id']}"},
-             {"text": "👁 Карточка", "callback_data": f"card:{ad['avito_id']}"}],
+            [{"text": "🔧 Тех. свойства", "callback_data": f"tech:{ad['avito_id']}"}],
             [{"text": "🔇 Отключить уведомления", "callback_data": "mute_all"}],
         ]},
     }
@@ -257,8 +256,7 @@ def send_new_lot(ad: dict) -> bool:
         "disable_web_page_preview": True,
         "reply_markup": {"inline_keyboard": [
             [{"text": "🛒 Открыть на Авито", "url": ad["url"]}],
-            [{"text": "🔧 Тех. свойства", "callback_data": f"tech:{ad['avito_id']}"},
-             {"text": "👁 Карточка", "callback_data": f"card:{ad['avito_id']}"}],
+            [{"text": "🔧 Тех. свойства", "callback_data": f"tech:{ad['avito_id']}"}],
             [{"text": "🔇 Отключить уведомления", "callback_data": "mute_all"}],
         ]},
     }
