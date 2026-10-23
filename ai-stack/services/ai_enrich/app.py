@@ -175,12 +175,25 @@ def batch_process(req: BatchRequest):
                                 "title": title, "desc": desc, "price_rub": price_rub,
                                 "url": url}
                     print(f"ai_enrich: {avito_id}: Jev conf {jr['confidence']:.2f} "
-                          f"< {jev_conf} → DeepSeek", flush=True)
+                          f"< {jev_conf} → карантин", flush=True)
+                    return {"ok": True, "avito_id": avito_id,
+                            "tier": "quarantine", "duration_ms": jdur, "attempts": 1,
+                            "quarantine_reason": f"conf {jr['confidence']:.2f} < {jev_conf}",
+                            "jev_confidence": jr["confidence"],
+                            "title": title, "desc": desc, "price_rub": price_rub, "url": url}
                 else:
-                    print(f"ai_enrich: {avito_id}: Jev fail ({jr.get('error')}) → DeepSeek",
+                    print(f"ai_enrich: {avito_id}: Jev fail ({jr.get('error')}) → карантин",
                           flush=True)
+                    return {"ok": True, "avito_id": avito_id,
+                            "tier": "quarantine", "duration_ms": jdur, "attempts": 1,
+                            "quarantine_reason": f"jev error: {str(jr.get('error'))[:120]}",
+                            "title": title, "desc": desc, "price_rub": price_rub, "url": url}
             except Exception as je:
-                print(f"ai_enrich: {avito_id}: Jev exception {je} → DeepSeek", flush=True)
+                print(f"ai_enrich: {avito_id}: Jev exception {je} → карантин", flush=True)
+                return {"ok": True, "avito_id": avito_id,
+                        "tier": "quarantine", "duration_ms": 0, "attempts": 1,
+                        "quarantine_reason": f"jev exception: {str(je)[:120]}",
+                        "title": title, "desc": desc, "price_rub": price_rub, "url": url}
         # --- тир 2: DeepSeek (как раньше, на нормализованном тексте) ---
         try:
             messages = _build_messages(t or "", d or "")
@@ -209,7 +222,26 @@ def batch_process(req: BatchRequest):
                     if note:
                         print(f"ai_enrich: {out['avito_id']}: {note} "
                               f"('{model_ai}' -> '{model_fixed}')", flush=True)
-                    if out.get("tier") == "jev":
+                    if out.get("tier") == "quarantine":
+                        cur.execute("""
+                            INSERT INTO avito_original.quarantine
+                                (avito_id, reason, jev_confidence)
+                            VALUES (%s, %s, %s)
+                            ON CONFLICT (avito_id) DO UPDATE
+                                SET reason=EXCLUDED.reason,
+                                    jev_confidence=EXCLUDED.jev_confidence
+                        """, (out["avito_id"], out.get("quarantine_reason"),
+                              out.get("jev_confidence")))
+                        cur.execute("""
+                            INSERT INTO avito_original.lot_pipeline_log
+                                (avito_id, stage, meta) VALUES (%s, 'quarantine_in', %s)
+                        """, (out["avito_id"], json.dumps(
+                            {"reason": out.get("quarantine_reason")})))
+                        conn.commit()
+                        results.append({"avito_id": out["avito_id"],
+                                        "status": "quarantined",
+                                        "reason": out.get("quarantine_reason")})
+                    elif out.get("tier") == "jev":
                         cur.execute("""
                             INSERT INTO detail.ads
                                 (avito_id, category, brand, model, model_ai, chip, tags,
@@ -357,3 +389,133 @@ def _call_openrouter(messages: list[dict], retries: int = 5) -> tuple[dict | Non
                 return None, int((time.time() - t0) * 1000), attempt + 1
             time.sleep(2 ** (attempt + 1))
     return None, int((time.time() - t0) * 1000), retries
+
+
+# ──── карантин ────
+
+def _slug_tag(ru_text: str) -> str:
+    """Слаг тега из русского текста DeepSeek: lowercase, дефисы."""
+    s = (ru_text or "").strip().lower()
+    s = re.sub(r"[^\wа-яё0-9]+", "-", s, flags=re.IGNORECASE)
+    s = s.strip("-")[:40]
+    return s if s else "прочее"
+
+
+@app.post("/quarantine_process")
+def quarantine_process(req: BatchRequest):
+    """Воркер: пачка из карантина → DeepSeek → detail.ads + новые теги в словарь."""
+    limit = min(req.limit or 10, 50)
+    tag_autoapprove = os.environ.get("TAG_AUTOAPPROVE", "1") == "1"
+    conn = psycopg2.connect(
+        host=DB_HOST, port=DB_PORT, dbname=DB_NAME,
+        user=DB_USER, password=DB_PASSWORD,
+    )
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT DISTINCT ON (q.avito_id)
+               q.avito_id, q.reason, m.title, m.price_rub, m.url,
+               coalesce(d2.input_description, '') AS desc
+        FROM avito_original.quarantine q
+        JOIN midraw.avito_ads m ON m.avito_id = q.avito_id
+        LEFT JOIN detail.ads d2 ON d2.avito_id = q.avito_id
+        WHERE q.status = 'waiting'
+        ORDER BY q.avito_id, m.parsed_at DESC
+        LIMIT %s
+    """, (limit,))
+    jobs = cur.fetchall()
+    done = failed = new_tags = 0
+    items = []
+    for avito_id, reason, title, price_rub, url, desc in jobs:
+        t0 = time.monotonic()
+        t, d, _ob = normalize_lot(title or "", desc or "")
+        result, duration_ms, attempts = _call_openrouter(_build_messages(t or "", d or ""))
+        if not isinstance(result, dict) or "category" not in result:
+            cur.execute("UPDATE avito_original.quarantine SET status='failed' WHERE avito_id=%s",
+                        (avito_id,))
+            conn.commit()
+            failed += 1
+            items.append({"avito_id": avito_id, "status": "failed"})
+            continue
+        try:
+            model_fixed, model_ai, chip, note = validate_model(
+                result.get("model"), url)
+            # --- обратная связь: новые теги → словарь ---
+            for tag in (result.get("tags") or []):
+                key = _slug_tag(tag)
+                if not key:
+                    continue
+                cur.execute("""
+                    INSERT INTO avito_original.tag_vocabulary (tag_key, grp, label_ru, created_by, status)
+                    VALUES (%s, 'сигнал', %s, 'deepseek', %s)
+                    ON CONFLICT (tag_key) DO NOTHING
+                """, (key, tag, 'active' if tag_autoapprove else 'pending'))
+                if cur.rowcount:
+                    new_tags += 1
+            tags_uni = [_slug_tag(tag) for tag in (result.get("tags") or []) if _slug_tag(tag)]
+            cur.execute("""
+                INSERT INTO detail.ads
+                    (avito_id, category, brand, model, model_ai, chip, tags,
+                     input_title, input_description, price_rub,
+                     ai_model, ai_version, ai_processed_at, ai_status,
+                     ai_duration_ms, ai_attempts,
+                     tags_universal, tier)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, NOW(), 'success', %s, %s, %s, 'quarantine_ds')
+                ON CONFLICT (avito_id) DO UPDATE SET
+                    category=EXCLUDED.category, brand=EXCLUDED.brand,
+                    model=EXCLUDED.model, model_ai=EXCLUDED.model_ai,
+                    chip=EXCLUDED.chip, tags=EXCLUDED.tags,
+                    price_rub=EXCLUDED.price_rub,
+                    ai_processed_at=NOW(), ai_status='success',
+                    ai_duration_ms=EXCLUDED.ai_duration_ms,
+                    ai_attempts=EXCLUDED.ai_attempts,
+                    tags_universal=EXCLUDED.tags_universal,
+                    tier='quarantine_ds'
+            """, (
+                avito_id, result.get("category"), result.get("brand"),
+                model_fixed, model_ai, chip,
+                json.dumps(result.get("tags", [])),
+                title, desc, price_rub or result.get("price_rub"),
+                AI_MODEL, PROMPT_VERSION,
+                duration_ms, attempts,
+                tags_uni,
+            ))
+            cur.execute("""
+                UPDATE avito_original.quarantine
+                SET status='done', processed_at=NOW(), result=%s
+                WHERE avito_id=%s
+            """, (f"категория={result.get('category')}, новых тегов={new_tags}", avito_id))
+            cur.execute("""
+                INSERT INTO avito_original.lot_pipeline_log
+                    (avito_id, stage, duration_ms, meta)
+                VALUES (%s, 'quarantine_done', %s, %s)
+            """, (avito_id, duration_ms,
+                  json.dumps({"attempts": attempts, "new_tags": new_tags,
+                              "category": result.get("category")})))
+            conn.commit()
+            done += 1
+            items.append({"avito_id": avito_id, "status": "done",
+                          "category": result.get("category")})
+        except Exception as e:
+            conn.rollback()
+            cur = conn.cursor()
+            cur.execute("UPDATE avito_original.quarantine SET status='failed' WHERE avito_id=%s",
+                        (avito_id,))
+            conn.commit()
+            failed += 1
+            items.append({"avito_id": avito_id, "status": "failed", "error": str(e)[:120]})
+    # инкремент usage_count у использованных тегов
+    try:
+        cur.execute("""
+            UPDATE avito_original.tag_vocabulary v
+            SET usage_count = usage_count + 1
+            WHERE tag_key IN (
+                SELECT unnest(tags_universal) FROM detail.ads
+                WHERE tier IN ('jev','quarantine_ds')
+                  AND ai_processed_at > now() - interval '10 minutes')
+        """)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    conn.close()
+    return {"done": done, "failed": failed, "new_tags": new_tags, "items": items}
