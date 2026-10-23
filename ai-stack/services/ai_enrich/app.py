@@ -17,6 +17,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from model_guard import validate_model
+from normalize import normalize_lot
+from jev_client import call_jev, condition_from_tags, universal_tags, JEV_MODEL
 
 app = FastAPI(title="AI Enrich", version="1.0.0")
 
@@ -133,14 +135,59 @@ def batch_process(req: BatchRequest):
     errors = 0
     results = []
 
+    # --- активные теги словаря для Noul-вопросов Jev ---
+    active_tags = []
+    try:
+        cur.execute("SELECT tag_key FROM avito_original.tag_vocabulary WHERE status = 'active'")
+        active_tags = [r[0] for r in cur.fetchall()]
+    except Exception as tag_err:
+        print(f"ai_enrich: словарь тегов недоступен: {tag_err}", flush=True)
+
+    jev_enabled = os.environ.get("JEV_ENABLED", "1") == "1"
+    jev_conf = float(os.environ.get("JEV_CONF", "0.70"))
+    jev_tag_thr = float(os.environ.get("JEV_TAG_THRESHOLD", "0.75"))
+
     def _process_one(job):
-        """Worker — тянет данные в OpenRouter (БД не касается)."""
+        """Worker: нормализация → Jev (быстро) → fallback DeepSeek (БД не касается)."""
         avito_id, title, desc, price_rub, url = job
+        t, d, obfuscated = normalize_lot(title or "", desc or "")
+        # --- тир 1: Jev ---
+        if jev_enabled and active_tags:
+            try:
+                t0 = time.monotonic()
+                jr = call_jev(OPENROUTER_API_KEY, t, d, active_tags)
+                jdur = int((time.monotonic() - t0) * 1000)
+                if jr.get("ok"):
+                    if jr["confidence"] >= jev_conf:
+                        tags_uni = universal_tags(jr["tags"], obfuscated, jev_tag_thr)
+                        return {"ok": True, "avito_id": avito_id,
+                                "tier": "jev", "duration_ms": jdur, "attempts": 1,
+                                "data": {
+                                    "category": jr["category"],
+                                    "brand": jr["brand"],
+                                    "model": None,  # чип ставит slug-валидатор
+                                    "tags": tags_uni,
+                                    "price_rub": price_rub,
+                                },
+                                "condition": condition_from_tags(jr["tags"]),
+                                "tags_universal": tags_uni,
+                                "jev_confidence": jr["confidence"],
+                                "title": title, "desc": desc, "price_rub": price_rub,
+                                "url": url}
+                    print(f"ai_enrich: {avito_id}: Jev conf {jr['confidence']:.2f} "
+                          f"< {jev_conf} → DeepSeek", flush=True)
+                else:
+                    print(f"ai_enrich: {avito_id}: Jev fail ({jr.get('error')}) → DeepSeek",
+                          flush=True)
+            except Exception as je:
+                print(f"ai_enrich: {avito_id}: Jev exception {je} → DeepSeek", flush=True)
+        # --- тир 2: DeepSeek (как раньше, на нормализованном тексте) ---
         try:
-            messages = _build_messages(title or "", desc or "")
+            messages = _build_messages(t or "", d or "")
             result, duration_ms, attempts = _call_openrouter(messages)
             if isinstance(result, dict) and "category" in result:
                 return {"ok": True, "avito_id": avito_id, "data": result,
+                        "tier": "deepseek",
                         "title": title, "desc": desc, "price_rub": price_rub, "url": url,
                         "duration_ms": duration_ms, "attempts": attempts}
             return {"ok": False, "avito_id": avito_id, "error": "invalid AI response",
@@ -162,7 +209,45 @@ def batch_process(req: BatchRequest):
                     if note:
                         print(f"ai_enrich: {out['avito_id']}: {note} "
                               f"('{model_ai}' -> '{model_fixed}')", flush=True)
-                    cur.execute("""
+                    if out.get("tier") == "jev":
+                        cur.execute("""
+                            INSERT INTO detail.ads
+                                (avito_id, category, brand, model, model_ai, chip, tags,
+                                 input_title, input_description, price_rub,
+                                 ai_model, ai_version, ai_processed_at, ai_status,
+                                 ai_duration_ms, ai_attempts,
+                                 condition, tags_universal, jev_confidence, tier)
+                            VALUES (%s, %s, %s, %s, NULL, %s, %s, %s, %s, %s,
+                                    %s, 'jev', NOW(), 'success', %s, 1,
+                                    %s, %s, %s, 'jev')
+                            ON CONFLICT (avito_id) DO UPDATE SET
+                                category=EXCLUDED.category, brand=EXCLUDED.brand,
+                                model=EXCLUDED.model, model_ai=NULL,
+                                chip=EXCLUDED.chip, tags=EXCLUDED.tags,
+                                price_rub=EXCLUDED.price_rub,
+                                ai_processed_at=NOW(), ai_status='success',
+                                ai_duration_ms=EXCLUDED.ai_duration_ms,
+                                ai_attempts=1,
+                                condition=EXCLUDED.condition,
+                                tags_universal=EXCLUDED.tags_universal,
+                                jev_confidence=EXCLUDED.jev_confidence,
+                                tier='jev'
+                        """, (
+                            out["avito_id"],
+                            out["data"].get("category"),
+                            out["data"].get("brand"),
+                            model_fixed,
+                            chip,
+                            json.dumps(out["tags_universal"]),
+                            out["title"], out["desc"], out["price_rub"],
+                            JEV_MODEL,
+                            out.get("duration_ms"),
+                            out.get("condition"),
+                            out.get("tags_universal"),
+                            out.get("jev_confidence"),
+                        ))
+                    else:
+                        cur.execute("""
                         INSERT INTO detail.ads
                             (avito_id, category, brand, model, model_ai, chip, tags,
                              input_title, input_description,
@@ -178,7 +263,8 @@ def batch_process(req: BatchRequest):
                             price_rub=EXCLUDED.price_rub,
                             ai_processed_at=NOW(), ai_status='success',
                             ai_duration_ms=EXCLUDED.ai_duration_ms,
-                            ai_attempts=EXCLUDED.ai_attempts
+                            ai_attempts=EXCLUDED.ai_attempts,
+                            tier=COALESCE(detail.ads.tier, 'deepseek')
                     """, (
                         out["avito_id"],
                         out["data"].get("category"),
@@ -196,7 +282,8 @@ def batch_process(req: BatchRequest):
                         "INSERT INTO avito_original.lot_pipeline_log "
                         "(avito_id, stage, duration_ms, meta) VALUES (%s, 'enrich_done', %s, %s)",
                         (out["avito_id"], out.get("duration_ms"),
-                         json.dumps({"tier": "deepseek", "attempts": out.get("attempts")})),
+                         json.dumps({"tier": out.get("tier", "deepseek"),
+                                     "attempts": out.get("attempts")})),
                     )
                     conn.commit()
                     processed += 1
