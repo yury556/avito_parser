@@ -286,6 +286,68 @@ def read_price(page) -> float | None:
         digits = "".join(ch for ch in el.inner_text() if ch.isdigit())
         if digits:
             return float(digits)
+
+
+def read_lot_meta_browser(page) -> dict:
+    """Дата публикации и просмотры со страницы лота (браузерный путь).
+
+    data-marker="item-view/item-date"      -> "23 сентября в 14:25"
+    data-marker="item-view/total-views"    -> "1251 просмотр"
+    data-marker="item-view/today-views"    -> "(+7 сегодня)"
+    """
+    import re as re_mod
+    from datetime import datetime, timezone as tz
+
+    out: dict = {"published_at": None, "views_total": None, "views_today": None}
+
+    el = page.query_selector('[data-marker="item-view/item-date"]')
+    if el:
+        raw = el.inner_text().strip()
+        low = raw.lower().replace("·", " ")
+        months = {"января": 1, "февраля": 2, "марта": 3, "апреля": 4, "мая": 5,
+                  "июня": 6, "июля": 7, "августа": 8, "сентября": 9,
+                  "октября": 10, "ноября": 11, "декабря": 12}
+        m = re_mod.search(r"(\d{1,2})\s+([а-яё]+)\s+в\s+(\d{1,2}):(\d{2})", low)
+        if not m:
+            m = re_mod.search(r"(\d{1,2})\s+([а-яё]+)\s+(\d{4})", low)
+        if m and m.group(2) in months:
+            now = datetime.now(tz.utc)
+            if m.lastindex >= 4:
+                day, mn = int(m.group(1)), months[m.group(2)]
+                hh, mm = int(m.group(3)), int(m.group(4))
+                year = now.year - (1 if mn > now.month else 0)
+            else:
+                day, mn = int(m.group(1)), months[m.group(2)]
+                hh = mm = 0
+                year = int(m.group(3))
+            try:
+                out["published_at"] = datetime(year, mn, day, hh, mm, tzinfo=tz.utc).isoformat()
+            except ValueError:
+                pass
+
+    el = page.query_selector('[data-marker="item-view/total-views"]')
+    if el:
+        m = re_mod.search(r"(\d+)", el.inner_text().replace(" ", "").replace("\xa0", ""))
+        if m:
+            out["views_total"] = int(m.group(1))
+
+    el = page.query_selector('[data-marker="item-view/today-views"]')
+    if el:
+        m = re_mod.search(r"\+(\d+)", el.inner_text())
+        if m:
+            out["views_today"] = int(m.group(1))
+    return out
+
+
+def read_price(page) -> float | None:
+    """Цена прямо со страницы лота."""
+    el = page.query_selector('[data-marker="item-view/item-price"]') or \
+         page.query_selector('[data-marker="item-price"]') or \
+         page.query_selector('[itemprop="price"]')
+    if el:
+        digits = "".join(ch for ch in el.inner_text() if ch.isdigit())
+        if digits:
+            return float(digits)
     return None
 
 
@@ -484,6 +546,8 @@ def main() -> None:
                             elif lot_is_open(page):
                                 price = read_price(page)
                                 desc = extract_description(page)
+                                meta = read_lot_meta_browser(page)
+                                _save_lot_meta(avito_id, meta)
                                 if desc and len(desc) > 260:
                                     save_description(avito_id, desc)
                                 _log_fetch(avito_id, "браузер", "check", t_start, True)
