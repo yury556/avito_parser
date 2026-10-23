@@ -228,6 +228,8 @@ def send_new_lot(ad: dict) -> bool:
         lines.append(f"<i>{model}</i>")
     lines.append(f"💰 {ad['price']:,.0f} ₽")
     lines.append(f"📍 {loc} · ID {ad['avito_id']}")
+    if ad.get("search_name"):
+        lines.append(f"🔎 Найдено в поиске: <b>{html_mod.escape(str(ad['search_name'])[:40])}</b>")
     if ad.get("published_at"):
         lines.append(f"🕐 Опубликовано: {html_mod.escape(_fmt_published(ad['published_at']))}")
 

@@ -32,6 +32,22 @@ def _db_conn(db: dict):
     return psycopg2.connect(**db)
 
 
+def _region_filter_clause(db: dict, alias: str = "m") -> str:
+    """SQL-условие фильтра региона (читает настройку бота)."""
+    try:
+        with _db_conn(db) as conn, conn.cursor() as cur:
+            cur.execute("SELECT value FROM avito_original.bot_settings WHERE key = 'region_filter'")
+            row = cur.fetchone()
+        region = row[0] if row else "all"
+    except Exception:
+        region = "all"
+    if region == "spb":
+        return (f"(position('петербург' in lower(coalesce({alias}.location,''))) > 0"
+                f" OR position('санкт' in lower(coalesce({alias}.location,''))) > 0"
+                f" OR position('sankt-peterburg' in lower(coalesce({alias}.url,''))) > 0)")
+    return "(true)"
+
+
 def _scan_good_lots(db: dict) -> list[dict] | None:
     """Активные лоты дешевле медианы на DISCOUNT_PCT%+.
 
@@ -42,7 +58,8 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
     """
     try:
         with _db_conn(db) as conn, conn.cursor() as cur:
-            cur.execute(
+            region_clause = _region_filter_clause(db, "m")
+            sql_text = (
                 r"""
                 WITH base AS (
                     SELECT d.avito_id, d.price_rub, d.state, d.category, d.model,
@@ -84,13 +101,16 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                     -- в midraw несколько строк на лот (история цен) — берём свежую,
                     -- но с непустыми location/title (в свежих снимках они бывают пусты)
                     SELECT DISTINCT ON (avito_id)
-                           avito_id, url, location, title,
+                           avito_id, url, location, title, source_url,
                            max(parsed_at) OVER (PARTITION BY avito_id) AS last_seen
                     FROM midraw.avito_ads
                     ORDER BY avito_id,
                              (coalesce(location, '') = '') ASC,
                              (coalesce(title, '') = '') ASC,
                              parsed_at DESC
+                ),
+                search_names AS (
+                    SELECT url, name FROM avito_original.search_urls
                 ),
                 lot_meta AS (
                     -- дата публикации, просмотры, описание и название из avito_original.ads
@@ -101,11 +121,13 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                        m.location,
                        COALESCE(med_fam.med, med_cat.med) AS ref_med,
                        b.tags, lm.published_at, lm.views_total, lm.views_today,
-                       lm.description, coalesce(NULLIF(lm.title, ''), m.title) AS lot_title
+                       lm.description, coalesce(NULLIF(lm.title, ''), m.title) AS lot_title,
+                       sn.name AS search_name
                 FROM base b
                 JOIN med_cat ON med_cat.category = b.category
                 LEFT JOIN med_fam ON med_fam.family = b.family
                 JOIN seen m ON m.avito_id = b.avito_id
+                LEFT JOIN search_names sn ON sn.url = m.source_url
                 LEFT JOIN lot_meta lm ON lm.avito_id = b.avito_id
                 WHERE b.state = 'активно' AND b.price_rub > 0
                   AND (b.alerted_at IS NULL
@@ -115,17 +137,15 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                   AND b.model IS NOT NULL AND b.model != ''
                   AND (m.title IS NULL OR m.title !~*
                        '(переходник|кабел|кронштейн|подставк|заглушк|адаптер|шлейф|креплени|держател)')
-                  AND (position('петербург' in lower(coalesce(m.location,''))) > 0
-                       OR position('ленинград' in lower(coalesce(m.location,''))) > 0
-                       OR position('sankt-peterburg' in lower(coalesce(m.url,''))) > 0
-                       OR position('leningradskaya' in lower(coalesce(m.url,''))) > 0)
+                  AND __REGION__
                   AND b.price_rub >= COALESCE(med_fam.med, med_cat.med) * 0.30
                   AND b.price_rub < COALESCE(med_fam.med, med_cat.med) * %(k)s
                 ORDER BY (b.price_rub / COALESCE(med_fam.med, med_cat.med)) ASC
                 LIMIT 10
-                """,
-                {"k": 1 - DISCOUNT_PCT / 100.0},
-            )
+                """)
+
+            sql_text = sql_text.replace("__REGION__", region_clause)
+            cur.execute(sql_text, {"k": 1 - DISCOUNT_PCT / 100.0})
             rows = cur.fetchall()
     except Exception as exc:
         print(f"alerts: scan failed: {exc}", flush=True)
@@ -155,6 +175,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
             "views_total": r[8],
             "views_today": r[9],
             "description": r[10] or "",
+            "search_name": r[12] or "",
         }
         for r in rows
     ]
@@ -165,7 +186,8 @@ def _scan_new_lots(db: dict, limit: int = 20) -> list[dict]:
     приходят отдельными уведомлениями, независимо от выгоды цены."""
     try:
         with _db_conn(db) as conn, conn.cursor() as cur:
-            cur.execute(
+            region_clause = _region_filter_clause(db, "f")
+            sql_text = (
                 """
                 WITH fresh AS (
                     SELECT DISTINCT ON (avito_id)
@@ -189,11 +211,12 @@ def _scan_new_lots(db: dict, limit: int = 20) -> list[dict]:
                   AND d.state = 'активно'
                   AND d.price_rub > 0
                   AND coalesce(NULLIF(d.model,''), NULLIF(f.title,'')) IS NOT NULL
+                  AND __REGION__
                 ORDER BY f.seen_at DESC
                 LIMIT %s
-                """,
-                (limit,),
-            )
+                """)
+            sql_text = sql_text.replace("__REGION__", region_clause)
+            cur.execute(sql_text, (limit,))
             rows = cur.fetchall()
     except Exception as exc:
         print(f"alerts: scan new failed: {exc}", flush=True)

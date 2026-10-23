@@ -15,6 +15,7 @@ Long-polling через urllib — без внешних зависимосте�
 import html as html_mod
 import json
 import os
+import re
 import time
 import tomllib
 import urllib.parse
@@ -46,8 +47,10 @@ HELP = (
     "/menu — настройки бота (регион, уведомления)\n"
     "/checks — последние 20 проверок лотов\n"
     "/tech <ID> — технические свойства лота (обогащение, запросы, цена)\n"
-    "/add <url> — добавить URL мониторинга\n"
-    "/urls — список URL и их сбор за 24 ч\n"
+    "/add <url> [имя] — добавить поиск с именем\n"
+    "/urls — список поисков (имена, сбор за 24 ч)\n"
+    "/rename <N> <имя> — переименовать поиск\n"
+    "/muteurl <N> — временно выключить поиск\n"
     "/remove N confirm — удалить URL номер N\n"
     "/mute N — пауза алертов лотов на N часов\n"
     "/unmute — снять паузу\n"
@@ -430,6 +433,44 @@ def _backup_config() -> str:
     return path
 
 
+def _read_url_names() -> dict[str, str]:
+    """Читает секцию [url_names] из config.toml."""
+    try:
+        import tomllib as _tomllib
+        with open(CONFIG_PATH, "rb") as f:
+            cfg = _tomllib.load(f)
+        return cfg.get("url_names", {})
+    except Exception:
+        return {}
+
+
+def _write_url_names(names: dict[str, str]) -> None:
+    """Переписывает секцию [url_names] НА МЕСТЕ (truncate, как urls)."""
+    with open(CONFIG_PATH, encoding="utf-8") as f:
+        lines = f.readlines()
+    # вырезаем старую секцию, если есть
+    start = next((i for i, l in enumerate(lines) if l.strip() == "[url_names]"), None)
+    if start is not None:
+        lines = lines[:start]
+    while lines and lines[-1].strip() == "":
+        lines.pop()
+    lines.append("\n[url_names]\n")
+    for u, n in names.items():
+        lines.append(f'"{u}" = "{str(n).replace(chr(34), chr(39))}"\n')
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+
+
+def _default_url_name(url: str) -> str:
+    q = urllib.parse.unquote_plus(
+        urllib.parse.parse_qs(urllib.parse.urlparse(url).query).get("q", [""])[0])
+    if q:
+        return q.strip()[:40]
+    path = urllib.parse.urlparse(url).path.rstrip("/").rsplit("/", 1)[-1]
+    path = re.sub(r"-ASgBAg.*", "", path).replace("-", " ").strip()
+    return (path or "поиск")[:40]
+
+
 def _rewrite_config_urls(new_urls: list[str]) -> None:
     """Перезаписывает блок urls = [ ... ] в секции [avito].
 
@@ -450,7 +491,7 @@ def _rewrite_config_urls(new_urls: list[str]) -> None:
         f.writelines(lines)
 
 
-def cmd_add(url: str) -> str:
+def cmd_add(url: str, name: str | None = None) -> str:
     url = url.strip().strip('"')
     host = urllib.parse.urlparse(url).netloc
     if "avito.ru" not in host:
@@ -464,11 +505,66 @@ def cmd_add(url: str) -> str:
         return f"⚠️ Лимит {MAX_URLS} URL. Сначала /remove."
     backup = _backup_config()
     _rewrite_config_urls(urls + [url])
+    if not name:
+        name = _default_url_name(url)
+    names = _read_url_names()
+    names[url] = name.strip()[:40]
+    _write_url_names(names)
     return (
-        f"✅ URL добавлен ({len(urls) + 1}-й).\n"
+        f"✅ URL добавлен ({len(urls) + 1}-й): <b>{html_mod.escape(name)}</b>\n"
         f"Парсер перечитывает config.toml каждый цикл — подхватит сам.\n"
         f"Бэкап: {os.path.basename(backup)}"
     )
+
+
+def cmd_rename(num: int, name: str) -> str:
+    urls = _read_config_urls()
+    if not 1 <= num <= len(urls):
+        return f"❌ Номер 1..{len(urls)}. Смотри /urls"
+    url = urls[num - 1]
+    names = _read_url_names()
+    old = names.get(url, _default_url_name(url))
+    names[url] = name.strip()[:40]
+    _write_url_names(names)
+    return f"✅ Поиск #{num}: «{html_mod.escape(old)}» → <b>{html_mod.escape(name)}</b>"
+
+
+def cmd_muteurl(num: int) -> str:
+    """Временно выключить поиск: URL попадает в [url_muted] (парсер его
+    отфильтрует через загрузчик конфига). Нумерация из /urls сохраняется."""
+    urls = _read_config_urls()
+    if not 1 <= num <= len(urls):
+        return f"❌ Номер 1..{len(urls)}. Смотри /urls"
+    url = urls[num - 1]
+    names = _read_url_names()
+    label = names.get(url, _default_url_name(url))
+    try:
+        import tomllib as _tomllib
+        with open(CONFIG_PATH, "rb") as f:
+            muted = _tomllib.load(f).get("url_muted", {})
+    except Exception:
+        muted = {}
+    backup = _backup_config()
+    if url in muted:
+        muted.pop(url)
+        act = "включён обратно"
+    else:
+        muted[url] = True
+        act = "выключен (🔇 в /urls)"
+    # переписываем секцию [url_muted] на месте
+    with open(CONFIG_PATH, encoding="utf-8") as f:
+        lines = f.readlines()
+    start = next((i for i, l in enumerate(lines) if l.strip() == "[url_muted]"), None)
+    if start is not None:
+        lines = lines[:start]
+    while lines and lines[-1].strip() == "":
+        lines.pop()
+    lines.append("\n[url_muted]\n")
+    for u in muted:
+        lines.append(f'"{u}" = true\n')
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+    return f"✅ Поиск #{num} «{html_mod.escape(label)}» {act}.\nБэкап: {os.path.basename(backup)}"
 
 
 def cmd_remove(num: int, confirm: bool) -> str:
@@ -486,6 +582,13 @@ def cmd_remove(num: int, confirm: bool) -> str:
 
 def cmd_urls() -> str:
     urls = _read_config_urls()
+    names = _read_url_names()
+    try:
+        import tomllib as _tomllib
+        with open(CONFIG_PATH, "rb") as f:
+            muted = set(_tomllib.load(f).get("url_muted", {}).keys())
+    except Exception:
+        muted = set()
     stats = dict(sql("""
         SELECT source_url, count(*) FROM raw.avito_ads_csv
         WHERE loaded_at > now() - interval '24 hours'
@@ -494,13 +597,14 @@ def cmd_urls() -> str:
     lines = []
     for i, u in enumerate(urls, 1):
         n = stats.get(u, 0)
-        q = urllib.parse.unquote_plus(
-            urllib.parse.parse_qs(urllib.parse.urlparse(u).query).get("q", [""])[0]
-        )
-        label = q or urllib.parse.urlparse(u).path.rsplit("/", 1)[-1][:40]
-        mark = "🟢" if n > 0 else "⚪"
-        lines.append(f"{mark} {i}. {label} — {n} лотов/24ч")
-    return f"📋 {len(urls)} URL (🟢 собирает, ⚪ нет за 24 ч):\n\n" + "\n".join(lines)
+        label = names.get(u) or _default_url_name(u)
+        if u in muted:
+            mark = "🔇"
+        else:
+            mark = "🟢" if n > 0 else "⚪"
+        lines.append(f"{mark} {i}. {html_mod.escape(label)} — {n} лотов/24ч")
+    return (f"📋 {len(urls)} URL (🟢 собирает, ⚪ нет за 24 ч, 🔇 выключен):\n\n"
+            + "\n".join(lines))
 
 
 # ---------------------------------------------------------------- mute
@@ -679,7 +783,18 @@ def handle(chat_id: int, text: str) -> None:
         elif cmd == "/tech" and arg:
             reply(chat_id, cmd_tech(int(arg)))
         elif cmd == "/add" and arg:
-            reply(chat_id, cmd_add(arg))
+            parts = arg.split(None, 1)
+            url = parts[0]
+            name = parts[1].strip() if len(parts) > 1 else None
+            reply(chat_id, cmd_add(url, name))
+        elif cmd == "/rename" and arg:
+            parts = arg.split(None, 1)
+            if len(parts) < 2 or not parts[0].isdigit():
+                reply(chat_id, "Формат: /rename <номер> <новое имя>")
+            else:
+                reply(chat_id, cmd_rename(int(parts[0]), parts[1]))
+        elif cmd == "/muteurl" and arg and arg.isdigit():
+            reply(chat_id, cmd_muteurl(int(arg)))
         elif cmd == "/urls":
             reply(chat_id, cmd_urls())
         elif cmd == "/remove" and arg:

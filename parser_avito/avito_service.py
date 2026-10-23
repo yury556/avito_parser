@@ -203,6 +203,37 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                             WHERE p.avito_id = v.avito_id AND p.stage = 'raw'
                         )
                     """)
+
+    # --- синк именованных поисков из [url_names] в БД ---
+                try:
+                    url_names = {}
+                    config_path = os.environ.get("PARSER_CONFIG", "/app/config/config.toml")
+                    try:
+                        import tomllib as _tomllib
+                        with open(config_path, "rb") as tf:
+                            _cfg = _tomllib.load(tf)
+                        url_names = _cfg.get("url_names", {})
+                    except Exception:
+                        pass
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS avito_original.search_urls (
+                            url TEXT PRIMARY KEY, name TEXT,
+                            active BOOLEAN DEFAULT TRUE, added_at TIMESTAMPTZ DEFAULT now())
+                    """)
+                    seen_urls = set()
+                    for su in (source_urls or []):
+                        if not su or su in seen_urls:
+                            continue
+                        seen_urls.add(su)
+                        cur.execute("""
+                            INSERT INTO avito_original.search_urls (url, name)
+                            VALUES (%s, %s)
+                            ON CONFLICT (url) DO UPDATE
+                                SET name = COALESCE(EXCLUDED.name, search_urls.name),
+                                    active = TRUE
+                        """, (su, url_names.get(su)))
+                except Exception as sync_err:
+                    logger.warning(f"sync search_urls failed: {sync_err}")
     return len([ad for ad in ads if ad.get("avito_id")])
 
 
