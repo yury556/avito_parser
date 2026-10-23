@@ -68,7 +68,13 @@ CREATE TABLE IF NOT EXISTS mart.avito_ads_detail
     tags           Array(String),
     ai_status      String,
     ai_processed_at DateTime,
-    updated_at     DateTime DEFAULT now()
+    updated_at     DateTime DEFAULT now(),
+    state          String,
+    condition      String,
+    tags_universal Array(String),
+    tier           String,
+    jev_confidence Float32,
+    chip           String
 )
 ENGINE = ReplacingMergeTree(updated_at)
 PARTITION BY category
@@ -122,13 +128,22 @@ AS SELECT
     d.model,
     m.title,
     m.url,
-    d.price_rub,
+    m.price_rub AS price_rub,
     JSONExtract(d.tags, 'Array(String)') AS tags,
     d.ai_status,
     d.ai_processed_at,
-    now() AS updated_at
+    now() AS updated_at,
+    d.state AS state,
+    coalesce(d.condition, '') AS condition,
+    coalesce(d.tags_universal, []) AS tags_universal,
+    coalesce(d.tier, 'deepseek') AS tier,
+    coalesce(d.jev_confidence, 0) AS jev_confidence,
+    coalesce(d.chip, '') AS chip
 FROM mart.pg_detail_ads AS d
-LEFT JOIN mart.pg_midraw_ads AS m ON m.avito_id = d.avito_id
+INNER JOIN (SELECT avito_id, argMax(price_rub, parsed_at) AS price_rub,
+                   argMax(title, parsed_at) AS title, argMax(url, parsed_at) AS url
+            FROM mart.pg_midraw_ads GROUP BY avito_id) AS m
+     ON m.avito_id = d.avito_id
 WHERE d.ai_status = 'success'
   AND d.category != '';
 
