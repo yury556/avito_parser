@@ -270,6 +270,15 @@ def cmd_tech(avito_id: int) -> str:
             return f"{m / 60:.0f} ч назад"
         return f"{m / 1440:.0f} дн назад"
 
+    # --- ⏱ конвейер: хронология этапов ---
+    pipe_rows = sql("""
+        SELECT stage, ts, duration_ms FROM avito_original.lot_pipeline_log
+        WHERE avito_id = %s ORDER BY ts ASC
+    """, (avito_id,))
+    pipe = {}
+    for stage, ts, dur in pipe_rows:
+        pipe.setdefault(stage, []).append((ts, dur))
+
     def esc(s) -> str:
         return html_mod.escape(str(s or "—"))
 
@@ -325,6 +334,25 @@ def cmd_tech(avito_id: int) -> str:
              + (f" · проверено {ago(last_checked)}" if last_checked else ""))
     if published_at:
         L.append(f"Опубликовано: {published_at}")
+
+    # --- ⏱ конвейер ---
+    if pipe:
+        L.append("")
+        L.append("⏱ <b>Конвейер</b>")
+        stage_labels = {"raw": "Сырой слой", "midraw": "→ Midraw", "enrich_start": "→ Обогащение начато",
+                        "enrich_done": "→ Обогащение готово", "quarantine_in": "🚨 Карантин",
+                        "quarantine_done": "→ Карантин обработан"}
+        first_ts = None
+        for stage, ts, dur in pipe_rows:
+            if first_ts is None:
+                first_ts = ts
+            label = stage_labels.get(stage, stage)
+            delta = f" (+{(ts - first_ts).total_seconds() / 60:.0f} мин)" if stage != "raw" else ""
+            extra = f" · запрос {dur / 1000:.1f} с" if dur and stage == "enrich_done" else ""
+            L.append(f"{label}: {ts:%d.%m %H:%M}{delta}{extra}")
+        if "raw" in pipe and "enrich_done" in pipe:
+            total_min = (pipe["enrich_done"][0][0] - pipe["raw"][0][0]).total_seconds() / 60
+            L.append(f"Полный цикл: <b>{total_min:.0f} мин</b>")
 
     return "\n".join(L)
 
@@ -557,12 +585,29 @@ def build_digest() -> str:
     }
     inc = ", ".join(f"{inc_parts.get(k, k)}: {n}" for k, n in incidents) or "не было"
 
+    # --- конвейер за сутки ---
+    try:
+        enrich_avg = sql("""
+            SELECT round(avg(duration_ms)) FROM avito_original.lot_pipeline_log
+            WHERE stage = 'enrich_done' AND ts > now() - interval '24 hours'
+        """)[0][0]
+        quar_cnt = sql("""
+            SELECT count(*) FROM avito_original.lot_pipeline_log
+            WHERE stage = 'quarantine_done' AND ts > now() - interval '24 hours'
+        """)[0][0]
+        enrich_line = (f"\n⚙️ Обогащение: средний запрос {int(enrich_avg) / 1000:.1f} с"
+                       if enrich_avg else "\n⚙️ Обогащение: нет данных за сутки")
+        enrich_line += f" · карантин обработан: {quar_cnt}"
+    except Exception:
+        enrich_line = ""
+
     return (
         f"📰 СВОДКА за сутки\n\n"
         f"📦 Сбор: {collected} лотов записано, {in_midraw} прошло в midraw\n"
         f"🔄 Актуализация: {checked} лотов проверено напрямую\n"
         f"📝 Описания: полных {desc_total} ({'+' if desc_delta >= 0 else ''}{desc_delta} за сутки)\n"
-        f"📊 Статусы: активных {active} ({'+' if act_delta >= 0 else ''}{act_delta}), закрыто {closed}\n"
+        f"📊 Статусы: активных {active} ({'+' if act_delta >= 0 else ''}{act_delta}), закрыто {closed}"
+        f"{enrich_line}\n"
         f"🚨 Инциденты: {inc}\n"
         f"🟢 Сейчас: парсер/enricher/бот на связи"
     )

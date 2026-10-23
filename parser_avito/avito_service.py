@@ -186,6 +186,23 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                         if ad.get("avito_id")
                     ],
                 )
+
+    # --- журнал конвейера: этап 'raw' только для новых лотов ---
+                new_ids = [ad["avito_id"] for ad in ads if ad.get("avito_id")]
+                if new_ids:
+                    values = ", ".join(
+                        f"({avito_id}, 'raw', '{json.dumps({'run_id': run_id})}'::jsonb)"
+                        for avito_id in new_ids
+                    )
+                    cur.execute(f"""
+                        INSERT INTO avito_original.lot_pipeline_log (avito_id, stage, meta)
+                        SELECT v.avito_id, v.stage, v.meta
+                        FROM (VALUES {values}) AS v(avito_id, stage, meta)
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM avito_original.lot_pipeline_log p
+                            WHERE p.avito_id = v.avito_id AND p.stage = 'raw'
+                        )
+                    """)
     return len([ad for ad in ads if ad.get("avito_id")])
 
 

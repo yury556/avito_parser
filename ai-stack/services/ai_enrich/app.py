@@ -110,6 +110,25 @@ def batch_process(req: BatchRequest):
     """, (req.limit,))
     rows = cur.fetchall()
 
+    # --- журнал конвейера: midraw (первое появление) + enrich_start ---
+    if rows:
+        ids = [r[0] for r in rows]
+        id_list = ", ".join(str(i) for i in ids)
+        cur.execute(f"""
+            INSERT INTO avito_original.lot_pipeline_log (avito_id, stage)
+            SELECT v.avito_id, 'midraw'
+            FROM (VALUES ({id_list})) AS v(avito_id)
+            WHERE NOT EXISTS (
+                SELECT 1 FROM avito_original.lot_pipeline_log p
+                WHERE p.avito_id = v.avito_id AND p.stage = 'midraw')
+        """)
+        cur.execute(f"""
+            INSERT INTO avito_original.lot_pipeline_log (avito_id, stage)
+            SELECT v.avito_id, 'enrich_start'
+            FROM (VALUES ({id_list})) AS v(avito_id)
+        """)
+        conn.commit()
+
     processed = 0
     errors = 0
     results = []
@@ -173,6 +192,12 @@ def batch_process(req: BatchRequest):
                         AI_MODEL, PROMPT_VERSION,
                         out.get("duration_ms"), out.get("attempts"),
                     ))
+                    cur.execute(
+                        "INSERT INTO avito_original.lot_pipeline_log "
+                        "(avito_id, stage, duration_ms, meta) VALUES (%s, 'enrich_done', %s, %s)",
+                        (out["avito_id"], out.get("duration_ms"),
+                         json.dumps({"tier": "deepseek", "attempts": out.get("attempts")})),
+                    )
                     conn.commit()
                     processed += 1
                     results.append({"avito_id": out["avito_id"], "status": "ok", "data": out["data"]})
