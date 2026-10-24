@@ -48,6 +48,39 @@ def _region_filter_clause(db: dict, alias: str = "m") -> str:
     return "(true)"
 
 
+def _load_search_names(db: dict) -> dict[str, str]:
+    """Имена поисков (url → имя). Не должна ронять скан ни при каких условиях:
+    нет таблицы/ошибка БД → пробуем config, иначе пустой словарь."""
+    try:
+        with _db_conn(db) as conn, conn.cursor() as cur:
+            cur.execute("SELECT url, name FROM avito_original.search_urls")
+            return {u: n for u, n in cur.fetchall() if u}
+    except Exception:
+        pass
+    try:
+        import tomllib
+        path = os.environ.get("PARSER_CONFIG", "/app/config/config.toml")
+        with open(path, "rb") as f:
+            cfg = tomllib.load(f)
+        names = cfg.get("url_names", {})
+        out = dict(names)
+        for u in cfg.get("avito", {}).get("urls", []):
+            out.setdefault(u, u)
+        return out
+    except Exception:
+        return {}
+
+
+def _load_lot_sources(db: dict) -> dict[int, str]:
+    """avito_id → URL поиска, из которого пришёл лот. Безопасно: ошибки → {}."""
+    try:
+        with _db_conn(db) as conn, conn.cursor() as cur:
+            cur.execute("SELECT avito_id, source_url FROM avito_original.lot_source")
+            return {a: u for a, u in cur.fetchall() if a and u}
+    except Exception:
+        return {}
+
+
 def _scan_good_lots(db: dict) -> list[dict] | None:
     """Активные лоты дешевле медианы на DISCOUNT_PCT%+.
 
@@ -64,6 +97,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                 WITH base AS (
                     SELECT d.avito_id, d.price_rub, d.state, d.category, d.model,
                            d.alerted_at, coalesce(d.chip, '') AS b_chip, d.tags,
+                           coalesce(d.tags_universal, ARRAY[]::text[]) AS tags_universal,
                            d.alerted_price,
                            lower(d.model) AS lmodel,
                            coalesce(
@@ -109,9 +143,6 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                              (coalesce(title, '') = '') ASC,
                              parsed_at DESC
                 ),
-                search_names AS (
-                    SELECT url, name FROM avito_original.search_urls
-                ),
                 lot_meta AS (
                     -- дата публикации, просмотры, описание и название из avito_original.ads
                     SELECT avito_id, published_at, views_total, views_today, description, title
@@ -122,13 +153,12 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                        COALESCE(med_fam.med, med_cat.med) AS ref_med,
                        b.tags, lm.published_at, lm.views_total, lm.views_today,
                        lm.description, coalesce(NULLIF(lm.title, ''), m.title) AS lot_title,
-                       sn.name AS search_name,
+                       m.source_url AS source_url,
                        coalesce(b.tags_universal, ARRAY[]::text[]) AS tags_universal
                 FROM base b
                 JOIN med_cat ON med_cat.category = b.category
                 LEFT JOIN med_fam ON med_fam.family = b.family
                 JOIN seen m ON m.avito_id = b.avito_id
-                LEFT JOIN search_names sn ON sn.url = m.source_url
                 LEFT JOIN lot_meta lm ON lm.avito_id = b.avito_id
                 WHERE b.state = 'активно' AND b.price_rub > 0
                   AND (b.alerted_at IS NULL
@@ -161,6 +191,8 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
             except Exception:
                 pass
         return None
+    search_names = _load_search_names(db)
+    lot_sources = _load_lot_sources(db)
     return [
         {
             "avito_id": r[0],
@@ -176,7 +208,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
             "views_total": r[8],
             "views_today": r[9],
             "description": r[10] or "",
-            "search_name": r[12] or "",
+            "search_name": search_names.get(lot_sources.get(r[0], ""), "") or "",
         }
         for r in rows
     ]

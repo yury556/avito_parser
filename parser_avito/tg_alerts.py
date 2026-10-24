@@ -16,6 +16,20 @@ from datetime import datetime, timezone
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 CHAT_ID = os.environ.get("TELEGRAM_ALERT_CHAT_ID", "").strip()
+
+# --- нормализация обфусцированного текста для показа в уведомлениях ---
+_LOOK_CLEAN = {
+    "a": "а", "c": "с", "e": "е", "o": "о", "p": "р", "x": "х",
+    "y": "у", "k": "к", "m": "м", "h": "н", "t": "т", "b": "в",
+    "i": "и", "s": "с", "j": "й", "d": "д",
+    "A": "А", "C": "С", "E": "Е", "O": "О", "P": "Р", "X": "Х",
+    "Y": "У", "K": "К", "M": "М", "H": "Н", "T": "Т", "B": "В",
+    "ο": "о", "α": "а",
+}
+
+
+def _clean_display(text):
+    return "".join(_LOOK_CLEAN.get(ch, ch) for ch in (text or ""))
 API = f"https://api.telegram.org/bot{TOKEN}"
 MUTE_FILE = os.environ.get("BOT_MUTE_FILE", "/shared/bot_mute_until.txt")
 MAX_LOT_MSGS_PER_HOUR = int(os.environ.get("ALERT_LOT_MSG_LIMIT", "10"))
@@ -165,7 +179,7 @@ def send_lot(ad: dict) -> bool:
 
     desc = (ad.get("description") or "").strip()
     if desc:
-        snippet = desc[:300].rstrip()
+        snippet = _clean_display(desc[:300].rstrip())
         if len(desc) > 300:
             snippet += "…"
         lines.append(f"\n📝 {html_mod.escape(snippet)}")
@@ -245,7 +259,7 @@ def send_new_lot(ad: dict) -> bool:
 
     desc = (ad.get("description") or "").strip()
     if desc:
-        snippet = desc[:300].rstrip()
+        snippet = _clean_display(desc[:300].rstrip())
         if len(desc) > 300:
             snippet += "…"
         lines.append(f"\n📝 {html_mod.escape(snippet)}")

@@ -148,6 +148,7 @@ class Item(BaseModel):
     total_views: int | None = None
     today_views: int | None = None
     phone: str | None = None
+    source_url: str | None = None  # URL поиска, из которого пришёл лот
 
 
 class ItemsResponse(BaseModel):

@@ -163,6 +163,12 @@ class AvitoParse:
                 filter_ads = self.filter_ads(ads=ads)
 
                 if filter_ads:
+                    # запоминаем, из какого поиска пришёл лот (для алертов)
+                    for _ad in filter_ads:
+                        try:
+                            _ad.source_url = url
+                        except Exception:
+                            pass
                     self.__save_viewed(ads=filter_ads)
                     ads_in_link.extend(filter_ads)
                     self.collected.extend(filter_ads)

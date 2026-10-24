@@ -24,6 +24,22 @@ import urllib.request
 import psycopg2
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+
+# --- мини-нормализация текста для отображения в уведомлениях ---
+_LOOK_CLEAN = {
+    "a": "а", "c": "с", "e": "е", "o": "о", "p": "р", "x": "х",
+    "y": "у", "k": "к", "m": "м", "h": "н", "t": "т", "b": "в",
+    "i": "и", "s": "с", "j": "й", "d": "д", "A": "А", "C": "С",
+    "E": "Е", "O": "О", "P": "Р", "X": "Х", "Y": "У", "K": "К",
+    "M": "М", "H": "Н", "T": "Т", "B": "В", "ο": "о", "α": "а",
+}
+
+def _clean_display(text):
+    s = (text or "")
+    out = []
+    for ch in s:
+        out.append(_LOOK_CLEAN.get(ch, ch))
+    return "".join(out)
 API = f"https://api.telegram.org/bot{TOKEN}"
 ADMIN_CHAT_ID = os.environ.get("TELEGRAM_ALERT_CHAT_ID", "").strip()
 CONFIG_PATH = os.environ.get("PARSER_CONFIG", "/app/config/config.toml")

@@ -87,6 +87,7 @@ def _item_to_dict(item) -> dict:
         "title": item.title or "",
         "price_rub": int(price_raw) if price_raw is not None else None,
         "url": f"https://www.avito.ru{item.urlPath}" if item.urlPath else None,
+        "source_url": getattr(item, "source_url", None),
         "location": (item.location.name or "")[:256] if item.location else None,
         "seller": (item.sellerId or "")[:64] if item.sellerId else None,
         "description": description_clean,
@@ -186,6 +187,32 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                         if ad.get("avito_id")
                     ],
                 )
+
+    # --- источник лота: из какого поиска пришёл ---
+                try:
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS avito_original.lot_source (
+                            avito_id BIGINT PRIMARY KEY,
+                            source_url TEXT NOT NULL,
+                            first_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
+                            last_seen TIMESTAMPTZ NOT NULL DEFAULT now())
+                    """)
+                    pairs = [(ad["avito_id"], ad["source_url"]) for ad in ads
+                             if ad.get("avito_id") and ad.get("source_url")
+                             and "avito.ru" in ad["source_url"]]
+                    if pairs:
+                        from psycopg2.extras import execute_values
+                        execute_values(
+                            cur,
+                            """INSERT INTO avito_original.lot_source (avito_id, source_url)
+                               VALUES %s
+                               ON CONFLICT (avito_id) DO UPDATE
+                                 SET source_url = EXCLUDED.source_url,
+                                     last_seen = now()""",
+                            pairs,
+                        )
+                except Exception as ls_err:
+                    logger.warning(f"lot_source write failed: {ls_err}")
 
     # --- журнал конвейера: этап 'raw' только для новых лотов ---
                 new_ids = [ad["avito_id"] for ad in ads if ad.get("avito_id")]
