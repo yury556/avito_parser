@@ -12,3 +12,10 @@ CREATE TABLE IF NOT EXISTS avito_original.search_urls (
     active BOOLEAN NOT NULL DEFAULT TRUE,
     added_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- источник лота (URL поиска, из которого пришёл) — заполняет парсер
+CREATE TABLE IF NOT EXISTS avito_original.lot_source (
+    avito_id BIGINT PRIMARY KEY,
+    source_url TEXT NOT NULL,
+    first_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_seen TIMESTAMPTZ NOT NULL DEFAULT now()
+);
