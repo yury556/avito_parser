@@ -1,0 +1,10 @@
+[Unit]
+Description=Avito monthly restore test (dump -> temp DB -> verify -> drop)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/yury/avito_parser/scripts/backup/avito_restore_test.sh
+Nice=10
+IOSchedulingClass=idle

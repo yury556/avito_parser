@@ -1,0 +1,9 @@
+[Unit]
+Description=Run avito restore test monthly (1st day, 05:00)
+
+[Timer]
+OnCalendar=*-*-1 05:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

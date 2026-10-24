@@ -1,0 +1,10 @@
+[Unit]
+Description=Avito nightly backup (PostgreSQL + configs)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/yury/avito_parser/scripts/backup/avito_backup.sh
+Nice=10
+IOSchedulingClass=idle

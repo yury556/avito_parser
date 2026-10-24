@@ -110,6 +110,28 @@ def check():
     except Exception as exc:
         print(f"db check failed: {exc}", flush=True)
 
+    # 4) свежесть и размер бэкапов
+    backup_dir = "/home/yury/backups/avito/daily"
+    try:
+        dumps = sorted(
+            (os.path.getmtime(os.path.join(backup_dir, f)), f)
+            for f in os.listdir(backup_dir) if f.endswith(".dump")
+        )
+        if not dumps:
+            problems["бэкап"] = "нет ни одного дампа"
+        else:
+            mtime, newest = dumps[-1]
+            age_h = (time.time() - mtime) / 3600
+            size_mb = os.path.getsize(os.path.join(backup_dir, newest)) / 1024 / 1024
+            if age_h > 36:
+                problems["бэкап"] = f"последний дамп {age_h:.0f} ч назад"
+            elif size_mb < 5:
+                problems["бэкап"] = f"дамп слишком мал: {size_mb:.1f} МБ"
+    except FileNotFoundError:
+        problems["бэкап"] = "каталог бэкапов не найден"
+    except Exception as exc:
+        print(f"backup check failed: {exc}", flush=True)
+
     # алерты / восстановление
     for key, msg in problems.items():
         if not state.get(key):
