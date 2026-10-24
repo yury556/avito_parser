@@ -122,7 +122,8 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                        COALESCE(med_fam.med, med_cat.med) AS ref_med,
                        b.tags, lm.published_at, lm.views_total, lm.views_today,
                        lm.description, coalesce(NULLIF(lm.title, ''), m.title) AS lot_title,
-                       sn.name AS search_name
+                       sn.name AS search_name,
+                       coalesce(b.tags_universal, ARRAY[]::text[]) AS tags_universal
                 FROM base b
                 JOIN med_cat ON med_cat.category = b.category
                 LEFT JOIN med_fam ON med_fam.family = b.family
@@ -170,7 +171,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
             "location": r[4],
             "median": float(r[5]),
             "benefit_pct": int(round((float(r[2]) / float(r[5]) - 1) * 100)),
-            "tags": r[6] or [],
+            "tags": r[13] or [],  # универсальные русские теги вместо свободных DeepSeek
             "published_at": r[7],
             "views_total": r[8],
             "views_today": r[9],

@@ -76,7 +76,8 @@ def enrich(req: EnrichRequest):
 
 # ──── Batch-эндпоинт для Airflow ────
 class BatchRequest(BaseModel):
-    limit: int = 10
+    limit: int = 50
+    scope: str = "active"
 
 
 class BatchItem(BaseModel):
@@ -393,12 +394,10 @@ def _call_openrouter(messages: list[dict], retries: int = 5) -> tuple[dict | Non
 
 # ──── карантин ────
 
-def _slug_tag(ru_text: str) -> str:
-    """Слаг тега из русского текста DeepSeek: lowercase, дефисы."""
-    s = (ru_text or "").strip().lower()
-    s = re.sub(r"[^\wа-яё0-9]+", "-", s, flags=re.IGNORECASE)
-    s = s.strip("-")[:40]
-    return s if s else "прочее"
+def _clean_tag(ru_text: str) -> str:
+    """Ключ/метка тега из текста DeepSeek: нижний регистр, одинарные пробелы."""
+    s = re.sub(r"\s+", " ", (ru_text or "").strip().lower())
+    return s[:60]
 
 
 @app.post("/quarantine_process")
@@ -439,19 +438,19 @@ def quarantine_process(req: BatchRequest):
         try:
             model_fixed, model_ai, chip, note = validate_model(
                 result.get("model"), url)
-            # --- обратная связь: новые теги → словарь ---
+            # --- обратная связь: новые теги → словарь (ключ = метка) ---
             for tag in (result.get("tags") or []):
-                key = _slug_tag(tag)
+                key = _clean_tag(tag)
                 if not key:
                     continue
                 cur.execute("""
                     INSERT INTO avito_original.tag_vocabulary (tag_key, grp, label_ru, created_by, status)
                     VALUES (%s, 'сигнал', %s, 'deepseek', %s)
                     ON CONFLICT (tag_key) DO NOTHING
-                """, (key, tag, 'active' if tag_autoapprove else 'pending'))
+                """, (key, key, 'active' if tag_autoapprove else 'pending'))
                 if cur.rowcount:
                     new_tags += 1
-            tags_uni = [_slug_tag(tag) for tag in (result.get("tags") or []) if _slug_tag(tag)]
+            tags_uni = [_clean_tag(tag) for tag in (result.get("tags") or []) if _clean_tag(tag)]
             cur.execute("""
                 INSERT INTO detail.ads
                     (avito_id, category, brand, model, model_ai, chip, tags,
@@ -519,3 +518,86 @@ def quarantine_process(req: BatchRequest):
         conn.rollback()
     conn.close()
     return {"done": done, "failed": failed, "new_tags": new_tags, "items": items}
+
+
+# ──── ретаксация существующих лотов через Jev ────
+
+@app.post("/reclassify")
+def reclassify(req: BatchRequest):
+    """Прогон существующих лотов detail.ads через Jev: унификация тегов
+    и перепроверка классификации. Обновляет ТОЛЬКО condition/tags_universal/
+    tier/jev_confidence — model/chip/tags/ai_model не трогаются.
+    scope: 'active' (по умолчанию) | 'all'.
+    Лоты с conf < порога не меняются (tier='jev_low_conf')."""
+    limit = min(req.limit or 50, 500)
+    scope = getattr(req, "scope", None) or "active"
+    jev_conf = float(os.environ.get("JEV_CONF", "0.70"))
+    jev_tag_thr = float(os.environ.get("JEV_TAG_THRESHOLD", "0.75"))
+    conn = psycopg2.connect(
+        host=DB_HOST, port=DB_PORT, dbname=DB_NAME,
+        user=DB_USER, password=DB_PASSWORD,
+    )
+    cur = conn.cursor()
+    cur.execute("SELECT tag_key FROM avito_original.tag_vocabulary WHERE status = 'active'")
+    active_tags = [r[0] for r in cur.fetchall()]
+
+    where = "d.state = 'активно'" if scope == "active" else "TRUE"
+    cur.execute(f"""
+        SELECT d.avito_id, d.category, coalesce(d.input_title, ''),
+               coalesce(d.input_description, '')
+        FROM detail.ads d
+        WHERE {where}
+          AND coalesce(d.tier, '') NOT IN ('jev_recheck', 'jev_low_conf')
+        ORDER BY d.avito_id
+        LIMIT %s
+    """, (limit,))
+    rows = cur.fetchall()
+    done = low_conf = errors = cat_changed = 0
+    items = []
+
+    def _one(row):
+        avito_id, old_cat, title, desc = row
+        t, d, ob = normalize_lot(title, desc)
+        jr = call_jev(OPENROUTER_API_KEY, t, d, active_tags)
+        return avito_id, old_cat, jr, ob
+
+    with ThreadPoolExecutor(max_workers=PARALLEL_WORKERS) as ex:
+        for avito_id, old_cat, jr, ob in ex.map(_one, rows):
+            if not jr.get("ok") or jr["confidence"] < jev_conf:
+                low_conf += 1
+                cur.execute("UPDATE detail.ads SET tier='jev_low_conf' WHERE avito_id=%s",
+                            (avito_id,))
+                cur.execute("""
+                    INSERT INTO avito_original.quarantine (avito_id, reason, jev_confidence)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (avito_id) DO UPDATE SET
+                        reason=EXCLUDED.reason, jev_confidence=EXCLUDED.jev_confidence
+                """, (avito_id, f"reclassify: conf {jr.get('confidence', 0):.2f} < {jev_conf}"
+                      if jr.get("ok") else f"reclassify: jev error: {str(jr.get('error'))[:80]}",
+                      jr.get("confidence")))
+                items.append({"avito_id": avito_id, "status": "low_conf",
+                              "reason": ("no ok" if not jr.get("ok") else
+                                         f"conf {jr['confidence']:.2f}"),
+                              "err": str(jr.get("error"))[:150]})
+                if len(items) <= 3:
+                    print(f"reclassify: {avito_id}: "
+                          f"{'ok=False err=' + str(jr.get('error'))[:150] if not jr.get('ok') else 'conf=' + str(jr['confidence'])}",
+                          flush=True)
+                continue
+            tags_uni = universal_tags(jr["tags"], ob, jev_tag_thr)
+            cond = condition_from_tags(jr["tags"])
+            cur.execute("""
+                UPDATE detail.ads SET
+                    category=%s, condition=%s, tags_universal=%s,
+                    jev_confidence=%s, tier='jev_recheck'
+                WHERE avito_id=%s
+            """, (jr["category"], cond, tags_uni, jr["confidence"], avito_id))
+            if jr["category"] != old_cat:
+                cat_changed += 1
+            done += 1
+            items.append({"avito_id": avito_id, "status": "ok",
+                          "category": jr["category"], "cat_changed": jr["category"] != old_cat})
+    conn.commit()
+    conn.close()
+    return {"done": done, "low_conf": low_conf, "errors": errors,
+            "category_changed": cat_changed, "remaining_hint": None, "items": items[:20]}
