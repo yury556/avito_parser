@@ -40,7 +40,14 @@ CREATE TABLE IF NOT EXISTS mart.pg_detail_ads
     input_title      String,
     price_rub        Decimal(12, 2),
     ai_status        String,
-    ai_processed_at  DateTime
+    ai_processed_at  DateTime,
+    state            String,
+    condition        String,
+    tags_universal   Array(String),
+    tier             String,
+    jev_confidence   Float32,
+    chip             String,
+    search_name      String
 )
 ENGINE = PostgreSQL(
     'external-postgres:5432',
@@ -74,7 +81,8 @@ CREATE TABLE IF NOT EXISTS mart.avito_ads_detail
     tags_universal Array(String),
     tier           String,
     jev_confidence Float32,
-    chip           String
+    chip           String,
+    search_name    String
 )
 ENGINE = ReplacingMergeTree(updated_at)
 PARTITION BY category
@@ -138,7 +146,8 @@ AS SELECT
     coalesce(d.tags_universal, []) AS tags_universal,
     coalesce(d.tier, 'deepseek') AS tier,
     coalesce(d.jev_confidence, 0) AS jev_confidence,
-    coalesce(d.chip, '') AS chip
+    coalesce(d.chip, '') AS chip,
+    coalesce(d.search_name, '') AS search_name
 FROM mart.pg_detail_ads AS d
 INNER JOIN (SELECT avito_id, argMax(price_rub, parsed_at) AS price_rub,
                    argMax(title, parsed_at) AS title, argMax(url, parsed_at) AS url

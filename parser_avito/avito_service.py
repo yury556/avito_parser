@@ -137,6 +137,10 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                 ALTER TABLE avito_original.ads
                 ADD COLUMN IF NOT EXISTS image_keys JSONB DEFAULT '[]'::jsonb
             """)
+            cur.execute("""
+                ALTER TABLE avito_original.ads
+                ADD COLUMN IF NOT EXISTS source_url TEXT
+            """)
             if ads:
                 from psycopg2.extras import execute_values
                 execute_values(
@@ -144,7 +148,7 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                     """
                     INSERT INTO avito_original.ads
                         (avito_id, title, price_rub, url, location, seller,
-                         description, image_keys,
+                         description, image_keys, source_url,
                          is_reserved, is_promotion, total_views, today_views, parsed_at)
                     VALUES %s
                     ON CONFLICT (avito_id) DO UPDATE SET
@@ -155,6 +159,7 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                         seller = EXCLUDED.seller,
                         description = EXCLUDED.description,
                         image_keys = EXCLUDED.image_keys,
+                        source_url = COALESCE(EXCLUDED.source_url, avito_original.ads.source_url),
                         is_reserved = EXCLUDED.is_reserved,
                         is_promotion = EXCLUDED.is_promotion,
                         total_views = EXCLUDED.total_views,
@@ -177,6 +182,7 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                             ad.get("seller"),
                             ad.get("description"),
                             json.dumps(ad.get("image_keys", [])),
+                            ad.get("source_url"),
                             ad.get("is_reserved", False),
                             ad.get("is_promotion", False),
                             ad.get("total_views"),

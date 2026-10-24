@@ -329,6 +329,22 @@ def batch_process(req: BatchRequest):
                 errors += 1
                 results.append({"avito_id": out["avito_id"], "status": "error", "error": out["error"]})
 
+    # имя поиска для новых лотов (из lot_source + справочника)
+    try:
+        cur.execute("""
+            UPDATE detail.ads d
+            SET search_name = su.name
+            FROM avito_original.lot_source ls
+            JOIN avito_original.search_urls su ON su.url = ls.source_url
+            WHERE d.avito_id = ls.avito_id
+              AND d.search_name IS NULL
+              AND su.name IS NOT NULL
+        """)
+        conn.commit()
+    except Exception as sn_err:
+        conn.rollback()
+        print(f"ai_enrich: search_name sync failed: {sn_err}", flush=True)
+
     conn.close()
     return BatchResult(processed=processed, errors=errors, items=results)
 
