@@ -20,6 +20,15 @@ from avito_parser.firewall_client.main import (
 )
 
 
+class CooldownActive(RuntimeError):
+    """Кулдаун после серии блокировок: запросы временно прекращены."""
+
+
+# кулдаун общий для всего процесса: каждый вызов /parse создаёт новый
+# HttpClient, но бан на IP действует независимо от этого
+_GLOBAL_COOLDOWN_UNTIL = 0.0
+
+
 class HttpClient:
     def __init__(
         self,
@@ -29,6 +38,7 @@ class HttpClient:
         max_retries: int = 5,
         retry_delay: int = 5,
         block_threshold: int = 3,
+        block_cooldown_min: int = 15,
     ):
         self.proxy = proxy
         self.cookies = cookies
@@ -36,6 +46,7 @@ class HttpClient:
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.block_threshold = block_threshold
+        self.block_cooldown_min = block_cooldown_min
 
         self._block_attempts = 0
         self._session: requests.Session | None = None
@@ -79,6 +90,14 @@ class HttpClient:
             logger.warning(f"Прогрев не удался (не критично): {e}")
 
     def request(self, method: str, url: str, **kwargs):
+        global _GLOBAL_COOLDOWN_UNTIL
+        # кулдаун: после серии блокировок не трогаем Авито вообще
+        if time.time() < _GLOBAL_COOLDOWN_UNTIL:
+            raise CooldownActive(
+                f"Кулдаун активен до "
+                f"{time.strftime('%H:%M:%S', time.localtime(_GLOBAL_COOLDOWN_UNTIL))}"
+            )
+
         last_exc = None
 
         for attempt in range(1, self.max_retries + 1):
@@ -111,11 +130,19 @@ class HttpClient:
                     )
 
                     if self._block_attempts >= self.block_threshold:
-                        logger.warning("Достигнут лимит блокировок, запускается обработка")
-                        if self.cookies:
-                            self.cookies.handle_block()
+                        _GLOBAL_COOLDOWN_UNTIL = time.time() + self.block_cooldown_min * 60
+                        logger.warning(
+                            f"🧊 {self._block_attempts} блокировок подряд — "
+                            f"кулдаун {self.block_cooldown_min} мин "
+                            f"(до {time.strftime('%H:%M:%S', time.localtime(_GLOBAL_COOLDOWN_UNTIL))})"
+                        )
+                        self.cookies.handle_block() if self.cookies else None
                         self.proxy.handle_block()
                         self._block_attempts = 0
+                        raise CooldownActive(
+                            f"Кулдаун активен до "
+                            f"{time.strftime('%H:%M:%S', time.localtime(_GLOBAL_COOLDOWN_UNTIL))}"
+                        )
 
                     # Попытка пройти верификацию firewall (PoW / GeeTest)
                     stage_cleared = None

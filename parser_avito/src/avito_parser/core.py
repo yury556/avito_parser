@@ -1,4 +1,5 @@
 import json
+import random
 import re
 import time
 from datetime import datetime, timedelta
@@ -17,7 +18,7 @@ from avito_parser.storages.viewed import build_viewed_handler
 from avito_parser.entities import ItemsResponse, Item
 from avito_parser.cookies.factory import build_cookies_provider
 from avito_parser.sheets.factory import build_result_storage
-from avito_parser.fetchers.client import HttpClient
+from avito_parser.fetchers.client import CooldownActive, HttpClient
 from avito_parser.proxies.factory import build_proxy
 from avito_parser.api.params import build_api_params
 from avito_parser.version import VERSION
@@ -47,7 +48,8 @@ class AvitoParse:
             timeout=config.timeout,
             max_retries=self.config.max_count_of_retry,
             retry_delay=config.retry_delay,
-            block_threshold=config.block_threshold
+            block_threshold=config.block_threshold,
+            block_cooldown_min=getattr(config, "block_cooldown_min", 15),
         )
         self.ads_filter = AdsFilter(config=config, is_viewed_fn=self.is_viewed)
         log_config(config=self.config, version=VERSION)
@@ -71,6 +73,9 @@ class AvitoParse:
             self.good_request_count += 1
             return response.text
 
+        except CooldownActive:
+            # кулдаун пробрасываем наверх: цикл должен остановиться целиком
+            raise
         except Exception as err:
             self.bad_request_count += 1
             logger.warning(f"Ошибка при запросе {url}: {err}")
@@ -99,7 +104,12 @@ class AvitoParse:
 
         all_ads = []
 
-        for _index, url in enumerate(self.config.urls):
+        urls = list(self.config.urls)
+        if getattr(self.config, "cycle_shuffle", True) and len(urls) > 1:
+            random.shuffle(urls)
+            logger.info(f"Порядок ссылок перемешан ({len(urls)} шт.)")
+
+        for _index, url in enumerate(urls):
 
             if self.config.one_file_for_link:
                 self.result_storage = build_result_storage(
@@ -115,7 +125,11 @@ class AvitoParse:
                 if self.stop_event and self.stop_event.is_set():
                     return
                 if i == 0:
-                    html_code = self.fetch_data(url=url)
+                    try:
+                        html_code = self.fetch_data(url=url)
+                    except CooldownActive as cd:
+                        logger.warning(f"⏸ {cd} — прерываю цикл, продолжу после кулдауна")
+                        return all_ads
                 else:
                     if api_params and context:
                         json_data = self.fetch_api_data(api_params, page=i + 1, context=context)
@@ -160,15 +174,17 @@ class AvitoParse:
                     logger.info("Объявления закончились, заканчиваю работу с данной ссылкой")
                     break
 
+                # запоминаем, из какого поиска пришёл КАЖДЫЙ лот —
+                # нужно для имён поисков в базе и алертах
+                for _ad in ads:
+                    try:
+                        _ad.source_url = url
+                    except Exception:
+                        pass
+
                 filter_ads = self.filter_ads(ads=ads)
 
                 if filter_ads:
-                    # запоминаем, из какого поиска пришёл лот (для алертов)
-                    for _ad in filter_ads:
-                        try:
-                            _ad.source_url = url
-                        except Exception:
-                            pass
                     self.__save_viewed(ads=filter_ads)
                     ads_in_link.extend(filter_ads)
                     self.collected.extend(filter_ads)
@@ -181,8 +197,11 @@ class AvitoParse:
                     if self.config.save_json:
                         self._save_ads_to_json(filter_ads)
 
-                logger.info(f"Пауза {self.config.pause_between_links} сек.")
-                time.sleep(self.config.pause_between_links)
+                jitter_pct = getattr(self.config, "pause_jitter_pct", 0) or 0
+                base_pause = self.config.pause_between_links
+                pause = max(5.0, base_pause * (1 + random.uniform(-jitter_pct, jitter_pct) / 100))
+                logger.info(f"Пауза {pause:.0f} сек.")
+                time.sleep(pause)
 
             # Урожай уже сохранён постранично выше — здесь только сводка.
             if ads_in_link:

@@ -64,6 +64,9 @@ class AvitoConfig:
     retry_delay: int = 5
     timeout: int = 20
     block_threshold: int = 3
+    block_cooldown_min: int = 15   # пауза после порога блокировок подряд
+    cycle_shuffle: bool = True     # перемешивать порядок ссылок каждый цикл
+    pause_jitter_pct: int = 20     # случайный разброс паузы между ссылками, %
     user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
     storage: StorageConfig = field(default_factory=StorageConfig)
 
