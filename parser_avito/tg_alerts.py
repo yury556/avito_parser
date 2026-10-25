@@ -165,6 +165,9 @@ def send_lot(ad: dict) -> bool:
     ]
     if ad.get("published_at"):
         lines.append(f"🕐 Опубликовано: {html_mod.escape(_fmt_published(ad['published_at']))}")
+    elif ad.get("first_seen"):
+        fs = ad["first_seen"]
+        lines.append(f"📥 В базе с: {fs:%d.%m %H:%M}" if hasattr(fs, "strftime") else f"📥 В базе с: {fs}")
 
     tags = ad.get("tags") or []
     if tags:
@@ -246,6 +249,9 @@ def send_new_lot(ad: dict) -> bool:
         lines.append(f"🔎 Найдено в поиске: <b>{html_mod.escape(str(ad['search_name'])[:40])}</b>")
     if ad.get("published_at"):
         lines.append(f"🕐 Опубликовано: {html_mod.escape(_fmt_published(ad['published_at']))}")
+    elif ad.get("first_seen"):
+        fs = ad["first_seen"]
+        lines.append(f"📥 В базе с: {fs:%d.%m %H:%M}" if hasattr(fs, "strftime") else f"📥 В базе с: {fs}")
 
     tags = ad.get("tags") or []
     if isinstance(tags, str):

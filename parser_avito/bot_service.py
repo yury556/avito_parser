@@ -355,23 +355,46 @@ def cmd_tech(avito_id: int) -> str:
         L.append(f"Опубликовано: {published_at}")
 
     # --- ⏱ конвейер ---
-    if pipe:
+    # Основные метки: когда лот попал в сырой слой и когда обогатили.
+    # Если журнала этапов нет (старые лоты) — берём first_seen из midraw и ai_processed_at.
+    has_log = bool(pipe.get("raw")) and bool(pipe.get("enrich_done"))
+    raw_ts = pipe["raw"][0][0] if pipe.get("raw") else first_seen
+    enrich_ts = pipe["enrich_done"][0][0] if pipe.get("enrich_done") else ai_at
+    if raw_ts or enrich_ts:
         L.append("")
         L.append("⏱ <b>Конвейер</b>")
-        stage_labels = {"raw": "Сырой слой", "midraw": "→ Midraw", "enrich_start": "→ Обогащение начато",
-                        "enrich_done": "→ Обогащение готово", "quarantine_in": "🚨 Карантин",
-                        "quarantine_done": "→ Карантин обработан"}
-        first_ts = None
-        for stage, ts, dur in pipe_rows:
-            if first_ts is None:
-                first_ts = ts
-            label = stage_labels.get(stage, stage)
-            delta = f" (+{(ts - first_ts).total_seconds() / 60:.0f} мин)" if stage != "raw" else ""
-            extra = f" · запрос {dur / 1000:.1f} с" if dur and stage == "enrich_done" else ""
-            L.append(f"{label}: {ts:%d.%m %H:%M}{delta}{extra}")
-        if "raw" in pipe and "enrich_done" in pipe:
-            total_min = (pipe["enrich_done"][0][0] - pipe["raw"][0][0]).total_seconds() / 60
-            L.append(f"Полный цикл: <b>{total_min:.0f} мин</b>")
+        if raw_ts:
+            label = "Забран в сырой слой" if pipe.get("raw") else "Появился в базе"
+            L.append(f"{label}: {raw_ts:%d.%m %H:%M:%S}")
+        else:
+            L.append("Забран в сырой слой: <i>нет данных</i>")
+        if enrich_ts:
+            L.append(f"Обогащён: {enrich_ts:%d.%m %H:%M:%S}")
+        else:
+            L.append("Обогащён: <i>нет данных</i>")
+        if has_log:
+            delta_min = (enrich_ts - raw_ts).total_seconds() / 60
+            if delta_min < 1:
+                L.append(f"Разница: <b>{delta_min * 60:.0f} с</b>")
+            elif delta_min < 120:
+                L.append(f"Разница: <b>{delta_min:.0f} мин</b>")
+            else:
+                L.append(f"Разница: <b>{delta_min / 60:.1f} ч</b>")
+        elif raw_ts and enrich_ts and enrich_ts >= raw_ts:
+            delta_min = (enrich_ts - raw_ts).total_seconds() / 60
+            L.append(f"Разница: <b>{delta_min:.0f} мин</b> <i>(оценка)</i>")
+        else:
+            L.append("Разница: <i>нет данных</i> — у лота нет журнала этапов")
+        if pipe:
+            stage_labels = {"midraw": "→ Midraw", "enrich_start": "→ Обогащение начато",
+                            "quarantine_in": "🚨 Карантин", "quarantine_done": "→ Карантин обработан"}
+            base_ts = raw_ts
+            for stage, ts, dur in pipe_rows:
+                label = stage_labels.get(stage)
+                if not label:
+                    continue
+                delta = f" (+{(ts - base_ts).total_seconds() / 60:.0f} мин)" if base_ts else ""
+                L.append(f"{label}: {ts:%d.%m %H:%M}{delta}")
 
     return "\n".join(L)
 

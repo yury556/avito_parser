@@ -4,6 +4,7 @@
 """
 import os
 import time
+from datetime import datetime, timezone
 
 import psycopg2
 
@@ -14,6 +15,8 @@ from tg_alerts import (send_lots_batch, send_failure, send_recovery, send_system
 _SCAN_FAIL_ALERTED_AT = 0.0
 
 SILENCE_THRESHOLD_MIN = int(os.environ.get("SILENCE_THRESHOLD_MIN", "90"))
+# Если парсер не приносил новых данных дольше этого — не рассылаем архив
+NO_DATA_MAX_HOURS = int(os.environ.get("NO_DATA_MAX_HOURS", "24"))
 ALERT_SCAN_INTERVAL = int(os.environ.get("ALERT_SCAN_INTERVAL", "300"))  # 5 мин
 NEW_SCAN_INTERVAL = int(os.environ.get("NEW_SCAN_INTERVAL", "300"))  # 5 мин
 NEW_PER_HOUR = int(os.environ.get("NEW_LOTS_PER_HOUR", "20"))  # новых объявлений за раз
@@ -136,7 +139,8 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                     -- но с непустыми location/title (в свежих снимках они бывают пусты)
                     SELECT DISTINCT ON (avito_id)
                            avito_id, url, location, title, source_url,
-                           max(parsed_at) OVER (PARTITION BY avito_id) AS last_seen
+                           max(parsed_at) OVER (PARTITION BY avito_id) AS last_seen,
+                           min(parsed_at) OVER (PARTITION BY avito_id) AS first_seen
                     FROM midraw.avito_ads
                     ORDER BY avito_id,
                              (coalesce(location, '') = '') ASC,
@@ -154,16 +158,18 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                        b.tags, lm.published_at, lm.views_total, lm.views_today,
                        lm.description, coalesce(NULLIF(lm.title, ''), m.title) AS lot_title,
                        m.source_url AS source_url,
-                       coalesce(b.tags_universal, ARRAY[]::text[]) AS tags_universal
+                       coalesce(b.tags_universal, ARRAY[]::text[]) AS tags_universal,
+                       m.first_seen
                 FROM base b
                 JOIN med_cat ON med_cat.category = b.category
                 LEFT JOIN med_fam ON med_fam.family = b.family
                 JOIN seen m ON m.avito_id = b.avito_id
                 LEFT JOIN lot_meta lm ON lm.avito_id = b.avito_id
                 WHERE b.state = 'активно' AND b.price_rub > 0
+                  -- повторно — только если цена реально упала на 3 процента и больше;
+                  -- старые лоты не пересылаем «по кругу» каждые 24 часа
                   AND (b.alerted_at IS NULL
-                       OR b.price_rub <= COALESCE(b.alerted_price, b.price_rub) * 0.97
-                       OR b.alerted_at < now() - interval '24 hours')
+                       OR b.price_rub <= COALESCE(b.alerted_price, b.price_rub) * 0.97)
                   AND m.last_seen > now() - interval '48 hours'
                   AND b.model IS NOT NULL AND b.model != ''
                   AND (m.title IS NULL OR m.title !~*
@@ -179,7 +185,9 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
             cur.execute(sql_text, {"k": 1 - DISCOUNT_PCT / 100.0})
             rows = cur.fetchall()
     except Exception as exc:
+        import traceback
         print(f"alerts: scan failed: {exc}", flush=True)
+        print(traceback.format_exc(), flush=True)
         # Молчащий отказ скана хуже падения: система перестаёт присылать лоты.
         # Сообщаем в Telegram (не чаще раза в час).
         global _SCAN_FAIL_ALERTED_AT
@@ -209,6 +217,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
             "views_today": r[9],
             "description": r[10] or "",
             "search_name": search_names.get(lot_sources.get(r[0], ""), "") or "",
+            "first_seen": r[14],
         }
         for r in rows
     ]
@@ -222,21 +231,29 @@ def _scan_new_lots(db: dict, limit: int = 20) -> list[dict]:
             region_clause = _region_filter_clause(db, "f")
             sql_text = (
                 """
-                WITH fresh AS (
-                    SELECT DISTINCT ON (avito_id)
-                           avito_id, url, location, title,
-                           max(parsed_at) OVER (PARTITION BY avito_id) AS seen_at
+                WITH agg AS (
+                    -- первое и последнее появление лота в выдаче
+                    SELECT avito_id,
+                           min(parsed_at) OVER (PARTITION BY avito_id) AS first_seen,
+                           max(parsed_at) OVER (PARTITION BY avito_id) AS last_seen
                     FROM midraw.avito_ads
-                    WHERE parsed_at > now() - interval '2 hours'
-                    ORDER BY avito_id,
-                             (coalesce(location,'') = '') ASC,
-                             (coalesce(title,'') = '') ASC,
-                             parsed_at DESC
+                ),
+                fresh AS (
+                    SELECT DISTINCT ON (a.avito_id)
+                           a.avito_id, m.url, m.location, m.title,
+                           a.last_seen AS seen_at, a.first_seen
+                    FROM agg a
+                    JOIN midraw.avito_ads m ON m.avito_id = a.avito_id
+                    WHERE a.first_seen > now() - interval '24 hours'
+                    ORDER BY a.avito_id,
+                             (coalesce(m.location,'') = '') ASC,
+                             (coalesce(m.title,'') = '') ASC,
+                             m.parsed_at DESC
                 )
                 SELECT f.avito_id, coalesce(NULLIF(d.model,''), '?') AS model,
                        d.price_rub, f.url, f.location, f.title,
                        lm.published_at, lm.views_total, lm.views_today,
-                       lm.description, d.tags, d.category
+                       lm.description, d.tags, d.category, f.first_seen
                 FROM fresh f
                 JOIN detail.ads d ON d.avito_id = f.avito_id
                 LEFT JOIN avito_original.ads lm ON lm.avito_id = f.avito_id
@@ -268,6 +285,7 @@ def _scan_new_lots(db: dict, limit: int = 20) -> list[dict]:
             "description": r[9] or "",
             "tags": r[10] or [],
             "category": r[11],
+            "first_seen": r[12],
         }
         for r in rows
     ]
@@ -360,6 +378,23 @@ def _collect_drop_check(db: dict) -> None:
         _state["drop_alerted"] = False
 
 
+def _parser_stale(db: dict) -> bool:
+    """True, если парсер не приносил новых данных дольше NO_DATA_MAX_HOURS.
+
+    В этом случае бот молчит, а не рассылает накопленный архив как «новое».
+    """
+    try:
+        with _db_conn(db) as conn, conn.cursor() as cur:
+            cur.execute("SELECT max(parsed_at) FROM avito_original.ads")
+            last = cur.fetchone()[0]
+    except Exception as exc:
+        print(f"alerts: stale check failed: {exc}", flush=True)
+        return False
+    if last is None:
+        return True
+    return (datetime.now(timezone.utc) - last).total_seconds() > NO_DATA_MAX_HOURS * 3600
+
+
 def alert_tick(db: dict) -> None:
     """Вызывать каждый проход цикла enricher; сам решает, пора ли."""
     global _state
@@ -382,6 +417,14 @@ def alert_tick(db: dict) -> None:
             _collect_drop_check(db)
         except Exception as exc:
             print(f"alerts: silence check failed: {exc}", flush=True)
+
+    # парсер давно не приносит данных — молчим, архив не рассылаем
+    if _parser_stale(db):
+        if now - _state.get("last_stale_log", 0) > 3600:
+            _state["last_stale_log"] = now
+            print(f"alerts: парсер не приносит данных > {NO_DATA_MAX_HOURS} ч — "
+                  f"рассылка лотов приостановлена", flush=True)
+        return
 
     if now - _state["last_scan"] >= ALERT_SCAN_INTERVAL:
         _state["last_scan"] = now
