@@ -130,11 +130,17 @@ class HttpClient:
                     )
 
                     if self._block_attempts >= self.block_threshold:
-                        _GLOBAL_COOLDOWN_UNTIL = time.time() + self.block_cooldown_min * 60
+                        rotating = bool(getattr(self.proxy, "change_ip_url", ""))
+                        if rotating:
+                            # IP сменится прямо сейчас — ожидание не нужно
+                            _GLOBAL_COOLDOWN_UNTIL = time.time()
+                        else:
+                            _GLOBAL_COOLDOWN_UNTIL = time.time() + self.block_cooldown_min * 60
                         logger.warning(
                             f"🧊 {self._block_attempts} блокировок подряд — "
-                            f"кулдаун {self.block_cooldown_min} мин "
-                            f"(до {time.strftime('%H:%M:%S', time.localtime(_GLOBAL_COOLDOWN_UNTIL))})"
+                            + (f"ротация IP (мост)" if rotating else
+                               f"кулдаун {self.block_cooldown_min} мин "
+                               f"(до {time.strftime('%H:%M:%S', time.localtime(_GLOBAL_COOLDOWN_UNTIL))})")
                         )
                         self.cookies.handle_block() if self.cookies else None
                         self.proxy.handle_block()

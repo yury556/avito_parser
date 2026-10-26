@@ -67,6 +67,7 @@ class AvitoConfig:
     block_cooldown_min: int = 15   # пауза после порога блокировок подряд
     cycle_shuffle: bool = True     # перемешивать порядок ссылок каждый цикл
     pause_jitter_pct: int = 20     # случайный разброс паузы между ссылками, %
+    rotate_on_start: bool = False  # ротация IP в начале каждого цикла (мобильный прокси)
     user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
     storage: StorageConfig = field(default_factory=StorageConfig)
 

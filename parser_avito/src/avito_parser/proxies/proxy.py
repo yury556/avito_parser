@@ -41,10 +41,13 @@ class MobileProxy(Proxy):
         return f"http://{self.url}"
 
     def handle_block(self):
-        # делаем запрос на смену IP
+        # делаем запрос на смену IP (мост может работать ~60 с)
         params = {
             "format": "json"
         }
-        res = requests.get(self.change_ip_url, params=params, timeout=10)
+        res = requests.get(self.change_ip_url, params=params, timeout=90)
         if res.status_code == 200:
-            logger.success(f"новый IP {res.json().get('new_ip')}")
+            try:
+                logger.success(f"новый IP {res.json().get('new_ip')}")
+            except Exception:
+                logger.success("IP сменён (ротация)")

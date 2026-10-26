@@ -109,6 +109,15 @@ class AvitoParse:
             random.shuffle(urls)
             logger.info(f"Порядок ссылок перемешан ({len(urls)} шт.)")
 
+        # свежий IP на старте цикла: мобильный прокси с мостом ротации
+        if getattr(self.config, "rotate_on_start", False) and \
+                getattr(self.proxy, "change_ip_url", ""):
+            try:
+                logger.info("Ротация IP перед циклом…")
+                self.proxy.handle_block()
+            except Exception as rot_err:
+                logger.warning(f"Ротация перед циклом не удалась (не критично): {rot_err}")
+
         for _index, url in enumerate(urls):
 
             if self.config.one_file_for_link:

@@ -5,9 +5,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py .
-COPY model_guard.py .
-COPY backfill_model_guard.py .
+# все python-модули сервиса (app.py импортирует normalize, jev_client и др.)
+COPY *.py ./
 COPY prompts/ ./prompts/
 
 EXPOSE 8000
