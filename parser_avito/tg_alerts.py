@@ -197,7 +197,10 @@ def _pick_photo_key(image_keys) -> str | None:
         return None
     good = [e for e in entries if "avito.st" in (e.get("original_url") or "")]
     pool = good or [e for e in entries if "icon" not in (e.get("original_url") or "")]
-    return (pool or entries)[0].get("key")
+    # Telegram надёжнее принимает jpg/png; webp — запасной вариант
+    jpg_png = [e for e in pool
+               if (e.get("key") or "").lower().endswith((".jpg", ".jpeg", ".png"))]
+    return (jpg_png or pool or entries)[0].get("key")
 
 
 def _photo_source(ad: dict):

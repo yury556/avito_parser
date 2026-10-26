@@ -265,6 +265,8 @@ services:
       ALERT_LOT_MSG_LIMIT: "30"
     volumes:
       - ../parser_avito/storage:/shared
+      # конфиг нужен для доступа к MinIO (фото лотов в уведомлениях)
+      - ../parser_avito/config:/app/config
     command: ["python", "/app/enricher.py"]
     depends_on:
       external-postgres:
