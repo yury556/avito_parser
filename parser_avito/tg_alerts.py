@@ -144,6 +144,122 @@ def _fmt_published(published_at) -> str:
     return stamp
 
 
+# ──── фото лотов ────
+PHOTO_ENABLED = os.environ.get("PHOTO_ENABLED", "1") == "1"
+PHOTO_MAX_BYTES = int(os.environ.get("PHOTO_MAX_BYTES", str(8 * 1024 * 1024)))
+
+_minio_state = {"client": None, "bucket": None, "failed_at": 0.0}
+
+
+def _minio():
+    """Ленивый клиент MinIO из конфига парсера. None → недоступен (не чаще раза в час)."""
+    if _minio_state["client"] is not None:
+        return _minio_state["client"], _minio_state["bucket"]
+    if time.time() - _minio_state["failed_at"] < 3600:
+        return None
+    try:
+        import tomllib
+        from minio import Minio
+        path = os.environ.get("PARSER_CONFIG", "/app/config/config.toml")
+        with open(path, "rb") as f:
+            st = tomllib.load(f).get("storage", {})
+        endpoint = (st.get("endpoint") or "").replace("http://", "").replace("https://", "")
+        client = Minio(endpoint, access_key=st.get("access_key", ""),
+                       secret_key=st.get("secret_key", ""), secure=False)
+        _minio_state["client"] = client
+        _minio_state["bucket"] = st.get("bucket", "avito-images")
+        return _minio_state["client"], _minio_state["bucket"]
+    except Exception as e:
+        _minio_state["failed_at"] = time.time()
+        print(f"tg_alerts: MinIO недоступен ({e}), фото временно выключены", flush=True)
+        return None
+
+
+def _photo_entries(image_keys) -> list[dict]:
+    if isinstance(image_keys, str):
+        try:
+            image_keys = json.loads(image_keys)
+        except Exception:
+            image_keys = []
+    out = []
+    for e in image_keys or []:
+        if isinstance(e, dict) and e.get("key"):
+            out.append(e)
+        elif isinstance(e, str):
+            out.append({"key": e})
+    return out
+
+
+def _pick_photo_key(image_keys) -> str | None:
+    """Первое настоящее фото: иконки Авито и мусор отбрасываем."""
+    entries = _photo_entries(image_keys)
+    if not entries:
+        return None
+    good = [e for e in entries if "avito.st" in (e.get("original_url") or "")]
+    pool = good or [e for e in entries if "icon" not in (e.get("original_url") or "")]
+    return (pool or entries)[0].get("key")
+
+
+def _photo_source(ad: dict):
+    """('bytes', имя, данные) | ('url', ссылка) | None. Ошибки — тихо, с логом."""
+    if not PHOTO_ENABLED:
+        return None
+    keys = ad.get("image_keys")
+    mc = _minio()
+    key = _pick_photo_key(keys)
+    if mc and key:
+        client, bucket = mc
+        try:
+            resp = client.get_object(bucket, key)
+            data = resp.read()
+            resp.close()
+            resp.release_conn()
+            if data and len(data) <= PHOTO_MAX_BYTES:
+                return ("bytes", key.rsplit("/", 1)[-1] or "lot.jpg", data)
+        except Exception as e:
+            print(f"tg_alerts: фото {ad.get('avito_id')}: {e}", flush=True)
+    # запасной путь: публичная ссылка на оригинал с CDN Авито
+    for e in _photo_entries(keys):
+        orig = e.get("original_url") or ""
+        if "avito.st" in orig:
+            return ("url", orig)
+    return None
+
+
+def _send_photo(caption: str, reply_markup: dict, photo) -> bool:
+    """sendPhoto с подписью и кнопками. False → вызывающий код шлёт текст."""
+    import requests
+    fields: dict = {
+        "chat_id": CHAT_ID,
+        "caption": caption[:1024],
+        "parse_mode": "HTML",
+        "reply_markup": json.dumps(reply_markup),
+    }
+    try:
+        if photo[0] == "bytes":
+            files = {"photo": (photo[1], photo[2])}
+            r = requests.post(f"{API}/sendPhoto", data=fields, files=files, timeout=30)
+        else:
+            fields["photo"] = photo[1]
+            r = requests.post(f"{API}/sendPhoto", data=fields, timeout=30)
+        if r.status_code == 200 and r.json().get("ok"):
+            return True
+        if r.status_code == 400:  # Telegram не понял HTML в подписи → без разметки
+            fields["caption"] = re.sub(r"<[^>]+>", "", caption)[:1024]
+            fields.pop("parse_mode", None)
+            if photo[0] == "bytes":
+                files = {"photo": (photo[1], photo[2])}
+                r = requests.post(f"{API}/sendPhoto", data=fields, files=files, timeout=30)
+            else:
+                r = requests.post(f"{API}/sendPhoto", data=fields, timeout=30)
+            return r.status_code == 200 and r.json().get("ok")
+        print(f"tg_alerts: sendPhoto {r.status_code}: {r.text[:120]}", flush=True)
+        return False
+    except Exception as e:
+        print(f"tg_alerts: sendPhoto failed: {e}", flush=True)
+        return False
+
+
 def send_lot(ad: dict) -> bool:
     """Одно сообщение на один лот: название, цена, медиана, локация, теги,
     описание, дата создания. Кнопки: Авито / тех. свойства / карточка."""
@@ -199,6 +315,15 @@ def send_lot(ad: dict) -> bool:
             [{"text": "🔇 Отключить уведомления", "callback_data": "mute_all"}],
         ]},
     }
+    # фото: подпись ≤1024 симв.; длинный текст уходит отдельным сообщением
+    photo = _photo_source(ad)
+    if photo:
+        cap = text if len(text) <= 1000 else ""
+        if _send_photo(cap, payload["reply_markup"], photo):
+            _lot_msg_times.append(time.time())
+            if not cap and _send(payload) is False:
+                return False
+            return True
     if _send(payload) is False:
         # Telegram не понял HTML (например, в тексте остался «<»):
         # отправляем без разметки, чтобы лот не потерялся
@@ -282,6 +407,15 @@ def send_new_lot(ad: dict) -> bool:
             [{"text": "🔇 Отключить уведомления", "callback_data": "mute_all"}],
         ]},
     }
+    # фото: подпись ≤1024 симв.; длинный текст уходит отдельным сообщением
+    photo = _photo_source(ad)
+    if photo:
+        cap = text if len(text) <= 1000 else ""
+        if _send_photo(cap, payload["reply_markup"], photo):
+            _lot_msg_times.append(time.time())
+            if not cap and _send(payload) is False:
+                return False
+            return True
     if _send(payload) is False:
         plain = re.sub(r"<[^>]+>", "", text)
         payload["text"] = plain

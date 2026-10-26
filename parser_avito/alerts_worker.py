@@ -149,7 +149,8 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                 ),
                 lot_meta AS (
                     -- дата публикации, просмотры, описание и название из avito_original.ads
-                    SELECT avito_id, published_at, views_total, views_today, description, title
+                    SELECT avito_id, published_at, views_total, views_today, description, title,
+                           image_keys
                     FROM avito_original.ads
                 )
                 SELECT b.avito_id, b.model, b.price_rub, m.url,
@@ -159,7 +160,8 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                        lm.description, coalesce(NULLIF(lm.title, ''), m.title) AS lot_title,
                        m.source_url AS source_url,
                        coalesce(b.tags_universal, ARRAY[]::text[]) AS tags_universal,
-                       m.first_seen
+                       m.first_seen,
+                       lm.image_keys
                 FROM base b
                 JOIN med_cat ON med_cat.category = b.category
                 LEFT JOIN med_fam ON med_fam.family = b.family
@@ -218,6 +220,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
             "description": r[10] or "",
             "search_name": search_names.get(lot_sources.get(r[0], ""), "") or "",
             "first_seen": r[14],
+            "image_keys": r[15],
         }
         for r in rows
     ]
@@ -253,7 +256,8 @@ def _scan_new_lots(db: dict, limit: int = 20) -> list[dict]:
                 SELECT f.avito_id, coalesce(NULLIF(d.model,''), '?') AS model,
                        d.price_rub, f.url, f.location, f.title,
                        lm.published_at, lm.views_total, lm.views_today,
-                       lm.description, d.tags, d.category, f.first_seen
+                       lm.description, d.tags, d.category, f.first_seen,
+                       lm.image_keys
                 FROM fresh f
                 JOIN detail.ads d ON d.avito_id = f.avito_id
                 LEFT JOIN avito_original.ads lm ON lm.avito_id = f.avito_id
@@ -286,6 +290,7 @@ def _scan_new_lots(db: dict, limit: int = 20) -> list[dict]:
             "tags": r[10] or [],
             "category": r[11],
             "first_seen": r[12],
+            "image_keys": r[13],
         }
         for r in rows
     ]
