@@ -105,10 +105,17 @@ def batch_process(req: BatchRequest):
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT a.avito_id, a.title, a.description, a.price_rub, a.url
-        FROM midraw.avito_ads a
-        LEFT JOIN detail.ads d ON a.avito_id = d.avito_id
-        WHERE d.avito_id IS NULL
+        WITH candidates AS (
+            SELECT DISTINCT ON (a.avito_id)
+                   a.avito_id, a.title, a.description, a.price_rub, a.url, a.parsed_at
+            FROM midraw.avito_ads a
+            LEFT JOIN detail.ads d ON a.avito_id = d.avito_id
+            WHERE d.avito_id IS NULL
+            ORDER BY a.avito_id, a.parsed_at DESC
+        )
+        SELECT avito_id, title, description, price_rub, url
+        FROM candidates
+        ORDER BY parsed_at DESC
         LIMIT %s
     """, (req.limit,))
     rows = cur.fetchall()
@@ -216,21 +223,18 @@ def batch_process(req: BatchRequest):
             out = fut.result()
             if out["ok"]:
                 try:
-                    # Детерминированная валидация модели по URL-slug: LLM иногда
-                    # называет не тот чип (i5-13600KF -> "i5-14400F").
-                    model_fixed, model_ai, chip, note = validate_model(
-                        out["data"].get("model"), out.get("url"))
-                    if note:
-                        print(f"ai_enrich: {out['avito_id']}: {note} "
-                              f"('{model_ai}' -> '{model_fixed}')", flush=True)
                     if out.get("tier") == "quarantine":
+                        # У результата карантина нет data: записываем его до
+                        # валидации модели и не считаем успешным обогащением.
                         cur.execute("""
                             INSERT INTO avito_original.quarantine
                                 (avito_id, reason, jev_confidence)
                             VALUES (%s, %s, %s)
                             ON CONFLICT (avito_id) DO UPDATE
                                 SET reason=EXCLUDED.reason,
-                                    jev_confidence=EXCLUDED.jev_confidence
+                                    jev_confidence=EXCLUDED.jev_confidence,
+                                    status='waiting',
+                                    processed_at=NULL
                         """, (out["avito_id"], out.get("quarantine_reason"),
                               out.get("jev_confidence")))
                         cur.execute("""
@@ -242,7 +246,16 @@ def batch_process(req: BatchRequest):
                         results.append({"avito_id": out["avito_id"],
                                         "status": "quarantined",
                                         "reason": out.get("quarantine_reason")})
-                    elif out.get("tier") == "jev":
+                        continue
+
+                    # Детерминированная валидация модели по URL-slug: LLM иногда
+                    # называет не тот чип (i5-13600KF -> "i5-14400F").
+                    model_fixed, model_ai, chip, note = validate_model(
+                        out["data"].get("model"), out.get("url"))
+                    if note:
+                        print(f"ai_enrich: {out['avito_id']}: {note} "
+                              f"('{model_ai}' -> '{model_fixed}')", flush=True)
+                    if out.get("tier") == "jev":
                         cur.execute("""
                             INSERT INTO detail.ads
                                 (avito_id, category, brand, model, model_ai, chip, tags,

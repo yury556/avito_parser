@@ -19,7 +19,7 @@ import psycopg2
 from loguru import logger
 from playwright.sync_api import sync_playwright
 
-from tg_alerts import send_message  # noqa: F401 (единый модуль алертов)
+from tg_alerts import send_failure, send_message, send_recovery  # noqa: F401 (единый модуль алертов)
 import alerts_worker
 
 PARSER_URL = os.environ.get("AVITO_PARSER_URL", "http://avito-parser-service:8000").rstrip("/")
@@ -476,15 +476,15 @@ def main() -> None:
             now_ts = time.time()
             for expired_id in [k for k, v in FAILED.items() if v <= now_ts]:
                 del FAILED[expired_id]
-            # Режим экономии: после 5 провалов подряд — пауза 30 мин
-            if time.time() < PROBE["paused_until"]:
-                time.sleep(60)
-                continue
-            # Алерты (батч лотов / молчание парсера) — сам решает, пора ли.
+            # Алерты работают даже во время паузы проверок Avito.
             try:
                 alerts_worker.alert_tick(DB)
             except Exception as _alert_err:
                 logger.warning("alert tick упал (не критично): {}", _alert_err)
+            # Режим экономии: после 5 провалов подряд — пауза 30 мин
+            if time.time() < PROBE["paused_until"]:
+                time.sleep(60)
+                continue
             # --- приоритет: проверка статуса (раз в STATUS_INTERVAL секунд) ---
             if time.time() - last_status_check >= STATUS_INTERVAL:
                 last_status_check = time.time()
