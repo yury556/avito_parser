@@ -2,6 +2,7 @@ import json
 import re
 import sys
 import types
+from pathlib import Path
 from unittest.mock import patch
 from urllib.parse import parse_qsl, urlsplit
 
@@ -164,6 +165,50 @@ def test_firefox_user_agent_matches_runtime_platform() -> None:
     assert "Macintosh; Intel Mac OS X" in main.firefox_user_agent("darwin")
     assert main.PAGE_REQUEST_HEADERS["User-Agent"] == main.BROWSER_USER_AGENT
     assert main.GEETEST_REQUEST_HEADERS["User-Agent"] == main.BROWSER_USER_AGENT
+
+
+def test_pow_challenge_json_response_remains_supported() -> None:
+    response = FakeResponse(
+        439,
+        headers={"content-type": "application/json"},
+        json_value={"pow_challenge": "json-challenge"},
+        text='{"pow_challenge":"json-challenge"}',
+    )
+
+    assert main.pow_challenge_from_response(response) == "json-challenge"
+    assert main.response_has_pow_challenge(response)
+
+
+def test_pow_challenge_read_from_cookie_for_captured_html_439() -> None:
+    fixture = Path(__file__).parent / "test_fixtures" / "http_439_pow.html"
+    response = FakeResponse(
+        439,
+        headers={"content-type": "text/html; charset=utf-8"},
+        text=fixture.read_text(encoding="utf-8"),
+    )
+    response.cookies = Cookies()
+    response.cookies.set(
+        "pow_challenge",
+        "EA2DtZce7g7H+W0aBmmDdHudIynFhvYrCa7wJeSWYfKS9ERIyuF8CAB/9wO1HV0Yg5XG3FAUY/93FSjbju8zIHPWe/zqpCwKP+t9MEWacgIkZglwp7jkGI6bor5ZbGMXKJ7pYXiwWUlwqKpipg5JyLDksojNmA",
+        domain=".avito.ru",
+        path="/",
+    )
+
+    assert main.pow_challenge_from_response(response).startswith("EA2DtZce")
+    assert main.response_has_pow_challenge(response)
+
+
+def test_pow_challenge_missing_from_html_and_cookie_is_rejected() -> None:
+    response = FakeResponse(
+        439,
+        headers={"content-type": "text/html; charset=utf-8"},
+        text="<html>no challenge</html>",
+    )
+    response.cookies = Cookies()
+
+    with pytest.raises(RuntimeError, match="JSON response or cookies"):
+        main.pow_challenge_from_response(response)
+    assert not main.response_has_pow_challenge(response)
 
 
 def test_catalog_bootstrap_repeats_after_pow_and_sets_location_state(

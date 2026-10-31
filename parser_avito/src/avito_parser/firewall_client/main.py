@@ -341,29 +341,34 @@ def verified_from_response(body: dict[str, Any]) -> tuple[bool, int | None]:
 
 
 def pow_challenge_from_response(response: Any) -> str:
-    """Read the fresh challenge issued by the captured HTTP 439 response."""
+    """Read the fresh challenge from a JSON body or the response cookie jar."""
     try:
-        pow_challenge = response.json()["pow_challenge"]
-    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
-        raise RuntimeError(
-            "challenge source: no pow_challenge in JSON response"
-        ) from exc
+        payload = response.json()
+    except (json.JSONDecodeError, ValueError):
+        payload = None
+
+    pow_challenge = (
+        payload.get("pow_challenge")
+        if isinstance(payload, dict)
+        else None
+    )
     if not isinstance(pow_challenge, str) or not pow_challenge:
-        raise RuntimeError("challenge source: pow_challenge must be a non-empty string")
+        cookies = getattr(response, "cookies", None)
+        pow_challenge = dict(cookies).get("pow_challenge") if cookies else None
+    if not isinstance(pow_challenge, str) or not pow_challenge:
+        raise RuntimeError(
+            "challenge source: no pow_challenge in JSON response or cookies"
+        )
     return pow_challenge
 
 
 def response_has_pow_challenge(response: Any) -> bool:
     """Return whether a protection response selects the firewallPow branch."""
     try:
-        payload = response.json()
-    except (json.JSONDecodeError, ValueError):
+        pow_challenge_from_response(response)
+    except RuntimeError:
         return False
-    return (
-        isinstance(payload, dict)
-        and isinstance(payload.get("pow_challenge"), str)
-        and bool(payload["pow_challenge"])
-    )
+    return True
 
 
 def is_firewall_captcha_dispatcher_response(response: Any) -> bool:

@@ -16,7 +16,7 @@ from avito_parser.config import load_avito_config
 from avito_parser.image_downloader import ImageDownloader
 from avito_parser.storages import create_storage
 
-app = FastAPI(title="Avito Parser Service", version="3.2.16")
+app = FastAPI(title="Avito Parser Service", version="3.2.17")
 
 
 def _build_config(body: dict) -> AvitoConfig:
@@ -311,7 +311,7 @@ def parse_ads(body: dict):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "avito-parser", "version": "3.2.16"}
+    return {"status": "ok", "service": "avito-parser", "version": "3.2.17"}
 
 
 # ---------------------------------------------------------------- /fetch_lot

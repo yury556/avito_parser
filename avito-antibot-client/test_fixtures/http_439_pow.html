@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Доступ ограничен: проверка безопасности</title>
+    <style>
+        html,
+        body { height: 100%; }
+
+        body {
+            background-color: #fff;
+            color: #000;
+            margin: 0;
+        }
+
+        .firewall__title {
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin: 0;
+        }
+
+        .link {
+            color: #000;
+            text-decoration: underline;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .firewall__text {
+            line-height: 22px;
+            font-size: 15px;
+            margin: 12px 0 16px 0;
+        }
+
+        .firewall__image {
+            width: 100%;
+            height: auto;
+        }
+
+        .firewall__header {
+            padding-top: 24px;
+            padding-bottom: 24px;
+            text-align: left;
+        }
+
+        .firewall__container {
+            text-align: center;
+            max-width: 1316px;
+            margin: auto;
+            padding-left: 62px;
+            padding-right: 62px;
+        }
+
+        .firewall__content {
+            display: flex;
+            width: 100%;
+            padding: 48px 0 80px 0;
+            justify-content: space-between;
+            text-align: left;
+            font: 16px/1.4 Arial, "Helvetica Neue", Helvetica, sans-serif;
+        }
+
+        .firewall__image-container {
+            width: 100%;
+            max-width: 480px;
+            height: 480px;
+            overflow: hidden;
+            order: 1;
+            margin-left: 40px;
+            background-image: url("https://www.avito.st/static/ims/graphic_library_ru_403_2_error_no_entry_light_1000x1000.png");
+            background-size: 100%;
+            background-repeat: no-repeat;
+        }
+
+        .firewall__text-container {
+            max-width: 814px;
+            min-width: 0;
+        }
+
+        .firewall__status {
+            font-size: 14px;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .firewall__status-text {
+            display: block;
+            font-size: 15px;
+            line-height: 22px;
+            margin-left: 3px;
+        }
+
+        .firewall__spinner {
+            display: block;
+            width: 12px;
+            height: 12px;
+            border: 1px solid #000;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 1px;
+        }
+
+        .firewall__error {
+            color: #ff6163;
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .firewall__subtitle {
+            font-size: 21px;
+            line-height: 26px;
+            font-weight: 600;
+            margin: 32px 0 0 0;
+        }
+
+        .list {
+            list-style: none;
+            margin: 12px 0 16px 0;
+            padding: 0;
+        }
+
+        .list__item {
+            margin: 0 0 12px 0;
+        }
+
+        .firewall__list {
+            margin: 8px 0 12px 0;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media only screen and (max-width: 1023px) {
+            .firewall__container {
+                padding: 0 16px;
+            }
+
+            .firewall__content {
+                flex-direction: column;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                text-align: left;
+                align-items: center;
+            }
+
+            .firewall__image-container {
+                order: 0;
+                margin: 24px 0 22px 0;
+                display: flex;
+                justify-content: center;
+                width: 300px;
+                height: 300px;
+                max-width: 90%;
+            }
+
+            .firewall__title {
+                font-size: 26px;
+            }
+
+            .firewall__header {
+                text-align: center;
+                padding: 0;
+                padding-top: 44px;
+            }
+
+            .firewall__text-container {
+                margin: 0 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="firewall">
+        <div class="firewall__container">
+            <header class="firewall__header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="109" height="40" viewBox="0 0 109 40" fill="none">
+                    <path d="M41.4259 5.62077L32.0647 30.0625H37.0929L39.0173 24.9556H48.9496L50.8822 30.0625H55.8732L46.57 5.62077H41.4259ZM40.743 20.4695L44.0124 11.8698L47.2694 20.4695H40.743Z" fill="black"/>
+                    <path d="M61.8822 23.7596L57.8223 12.8921H53.0259L59.5646 30.0625H64.3197L70.7426 12.8921H65.9461L61.8822 23.7596Z" fill="black"/>
+                    <path d="M76.7766 12.8921H72.2119V30.0625H76.7766V12.8921Z" fill="black"/>
+                    <path d="M74.4921 11.6546C76.3297 11.6546 77.8194 10.1649 77.8194 8.32732C77.8194 6.48969 76.3297 5 74.4921 5C72.6545 5 71.1648 6.48969 71.1648 8.32732C71.1648 10.1649 72.6545 11.6546 74.4921 11.6546Z" fill="black"/>
+                    <path d="M85.8234 8.31076H81.2711V12.8631H78.6018V17.0015H81.2711V24.2976C81.2711 28.4361 83.5514 30.2156 86.7628 30.2156C87.8466 30.2299 88.9217 30.0199 89.9205 29.599V25.3446C89.3753 25.5443 88.8001 25.6492 88.2196 25.655C86.8249 25.655 85.8193 25.1129 85.8193 23.2547V17.0015H89.9205V12.9044H85.8234V8.31076Z" fill="black"/>
+                    <path d="M99.5173 12.5817C97.7572 12.5809 96.0363 13.1021 94.5725 14.0795C93.1086 15.0569 91.9675 16.4464 91.2936 18.0724C90.6196 19.6985 90.4431 21.4878 90.7862 23.2142C91.1294 24.9405 91.9769 26.5263 93.2216 27.771C94.4662 29.0156 96.052 29.8631 97.7783 30.2063C99.5047 30.5494 101.294 30.3729 102.92 29.6989C104.546 29.025 105.936 27.8839 106.913 26.4201C107.89 24.9562 108.412 23.2354 108.411 21.4752C108.41 19.1168 107.472 16.8554 105.805 15.1877C104.137 13.5201 101.876 12.5828 99.5173 12.5817V12.5817ZM99.5173 25.8247C98.6601 25.8255 97.822 25.5721 97.1089 25.0965C96.3958 24.6209 95.8398 23.9445 95.5112 23.1528C95.1826 22.3611 95.0962 21.4898 95.263 20.649C95.4297 19.8082 95.842 19.0358 96.4478 18.4294C97.0536 17.823 97.8257 17.4099 98.6663 17.2424C99.5069 17.0748 100.378 17.1604 101.17 17.4882C101.962 17.8161 102.639 18.3714 103.116 19.0841C103.592 19.7967 103.846 20.6346 103.846 21.4918C103.844 22.638 103.387 23.7365 102.575 24.5459C101.763 25.3553 100.664 25.8093 99.5173 25.8082V25.8247Z" fill="black"/>
+                    <path d="M8.89768 32.5C13.8117 32.5 17.7954 28.5164 17.7954 23.6023C17.7954 18.6883 13.8117 14.7047 8.89768 14.7047C3.98363 14.7047 0 18.6883 0 23.6023C0 28.5164 3.98363 32.5 8.89768 32.5Z" fill="#04E061"/>
+                    <path d="M24.33 31.3785C27.299 31.3785 29.7058 28.9717 29.7058 26.0027C29.7058 23.0337 27.299 20.6268 24.33 20.6268C21.361 20.6268 18.9541 23.0337 18.9541 26.0027C18.9541 28.9717 21.361 31.3785 24.33 31.3785Z" fill="#FF4053"/>
+                    <path d="M10.5986 13.5501C12.4362 13.5501 13.9259 12.0604 13.9259 10.2228C13.9259 8.38514 12.4362 6.89545 10.5986 6.89545C8.76093 6.89545 7.27124 8.38514 7.27124 10.2228C7.27124 12.0604 8.76093 13.5501 10.5986 13.5501Z" fill="#965EEB"/>
+                    <path d="M22.2401 19.468C26.2354 19.468 29.4741 16.2293 29.4741 12.234C29.4741 8.23878 26.2354 5 22.2401 5C18.2449 5 15.0061 8.23878 15.0061 12.234C15.0061 16.2293 18.2449 19.468 22.2401 19.468Z" fill="#00AAFF"/>
+                </svg>
+            </header>
+
+            <div class="firewall__content">
+                <div class="firewall__image-container" aria-hidden="true"></div>
+
+                <div class="firewall__text-container">
+                    <h1 class="firewall__title">Нужна небольшая проверка браузера</h1>
+                    <div class="firewall__status" id="pow-status">
+                        <span class="firewall__spinner" id="pow-spinner"></span>
+                        <span id="pow-status-text" class="firewall__status-text">Один момент...</span>
+                    </div>
+                    <div class="firewall__error" id="pow-error"></div>
+                    <h2 class="firewall__subtitle">Что делать, если проблема повторяется</h2>
+                    <ul class="list firewall__list">
+                        <li class="list__item">&mdash; Отключить VPN</li>
+                        <li class="list__item">&mdash; Отключить AdBlock или другие блокировщики рекламы, если они есть</li>
+                        <li class="list__item">&mdash; Перезагрузить роутер</li>
+                    </ul>
+                    <p class="firewall__text">
+                        Если и это не сработает, <a class="link" href="https://support.avito.ru/request/720?eventData[contextId]=117">напишите в&nbsp;поддержку</a>. В обращении укажите город, интернет-провайдера и IP-адрес — узнать его можно <a class="link" href="https://www.avito.ru/info/show_technical" target="_blank" rel="nofollow noopener">на&nbsp;сайте</a>. Постараемся помочь. 
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    function getCookie(name) {
+        var match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+        return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    function b64DecodeUnicode(str) {
+        str = str.replace(/-/g, '+').replace(/_/g, '/');
+        while (str.length % 4) str += '=';
+        return decodeURIComponent(atob(str).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+    }
+
+    function parseJwtPayload(jwt) {
+        var parts = jwt.split('.');
+        if (parts.length < 2) throw new Error('invalid jwt');
+        return JSON.parse(b64DecodeUnicode(parts[1]));
+    }
+
+    async function sha256hex(str) {
+        var buf = new TextEncoder().encode(str);
+        var hash = await crypto.subtle.digest('SHA-256', buf);
+        var arr = new Uint8Array(hash);
+        var hex = '';
+        for (var i = 0; i < arr.length; i++) {
+            hex += ('0' + arr[i].toString(16)).slice(-2);
+        }
+        return hex;
+    }
+
+    async function solvePow(id, complexity) {
+        var prefix = '';
+        for (var i = 0; i < complexity; i++) prefix += '0';
+        var nonce = 0;
+        while (true) {
+            var hex = await sha256hex(id + ':' + nonce);
+            if (hex.substring(0, complexity) === prefix) {
+                return nonce;
+            }
+            nonce++;
+            if (nonce % 10000 === 0) {
+                await new Promise(function(r) { setTimeout(r, 0); });
+            }
+        }
+    }
+
+    var MAX_RETRIES = 3;
+
+    function showFinalError(msg) {
+        document.getElementById('pow-spinner').style.display = 'none';
+        document.getElementById('pow-status-text').textContent = msg;
+    }
+
+    function showStatus(msg) {
+        document.getElementById('pow-spinner').style.display = 'inline-block';
+        document.getElementById('pow-status-text').textContent = msg;
+        document.getElementById('pow-error').style.display = 'none';
+    }
+
+    async function fetchWithTimeout(url, options, timeoutMs) {
+        var controller = new AbortController();
+        var timeoutId = setTimeout(function() {
+            controller.abort();
+        }, timeoutMs);
+
+        try {
+            return await fetch(url, Object.assign({}, options, {
+                signal: controller.signal,
+            }));
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    }
+
+    async function startPow(attempt) {
+        attempt = attempt || 1;
+        try {
+            showStatus('Получение задания...');
+
+            var challenge = getCookie('pow_challenge');
+            if (!challenge) {
+                showFinalError('Не удалось получить данные для проверки. Обновите страницу.');
+                return;
+            }
+
+            var getResp = await fetchWithTimeout('/web/3/firewallPow/get', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ challenge: challenge }),
+            }, 15000);
+            var getData = await getResp.json();
+
+            if (!getData || !getData.success || !getData.success.result || !getData.success.result.challenge_jwt) {
+                throw new Error('no challenge_jwt');
+            }
+
+            var challengeJwt = getData.success.result.challenge_jwt;
+            var payload = parseJwtPayload(challengeJwt);
+            var id = payload.id;
+            var complexity = payload.compl;
+
+            showStatus('Один момент...');
+
+            var nonce = await solvePow(id, complexity);
+
+            showStatus('Отправка результата...');
+
+            var verifyResp = await fetchWithTimeout('/web/3/firewallPow/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ challenge: challengeJwt, nonce: nonce }),
+            }, 15000);
+            var verifyData = await verifyResp.json();
+
+            if (verifyData && verifyData.success && verifyData.success.result && verifyData.success.result.verified) {
+                document.cookie = 'pow_solved=1; Path=/; Max-Age=10; SameSite=Lax';
+                showStatus('Проверка пройдена, перенаправление...');
+                setTimeout(function() { window.location = location.href; }, 300);
+                return;
+            } else {
+                throw new Error('not verified');
+            }
+        } catch (err) {
+            console.error(err);
+            if (attempt < MAX_RETRIES) {
+                setTimeout(function() { startPow(attempt + 1); }, 1000);
+            } else {
+                showFinalError('Не удалось пройти проверку. Обновите страницу.');
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (getCookie('pow_solved')) {
+            showStatus('Проверка пройдена, перенаправление...');
+            setTimeout(function() { window.location = location.href; }, 3000);
+            return;
+        }
+        startPow(1);
+    });
+</script>
+</body>
+</html>
+
