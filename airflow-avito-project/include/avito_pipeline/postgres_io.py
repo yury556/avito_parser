@@ -136,10 +136,10 @@ def fetch_ads_from_original(config: PostgresConfig, since: datetime) -> list[Avi
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT avito_id, title, price_rub, url, location, seller, description, parsed_at
+                SELECT avito_id, title, price_rub, url, location, seller, description, last_seen_at
                 FROM avito_original.ads
-                WHERE parsed_at > %s
-                ORDER BY parsed_at
+                WHERE last_seen_at > %s
+                ORDER BY last_seen_at
                 """,
                 (since,),
             )

@@ -97,16 +97,21 @@ def check():
         except FileNotFoundError:
             problems[label] = "heartbeat-файла нет"
 
-    # 3) свежесть БД (через docker exec psql)
+    # 3) свежесть парсера: завершённые runs, с резервом по наблюдениям лотов
     try:
         out = subprocess.run(
             ["docker", "exec", "airflow-avito-project-external-postgres-1",
              "psql", "-U", "avito", "-d", "avito_dwh", "-t", "-A", "-c",
-             "SELECT extract(epoch FROM now() - max(parsed_at))/60 FROM avito_original.ads"],
+             "SELECT extract(epoch FROM now() - GREATEST("
+             "(SELECT max(finished_at) FROM avito_original.parser_runs "
+             "WHERE status IN ('success', 'partial')), "
+             "(SELECT max(last_seen_at) FROM avito_original.ads)))/60"],
             capture_output=True, text=True, timeout=30).stdout.strip()
-        age = float(out or 0)
-        if age > 120:
-            problems["парсер"] = f"нет записей {age:.0f} мин"
+        age = float(out) if out else None
+        if age is None:
+            problems["парсер"] = "нет parser_runs и last_seen_at"
+        elif age > 120:
+            problems["парсер"] = f"нет успешных циклов {age:.0f} мин"
     except Exception as exc:
         print(f"db check failed: {exc}", flush=True)
 

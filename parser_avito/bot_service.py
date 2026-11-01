@@ -200,20 +200,27 @@ def sql(query: str, params=None):
 
 # ---------------------------------------------------------------- /status
 def cmd_status() -> str:
-    parser_last, per_hour, enricher_last, active, total = sql("""
-        SELECT (SELECT max(parsed_at) FROM avito_original.ads),
+    parser_last, content_last, per_hour, enricher_last, active, total = sql("""
+        SELECT COALESCE(
+                   (SELECT max(finished_at) FROM avito_original.parser_runs
+                    WHERE status = 'success'),
+                   (SELECT max(last_seen_at) FROM avito_original.ads)),
+               (SELECT max(content_updated_at) FROM avito_original.ads),
                (SELECT count(*) FROM avito_original.ads
-                 WHERE parsed_at > now() - interval '1 hour'),
+                 WHERE last_seen_at > now() - interval '1 hour'),
                (SELECT max(last_checked_at) FROM detail.ads),
                (SELECT count(*) FROM detail.ads WHERE state = 'активно'),
                (SELECT count(*) FROM detail.ads)
     """)[0]
     parser_min = f"{(time.time() - parser_last.timestamp()) / 60:.0f} мин назад" if parser_last else "?"
+    content_min = f"{(time.time() - content_last.timestamp()) / 60:.0f} мин назад" if content_last else "нет данных"
     enricher_min = f"{(time.time() - enricher_last.timestamp()) / 60:.0f} мин назад" if enricher_last else "?"
     parser_ok = "🟢" if parser_last and parser_last.timestamp() > time.time() - 5400 else "🔴"
+    parser_time = f"{parser_last:%H:%M}" if parser_last else "—"
     return (
-        f"{parser_ok} Парсер: последняя запись {parser_min} ({parser_last:%H:%M})\n"
-        f"   за час: {per_hour} лотов\n"
+        f"{parser_ok} Парсер: последний успешный цикл {parser_min} ({parser_time})\n"
+        f"   наблюдено за час: {per_hour} лотов\n"
+        f"📝 Последнее изменение лота: {content_min}\n"
         f"🟡 Enricher: проверка {enricher_min} назад\n"
         f"📦 База: {total} лотов, активных {active}"
     )
@@ -700,7 +707,7 @@ def build_digest() -> str:
         cur.execute("""
             SELECT
               (SELECT count(*) FROM avito_original.ads
-                WHERE parsed_at > now() - interval '24 hours'),
+                WHERE last_seen_at > now() - interval '24 hours'),
               (SELECT count(*) FROM midraw.avito_ads
                 WHERE parsed_at > now() - interval '24 hours'),
               (SELECT count(*) FROM avito_original.ads WHERE length(description) > 260),

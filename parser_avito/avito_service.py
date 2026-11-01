@@ -14,6 +14,7 @@ from loguru import logger
 from avito_parser.settings import AvitoConfig
 from avito_parser.core import AvitoParse
 from avito_parser.config import load_avito_config
+from parser_runs import finish_parser_run, new_run_id, start_parser_run
 
 app = FastAPI(title="Avito Parser Service", version="3.2.17")
 
@@ -125,7 +126,14 @@ def _postgres_conn(pg_config: dict):
         conn.close()
 
 
-def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str], ads: list[dict]) -> int:
+def _write_ads_to_postgres(
+    pg_config: dict,
+    run_id: str,
+    source_urls: list[str],
+    ads: list[dict],
+    observed_at: datetime | None = None,
+) -> int:
+    observed_at = observed_at or datetime.now(timezone.utc)
     with _postgres_conn(pg_config) as conn:
         with conn.cursor() as cur:
             cur.execute("""
@@ -148,7 +156,8 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                     INSERT INTO avito_original.ads
                         (avito_id, title, price_rub, url, location, seller,
                          description, image_keys, source_url,
-                         is_reserved, is_promotion, total_views, today_views, parsed_at)
+                         is_reserved, is_promotion, total_views, today_views,
+                         parsed_at, first_seen_at, last_seen_at, content_updated_at)
                     VALUES %s
                     ON CONFLICT (avito_id) DO UPDATE SET
                         title = EXCLUDED.title,
@@ -167,16 +176,44 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                         is_promotion = EXCLUDED.is_promotion,
                         total_views = EXCLUDED.total_views,
                         today_views = EXCLUDED.today_views,
-                        parsed_at = EXCLUDED.parsed_at
-                    WHERE avito_original.ads.price_rub     IS DISTINCT FROM EXCLUDED.price_rub
-                       OR avito_original.ads.is_reserved   IS DISTINCT FROM EXCLUDED.is_reserved
-                       OR avito_original.ads.is_promotion  IS DISTINCT FROM EXCLUDED.is_promotion
-                       OR avito_original.ads.total_views   IS DISTINCT FROM EXCLUDED.total_views
-                       OR avito_original.ads.today_views   IS DISTINCT FROM EXCLUDED.today_views
-                       OR avito_original.ads.description IS DISTINCT FROM EXCLUDED.description
-                       OR (EXCLUDED.image_keys IS NOT NULL
-                           AND EXCLUDED.image_keys <> '[]'::jsonb
-                           AND avito_original.ads.image_keys IS DISTINCT FROM EXCLUDED.image_keys)
+                        parsed_at = CASE
+                            WHEN avito_original.ads.price_rub IS DISTINCT FROM EXCLUDED.price_rub
+                              OR avito_original.ads.is_reserved IS DISTINCT FROM EXCLUDED.is_reserved
+                              OR avito_original.ads.is_promotion IS DISTINCT FROM EXCLUDED.is_promotion
+                              OR avito_original.ads.total_views IS DISTINCT FROM EXCLUDED.total_views
+                              OR avito_original.ads.today_views IS DISTINCT FROM EXCLUDED.today_views
+                              OR avito_original.ads.description IS DISTINCT FROM EXCLUDED.description
+                              OR (EXCLUDED.image_keys IS NOT NULL
+                                  AND EXCLUDED.image_keys <> '[]'::jsonb
+                                  AND avito_original.ads.image_keys IS DISTINCT FROM EXCLUDED.image_keys)
+                            THEN EXCLUDED.parsed_at
+                            ELSE avito_original.ads.parsed_at
+                        END,
+                        first_seen_at = COALESCE(
+                            avito_original.ads.first_seen_at, EXCLUDED.first_seen_at),
+                        last_seen_at = EXCLUDED.last_seen_at,
+                        content_updated_at = CASE
+                            WHEN avito_original.ads.price_rub IS DISTINCT FROM EXCLUDED.price_rub
+                              OR avito_original.ads.title IS DISTINCT FROM EXCLUDED.title
+                              OR avito_original.ads.url IS DISTINCT FROM EXCLUDED.url
+                              OR avito_original.ads.location IS DISTINCT FROM EXCLUDED.location
+                              OR avito_original.ads.seller IS DISTINCT FROM EXCLUDED.seller
+                              OR avito_original.ads.is_reserved IS DISTINCT FROM EXCLUDED.is_reserved
+                              OR avito_original.ads.is_promotion IS DISTINCT FROM EXCLUDED.is_promotion
+                              OR avito_original.ads.total_views IS DISTINCT FROM EXCLUDED.total_views
+                              OR avito_original.ads.today_views IS DISTINCT FROM EXCLUDED.today_views
+                              OR avito_original.ads.description IS DISTINCT FROM EXCLUDED.description
+                              OR (EXCLUDED.image_keys IS NOT NULL
+                                  AND EXCLUDED.image_keys <> '[]'::jsonb
+                                  AND avito_original.ads.image_keys IS DISTINCT FROM EXCLUDED.image_keys)
+                            THEN EXCLUDED.content_updated_at
+                            ELSE avito_original.ads.content_updated_at
+                        END,
+                        last_price_changed_at = CASE
+                            WHEN avito_original.ads.price_rub IS DISTINCT FROM EXCLUDED.price_rub
+                            THEN EXCLUDED.last_seen_at
+                            ELSE avito_original.ads.last_price_changed_at
+                        END
                     """,
                     [
                         (
@@ -193,7 +230,10 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                             ad.get("is_promotion", False),
                             ad.get("total_views"),
                             ad.get("today_views"),
-                            datetime.now(timezone.utc),
+                            observed_at,
+                            observed_at,
+                            observed_at,
+                            observed_at,
                         )
                         for ad in ads
                         if ad.get("avito_id")
@@ -297,29 +337,50 @@ def parse_ads(body: dict):
 
     config = _build_config(body)
     parser = AvitoParse(config)
-    try:
-        items = parser.parse()
-        partial = False
-    except Exception as parse_err:
-        # Частичный урожай уже собранных страниц — не теряем при падении.
-        items = getattr(parser, "collected", None) or []
-        partial = True
-        if not items:
-            raise
-        logger.warning(f"Парсинг упал ({parse_err}); отдаю частичный урожай: {len(items)} объявлений")
-    logger.info(f"Парсинг завершён: {len(items)} объявлений{' (частично)' if partial else ''}")
-
-    ads = [_item_to_dict(item) for item in items]
-    for ad in ads:
-        # URL сохраняются в durable image_jobs вместе с лотом; сети MinIO/CDN здесь нет.
-        ad["image_keys"] = []
-
     pg_config = _get_postgres_config(body)
-    if pg_config and ads:
-        run_id = datetime.now(timezone.utc).strftime("svc_%Y%m%d_%H%M%S")
-        count = _write_ads_to_postgres(pg_config, run_id, config.urls, ads)
-        logger.info(f"Записано в Postgres: {count} строк, run_id={run_id}")
+    run_id = new_run_id("svc")
+    if pg_config:
+        start_parser_run(
+            pg_config, run_id, len(config.urls),
+            os.environ.get("PARSER_VERSION", app.version),
+        )
 
+    items = []
+    count = 0
+    partial = False
+    run_error = None
+    try:
+        try:
+            items = parser.parse()
+        except Exception as parse_err:
+            # Частичный урожай уже собранных страниц — не теряем при падении.
+            items = getattr(parser, "collected", None) or []
+            partial = True
+            run_error = parse_err
+            if not items:
+                raise
+            logger.warning(
+                f"Парсинг упал ({parse_err}); отдаю частичный урожай: {len(items)} объявлений")
+        logger.info(f"Парсинг завершён: {len(items)} объявлений{' (частично)' if partial else ''}")
+
+        ads = [_item_to_dict(item) for item in items]
+        for ad in ads:
+            # URL сохраняются в durable image_jobs вместе с лотом; сети MinIO/CDN здесь нет.
+            ad["image_keys"] = []
+
+        if pg_config and ads:
+            count = _write_ads_to_postgres(pg_config, run_id, config.urls, ads)
+            logger.info(f"Записано в Postgres: {count} строк, run_id={run_id}")
+    except Exception as exc:
+        if pg_config:
+            finish_parser_run(pg_config, run_id, "failed", len(items), count, exc)
+        raise
+
+    if pg_config:
+        finish_parser_run(
+            pg_config, run_id, "partial" if partial else "success",
+            len(items), count, run_error,
+        )
     return {"status": "ok", "count": len(ads), "ads": ads}
 
 

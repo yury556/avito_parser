@@ -35,6 +35,18 @@ def _db_conn(db: dict):
     return psycopg2.connect(**db)
 
 
+def _last_parser_activity(cur):
+    """Последний завершённый живой цикл; last_seen_at — резервный сигнал."""
+    cur.execute("""
+        SELECT GREATEST(
+            (SELECT max(finished_at) FROM avito_original.parser_runs
+             WHERE status IN ('success', 'partial')),
+            (SELECT max(last_seen_at) FROM avito_original.ads)
+        )
+    """)
+    return cur.fetchone()[0]
+
+
 def _region_filter_clause(db: dict, alias: str = "m") -> str:
     """SQL-условие фильтра региона (читает настройку бота)."""
     try:
@@ -330,21 +342,19 @@ def _parser_silence_check(db: dict) -> None:
     """Парсер молчит > порога → один алерт; восстановление → отдельный алерт."""
     global _state
     with _db_conn(db) as conn, conn.cursor() as cur:
-        cur.execute("SELECT max(parsed_at) FROM avito_original.ads")
-        row = cur.fetchone()
-    last = row[0] if row else None
+        last = _last_parser_activity(cur)
     if last is None:
         return
     silence_min = (time.time() - last.timestamp()) / 60.0
     if silence_min > SILENCE_THRESHOLD_MIN and not _state["silence_alerted"]:
         send_failure(
             f"Парсер молчит {int(silence_min)} минут\n"
-            f"последняя запись: {last:%d.%m %H:%M}.\n"
+            f"последний успешный цикл/наблюдение: {last:%d.%m %H:%M}.\n"
             f"Смотри: docker logs airflow-avito-project-avito-parser-service-1"
         )
         _state["silence_alerted"] = True
     elif silence_min <= SILENCE_THRESHOLD_MIN and _state["silence_alerted"]:
-        send_recovery(f"Парсер снова пишет (последняя запись {last:%d.%m %H:%M})")
+        send_recovery(f"Парсер снова работает (последний цикл {last:%d.%m %H:%M})")
         _state["silence_alerted"] = False
 
 
@@ -366,10 +376,10 @@ def _collect_drop_check(db: dict) -> None:
             cur.execute("""
                 SELECT
                   (SELECT count(*) FROM avito_original.ads
-                    WHERE parsed_at > now() - interval '24 hours'),
+                    WHERE last_seen_at > now() - interval '24 hours'),
                   (SELECT count(*) FROM avito_original.ads
-                    WHERE parsed_at > now() - interval '48 hours'
-                      AND parsed_at <= now() - interval '24 hours')
+                    WHERE last_seen_at > now() - interval '48 hours'
+                      AND last_seen_at <= now() - interval '24 hours')
             """)
             cur24, prev24 = cur.fetchone()
     except Exception as exc:
@@ -388,14 +398,13 @@ def _collect_drop_check(db: dict) -> None:
 
 
 def _parser_stale(db: dict) -> bool:
-    """True, если парсер не приносил новых данных дольше NO_DATA_MAX_HOURS.
+    """True, если давно нет живого parser run или подтверждения наблюдения.
 
     В этом случае бот молчит, а не рассылает накопленный архив как «новое».
     """
     try:
         with _db_conn(db) as conn, conn.cursor() as cur:
-            cur.execute("SELECT max(parsed_at) FROM avito_original.ads")
-            last = cur.fetchone()[0]
+            last = _last_parser_activity(cur)
     except Exception as exc:
         print(f"alerts: stale check failed: {exc}", flush=True)
         return False
