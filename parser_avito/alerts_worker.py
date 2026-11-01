@@ -97,7 +97,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
             region_clause = _region_filter_clause(db, "m")
             sql_text = (
                 r"""
-                WITH base AS (
+                WITH base AS MATERIALIZED (
                     SELECT d.avito_id, d.price_rub, d.state, d.category, d.model,
                            d.alerted_at, coalesce(d.chip, '') AS b_chip, d.tags,
                            coalesce(d.tags_universal, ARRAY[]::text[]) AS tags_universal,
@@ -117,7 +117,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                            ) AS family
                     FROM detail.ads d
                 ),
-                med_fam AS (
+                med_fam AS MATERIALIZED (
                     SELECT family, percentile_cont(0.5)
                            WITHIN GROUP (ORDER BY price_rub) AS med
                     FROM base
@@ -126,7 +126,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                     GROUP BY family
                     HAVING count(*) >= 3
                 ),
-                med_cat AS (
+                med_cat AS MATERIALIZED (
                     SELECT category, percentile_cont(0.5)
                            WITHIN GROUP (ORDER BY price_rub) AS med
                     FROM base
@@ -134,7 +134,7 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                       AND model IS NOT NULL AND model != ''
                     GROUP BY category
                 ),
-                seen AS (
+                seen AS MATERIALIZED (
                     -- в midraw несколько строк на лот (история цен) — берём свежую,
                     -- но с непустыми location/title (в свежих снимках они бывают пусты)
                     SELECT DISTINCT ON (avito_id)

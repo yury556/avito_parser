@@ -19,9 +19,13 @@ services:
       - DB_USER=${DB_USER:-avito}
       - DB_PASSWORD=${DB_PASSWORD:-avito123}
       - AI_PROMPT_VERSION=${AI_PROMPT_VERSION:-v2}
-      - WORKER_ENABLED=${WORKER_ENABLED:-false}
+      # Постоянный последовательный worker; внутри batch остаётся 5 параллельных AI-запросов.
+      - WORKER_ENABLED=${AI_WORKER_ENABLED:-true}
       - PARALLEL_WORKERS=${PARALLEL_WORKERS:-5}
-      - IDLE_SLEEP=${IDLE_SLEEP:-30}
+      - AI_BATCH_LIMIT=${AI_BATCH_LIMIT:-50}
+      - IDLE_SLEEP=${IDLE_SLEEP:-10}
+      - WORKER_BACKOFF_BASE=${WORKER_BACKOFF_BASE:-2}
+      - WORKER_BACKOFF_MAX=${WORKER_BACKOFF_MAX:-60}
     networks:
       - ai-net
       - airflow-net

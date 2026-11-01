@@ -1,4 +1,8 @@
-{{ config(materialized='table', schema='midraw') }}
+{{ config(
+    materialized='table',
+    schema='midraw',
+    post_hook="CREATE INDEX IF NOT EXISTS idx_midraw_avito_parsed ON midraw.avito_ads (avito_id, parsed_at DESC)"
+) }}
 
 with parsed as (
     select

@@ -19,6 +19,7 @@ from pydantic import BaseModel
 from model_guard import validate_model
 from normalize import normalize_lot
 from jev_client import call_jev, condition_from_tags, universal_tags, JEV_MODEL
+from worker import AIEnrichWorker
 
 app = FastAPI(title="AI Enrich", version="1.0.0")
 
@@ -33,8 +34,13 @@ DB_NAME = os.getenv("DB_NAME", "avito_dwh")
 DB_USER = os.getenv("DB_USER", "avito")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "avito123")
 
-# ──── Параллелизм внутри батча ────
+# ──── Параллелизм внутри батча и постоянный worker ────
 PARALLEL_WORKERS = int(os.getenv("PARALLEL_WORKERS", "5"))
+WORKER_ENABLED = os.getenv("WORKER_ENABLED", "false").lower() in ("1", "true", "yes")
+AI_BATCH_LIMIT = max(1, min(int(os.getenv("AI_BATCH_LIMIT", "50")), 50))
+IDLE_SLEEP = float(os.getenv("IDLE_SLEEP", "10"))
+WORKER_BACKOFF_BASE = float(os.getenv("WORKER_BACKOFF_BASE", "2"))
+WORKER_BACKOFF_MAX = float(os.getenv("WORKER_BACKOFF_MAX", "60"))
 
 # ──── Загрузка промпта ────
 PROMPT_DIR = Path(__file__).parent / "prompts"
@@ -93,10 +99,10 @@ class BatchResult(BaseModel):
     items: list[dict]
 
 
-@app.post("/batch", response_model=BatchResult)
-def batch_process(req: BatchRequest):
+def _batch_process(req: BatchRequest):
     """
     Читает из midraw.avito_ads, шлёт в OpenRouter, пишет в detail.ads.
+    Вызывается только через AI_WORKER.run_batch: один batch в процессе.
     """
     conn = psycopg2.connect(
         host=DB_HOST, port=DB_PORT, dbname=DB_NAME,
@@ -110,7 +116,9 @@ def batch_process(req: BatchRequest):
                    a.avito_id, a.title, a.description, a.price_rub, a.url, a.parsed_at
             FROM midraw.avito_ads a
             LEFT JOIN detail.ads d ON a.avito_id = d.avito_id
+            LEFT JOIN avito_original.quarantine q ON a.avito_id = q.avito_id
             WHERE d.avito_id IS NULL
+              AND q.avito_id IS NULL
             ORDER BY a.avito_id, a.parsed_at DESC
         )
         SELECT avito_id, title, description, price_rub, url
@@ -119,6 +127,9 @@ def batch_process(req: BatchRequest):
         LIMIT %s
     """, (req.limit,))
     rows = cur.fetchall()
+    if not rows:
+        conn.close()
+        return BatchResult(processed=0, errors=0, items=[])
 
     # --- журнал конвейера: midraw (первое появление) + enrich_start ---
     if rows:
@@ -360,6 +371,42 @@ def batch_process(req: BatchRequest):
 
     conn.close()
     return BatchResult(processed=processed, errors=errors, items=results)
+
+
+AI_WORKER = AIEnrichWorker(
+    _batch_process,
+    BatchRequest(limit=AI_BATCH_LIMIT),
+    enabled=WORKER_ENABLED,
+    idle_sleep=IDLE_SLEEP,
+    backoff_base=WORKER_BACKOFF_BASE,
+    backoff_max=WORKER_BACKOFF_MAX,
+)
+
+
+@app.post("/batch", response_model=BatchResult)
+def batch_process(req: BatchRequest):
+    """Ручной/Airflow вызов использует тот же замок, что и фоновый worker."""
+    return AI_WORKER.run_batch(req)
+
+
+@app.get("/worker/status")
+def worker_status():
+    return AI_WORKER.status()
+
+
+@app.on_event("startup")
+def start_ai_worker():
+    if AI_WORKER.start():
+        print(
+            f"ai_worker: запущен, limit={AI_BATCH_LIMIT}, "
+            f"idle_sleep={IDLE_SLEEP}s, parallel={PARALLEL_WORKERS}",
+            flush=True,
+        )
+
+
+@app.on_event("shutdown")
+def stop_ai_worker():
+    AI_WORKER.stop()
 
 
 # ──── OpenRouter API ────
