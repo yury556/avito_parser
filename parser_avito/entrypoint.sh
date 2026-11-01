@@ -149,6 +149,24 @@ def write_to_postgres(ads: list[dict]):
                     if ad.get('avito_id')
                 ],
             )
+            image_jobs = [
+                (ad['avito_id'], url, position, 'image')
+                for ad in ads if ad.get('avito_id')
+                for position, url in enumerate(
+                    ad.get('image_urls', [])[:int(os.environ.get('MAX_IMAGES_PER_AD', '10'))]
+                ) if url
+            ]
+            if image_jobs:
+                execute_values(
+                    cur,
+                    '''
+                    INSERT INTO avito_original.image_jobs
+                        (avito_id, original_url, position, job_type)
+                    VALUES %s
+                    ON CONFLICT (avito_id, original_url) DO NOTHING
+                    ''',
+                    image_jobs,
+                )
         conn.commit()
         conn.close()
         valid = [ad for ad in ads if ad.get('avito_id')]
@@ -176,51 +194,7 @@ while True:
         if items:
             ads = [item_to_dict(item) for item in items]
             print(f'Got {len(ads)} ads', flush=True)
-            # Image download
-            storage_type = os.environ.get('STORAGE_TYPE', 'none')
-            if storage_type in ('minio', 's3'):
-                from minio import Minio
-                from io import BytesIO
-                storage = Minio(
-                    os.environ.get('MINIO_ENDPOINT', 'minio:9000'),
-                    access_key=os.environ.get('MINIO_ACCESS_KEY', 'minioadmin'),
-                    secret_key=os.environ.get('MINIO_SECRET_KEY', 'minioadmin'),
-                    secure=False,
-                )
-                bucket = os.environ.get('MINIO_BUCKET', 'avito-images')
-                max_images = int(os.environ.get('MAX_IMAGES_PER_AD', '10'))
-                timeout = int(os.environ.get('DOWNLOAD_TIMEOUT', '30'))
-                max_size = int(os.environ.get('MAX_IMAGE_SIZE_MB', '10')) * 1024 * 1024
-
-                import requests as _requests
-                for ad in ads:
-                    image_urls = ad.pop('image_urls', [])
-                    image_keys = []
-                    for idx, url in enumerate(image_urls[:max_images]):
-                        try:
-                            resp = _requests.get(url, timeout=timeout, stream=True)
-                            resp.raise_for_status()
-                            content_type = resp.headers.get('Content-Type', 'image/jpeg')
-                            data = resp.content
-                            if len(data) > max_size:
-                                continue
-                            ext = content_type.split('/')[-1]
-                            if ext == 'jpeg':
-                                ext = 'jpg'
-                            key = str(ad['avito_id']) + '/' + str(idx) + '.' + ext
-                            storage.put_object(bucket, key, BytesIO(data), len(data), content_type=content_type)
-                            image_keys.append({
-                                'key': key,
-                                'url': os.environ.get('MINIO_ENDPOINT', 'minio:9000') + '/' + bucket + '/' + key,
-                                'original_url': url,
-                                'size_bytes': len(data),
-                                'content_type': content_type,
-                            })
-                        except Exception as e:
-                            print(f'Image download failed for {ad.get("avito_id")}: {e}', flush=True)
-                            continue
-                    ad['image_keys'] = image_keys
-
+            # Изображения скачивает отдельный image-downloader через image_jobs.
             write_to_postgres(ads)
         print('=== Pause ===', flush=True)
         time.sleep(config.pause_general)

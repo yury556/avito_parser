@@ -14,8 +14,6 @@ from loguru import logger
 from avito_parser.settings import AvitoConfig
 from avito_parser.core import AvitoParse
 from avito_parser.config import load_avito_config
-from avito_parser.image_downloader import ImageDownloader
-from avito_parser.storages import create_storage
 
 app = FastAPI(title="Avito Parser Service", version="3.2.17")
 
@@ -159,7 +157,11 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                         location = EXCLUDED.location,
                         seller = EXCLUDED.seller,
                         description = EXCLUDED.description,
-                        image_keys = EXCLUDED.image_keys,
+                        image_keys = CASE
+                            WHEN EXCLUDED.image_keys IS NULL OR EXCLUDED.image_keys = '[]'::jsonb
+                            THEN avito_original.ads.image_keys
+                            ELSE EXCLUDED.image_keys
+                        END,
                         source_url = COALESCE(EXCLUDED.source_url, avito_original.ads.source_url),
                         is_reserved = EXCLUDED.is_reserved,
                         is_promotion = EXCLUDED.is_promotion,
@@ -172,6 +174,9 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                        OR avito_original.ads.total_views   IS DISTINCT FROM EXCLUDED.total_views
                        OR avito_original.ads.today_views   IS DISTINCT FROM EXCLUDED.today_views
                        OR avito_original.ads.description IS DISTINCT FROM EXCLUDED.description
+                       OR (EXCLUDED.image_keys IS NOT NULL
+                           AND EXCLUDED.image_keys <> '[]'::jsonb
+                           AND avito_original.ads.image_keys IS DISTINCT FROM EXCLUDED.image_keys)
                     """,
                     [
                         (
@@ -194,6 +199,20 @@ def _write_ads_to_postgres(pg_config: dict, run_id: str, source_urls: list[str],
                         if ad.get("avito_id")
                     ],
                 )
+                image_jobs = [
+                    (ad["avito_id"], url, position, "image")
+                    for ad in ads if ad.get("avito_id")
+                    for position, url in enumerate(
+                        ad.get("image_urls", [])[:int(os.environ.get("MAX_IMAGES_PER_AD", "10"))]
+                    ) if url
+                ]
+                if image_jobs:
+                    execute_values(cur, """
+                        INSERT INTO avito_original.image_jobs
+                            (avito_id, original_url, position, job_type)
+                        VALUES %s
+                        ON CONFLICT (avito_id, original_url) DO NOTHING
+                    """, image_jobs)
 
     # --- источник лота: из какого поиска пришёл ---
                 try:
@@ -291,15 +310,9 @@ def parse_ads(body: dict):
     logger.info(f"Парсинг завершён: {len(items)} объявлений{' (частично)' if partial else ''}")
 
     ads = [_item_to_dict(item) for item in items]
-
-    storage = create_storage(config.storage)
-    downloader = ImageDownloader(storage, config.storage)
     for ad in ads:
-        if ad.get("image_urls"):
-            image_keys = downloader.download_and_store(ad["avito_id"], ad["image_urls"])
-            ad["image_keys"] = image_keys
-        else:
-            ad["image_keys"] = []
+        # URL сохраняются в durable image_jobs вместе с лотом; сети MinIO/CDN здесь нет.
+        ad["image_keys"] = []
 
     pg_config = _get_postgres_config(body)
     if pg_config and ads:
