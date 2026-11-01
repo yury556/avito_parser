@@ -106,7 +106,7 @@ default_args = {
 
 with DAG(
     dag_id="midraw_to_details",
-    description="Quarantine and state updates; regular AI enrichment runs in ai_enrich worker.",
+    description="Call ai_enrich /batch to enrich all unprocessed midraw.avito_ads into detail.ads.",
     default_args=default_args,
     schedule="*/15 * * * *",
     start_date=datetime(2026, 8, 1),
@@ -114,10 +114,13 @@ with DAG(
     max_active_runs=1,
     tags=["avito", "ai", "midraw", "details"],
 ) as dag:
-    # Обычный ai_enrich_batch отключён: новые лоты обрабатывает постоянный
-    # worker внутри ai_enrich. Для rollback восстановить задачу и зависимость
-    # enrich_batch >> quarantine_process >> update_state после остановки worker.
-    # Карантин остаётся в DAG и выполняется последовательно с update_state.
+    enrich_batch = PythonOperator(
+        task_id="ai_enrich_batch",
+        python_callable=call_ai_enrich_batch,
+    )
+
+    # Карантин: лоты с низкой уверенностью Jev разбирает DeepSeek,
+    # создаёт новые теги в словарь. После основной пачки.
     quarantine_process = PythonOperator(
         task_id="quarantine_process",
         python_callable=call_quarantine_process,
@@ -130,4 +133,4 @@ with DAG(
         python_callable=_update_ad_state,
     )
 
-    quarantine_process >> update_state
+    enrich_batch >> quarantine_process >> update_state
