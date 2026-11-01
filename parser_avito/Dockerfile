@@ -12,9 +12,11 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 
 COPY src/ ./src/
 COPY avito_service.py .
+COPY parser_runs.py .
 COPY image_downloader_service.py .
 COPY enricher.py .
 COPY tg_alerts.py .
+COPY notification_outbox.py .
 COPY alerts_worker.py .
 COPY bot_service.py .
 

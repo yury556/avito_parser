@@ -229,7 +229,36 @@ def _photo_source(ad: dict):
     return None
 
 
-def _send_photo(caption: str, reply_markup: dict, photo) -> bool:
+def _retry_after(data: dict) -> int | None:
+    try:
+        return int((data.get("parameters") or {}).get("retry_after"))
+    except (TypeError, ValueError):
+        return None
+
+
+def _as_result(value) -> dict:
+    """Совместимость со старыми моками _send/_send_photo (True/False/None)."""
+    if isinstance(value, dict):
+        return value
+    if value is True:
+        return {"ok": True, "message_id": None}
+    return {"ok": False, "error": "Telegram delivery failed"}
+
+
+def _response_result(status: int, data: dict, body: str = "") -> dict:
+    ok = status == 200 and bool(data.get("ok", False))
+    result = {
+        "ok": ok,
+        "status": status,
+        "message_id": (data.get("result") or {}).get("message_id") if ok else None,
+        "retry_after": _retry_after(data),
+    }
+    if not ok:
+        result["error"] = f"HTTP {status}: {data.get('description') or body[:300]}"
+    return result
+
+
+def _send_photo(caption: str, reply_markup: dict, photo, detailed: bool = False):
     """sendPhoto с подписью и кнопками. False → вызывающий код шлёт текст."""
     import requests
     fields: dict = {
@@ -245,8 +274,7 @@ def _send_photo(caption: str, reply_markup: dict, photo) -> bool:
         else:
             fields["photo"] = photo[1]
             r = requests.post(f"{API}/sendPhoto", data=fields, timeout=30)
-        if r.status_code == 200 and r.json().get("ok"):
-            return True
+        data = r.json()
         if r.status_code == 400:  # Telegram не понял HTML в подписи → без разметки
             fields["caption"] = re.sub(r"<[^>]+>", "", caption)[:1024]
             fields.pop("parse_mode", None)
@@ -255,15 +283,18 @@ def _send_photo(caption: str, reply_markup: dict, photo) -> bool:
                 r = requests.post(f"{API}/sendPhoto", data=fields, files=files, timeout=30)
             else:
                 r = requests.post(f"{API}/sendPhoto", data=fields, timeout=30)
-            return r.status_code == 200 and r.json().get("ok")
-        print(f"tg_alerts: sendPhoto {r.status_code}: {r.text[:120]}", flush=True)
-        return False
+            data = r.json()
+        result = _response_result(r.status_code, data, r.text)
+        if not result["ok"]:
+            print(f"tg_alerts: sendPhoto: {result['error']}", flush=True)
+        return result if detailed else result["ok"]
     except Exception as e:
         print(f"tg_alerts: sendPhoto failed: {e}", flush=True)
-        return False
+        result = {"ok": False, "error": f"{type(e).__name__}: {e}", "unknown_result": True}
+        return result if detailed else False
 
 
-def send_lot(ad: dict) -> bool:
+def _deliver_good_lot(ad: dict) -> dict:
     """Одно сообщение на один лот: название, цена, медиана, локация, теги,
     описание, дата создания. Кнопки: Авито / тех. свойства / карточка."""
     model = html_mod.escape((ad["model"] or "?")[:60])
@@ -322,26 +353,29 @@ def send_lot(ad: dict) -> bool:
     photo = _photo_source(ad)
     if photo:
         cap = text if len(text) <= 1000 else ""
-        if _send_photo(cap, payload["reply_markup"], photo):
-            _lot_msg_times.append(time.time())
-            if not cap and _send(payload) is False:
-                return False
-            return True
-    if _send(payload) is False:
-        # Telegram не понял HTML (например, в тексте остался «<»):
-        # отправляем без разметки, чтобы лот не потерялся
+        photo_result = _as_result(_send_photo(cap, payload["reply_markup"], photo, detailed=True))
+        if not photo_result["ok"]:
+            return photo_result
+        if not cap:
+            # Фото уже доставлено: не повторяем его из-за сбоя дополнительного текста.
+            _as_result(_send(payload, detailed=True))
+        _log_alert("lots", f"{model} — {ad['price']:.0f} ₽ ({ad['benefit_pct']:+d}%)")
+        return photo_result
+    result = _as_result(_send(payload, detailed=True))
+    if not result["ok"] and result.get("status") == 400:
+        # Только HTTP 400: при 429/500/timeout немедленного повтора нет.
         plain = re.sub(r"<[^>]+>", "", text)
         payload["text"] = plain
         payload["parse_mode"] = None
-        if _send(payload) is False:
-            return False
-    _lot_msg_times.append(time.time())
+        result = _as_result(_send(payload, detailed=True))
+    if not result["ok"]:
+        return result
     _log_alert("lots", f"{model} — {ad['price']:.0f} ₽ ({ad['benefit_pct']:+d}%)")
-    return True
+    return result
 
 
-def _send(payload: dict) -> bool | None:
-    """Отправка одного сообщения. True — ок, False — ошибка, None — сетевая."""
+def _send(payload: dict, detailed: bool = False):
+    """Отправка одного сообщения; detailed добавляет message_id и retry_after."""
     try:
         req = urllib.request.Request(
             API + "/sendMessage",
@@ -349,19 +383,33 @@ def _send(payload: dict) -> bool | None:
             headers={"Content-Type": "application/json"},
         )
         with urllib.request.urlopen(req, timeout=15) as r:
-            return r.status == 200
+            body = r.read().decode()
+            try:
+                data = json.loads(body)
+            except json.JSONDecodeError:
+                data = {}
+            result = _response_result(r.status, data, body)
     except urllib.error.HTTPError as exc:
-        body = exc.read().decode()[:300]
-        print(f"tg_alerts: send failed: HTTP {exc.code}: {body}", flush=True)
+        body = exc.read().decode()[:2000]
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError:
+            data = {}
+        result = _response_result(exc.code, data, body)
+        print(f"tg_alerts: send failed: {result['error']}", flush=True)
         if exc.code == 400:
             print(f"tg_alerts: текст сообщения: {payload.get('text', '')[:300]!r}", flush=True)
-        return False
     except Exception as exc:
         print(f"tg_alerts: send failed: {exc}", flush=True)
-        return None
+        result = {"ok": False, "error": f"{type(exc).__name__}: {exc}", "unknown_result": True}
+    if detailed:
+        return result
+    if result["ok"]:
+        return True
+    return None if result.get("unknown_result") else False
 
 
-def send_new_lot(ad: dict) -> bool:
+def _deliver_new_lot(ad: dict) -> dict:
     """Уведомление о НОВОМ объявлении (появилось в выдаче) — без сравнения
     с медианой. Название, цена, локация, теги, описание, дата создания."""
     title = html_mod.escape((ad.get("title") or ad.get("model") or "?").strip()[:120])
@@ -414,19 +462,50 @@ def send_new_lot(ad: dict) -> bool:
     photo = _photo_source(ad)
     if photo:
         cap = text if len(text) <= 1000 else ""
-        if _send_photo(cap, payload["reply_markup"], photo):
-            _lot_msg_times.append(time.time())
-            if not cap and _send(payload) is False:
-                return False
-            return True
-    if _send(payload) is False:
-        plain = re.sub(r"<[^>]+>", "", text)
-        payload["text"] = plain
+        photo_result = _as_result(_send_photo(cap, payload["reply_markup"], photo, detailed=True))
+        if not photo_result["ok"]:
+            return photo_result
+        if not cap:
+            # Не повторяем уже доставленное фото из-за дополнительного текста.
+            _as_result(_send(payload, detailed=True))
+        _log_alert("new", f"{title} — {ad['price']:.0f} ₽")
+        return photo_result
+    result = _as_result(_send(payload, detailed=True))
+    if not result["ok"] and result.get("status") == 400:
+        payload["text"] = re.sub(r"<[^>]+>", "", text)
         payload["parse_mode"] = None
-        if _send(payload) is False:
-            return False
+        result = _as_result(_send(payload, detailed=True))
+    if not result["ok"]:
+        return result
     _log_alert("new", f"{title} — {ad['price']:.0f} ₽")
-    return True
+    return result
+
+
+def deliver_lot(ad: dict, kind: str) -> dict:
+    """Сетевой вызов для outbox; бюджет уже зарезервирован sender-ом."""
+    if kind == "new":
+        return _deliver_new_lot(ad)
+    if kind == "good":
+        return _deliver_good_lot(ad)
+    raise ValueError(f"unknown notification kind: {kind}")
+
+
+def _send_legacy_with_budget(ad: dict, kind: str) -> bool:
+    if lots_muted() or lot_budget_left() <= 0:
+        return False
+    result = deliver_lot(ad, kind)
+    if result["ok"]:
+        # Общий учёт для текстового и фото-пути, в том числе send_new_lot().
+        _lot_msg_times.append(time.time())
+    return result["ok"]
+
+
+def send_lot(ad: dict) -> bool:
+    return _send_legacy_with_budget(ad, "good")
+
+
+def send_new_lot(ad: dict) -> bool:
+    return _send_legacy_with_budget(ad, "new")
 
 
 def send_lots_batch(items: list[dict]) -> list[int]:

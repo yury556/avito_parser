@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 
 import psycopg2
 
-from tg_alerts import (send_lots_batch, send_failure, send_recovery, send_system,
-                      send_new_lot)
+from tg_alerts import send_failure, send_recovery, send_system
+from notification_outbox import enqueue_lots, send_pending
 
 # Троттлинг алерта «скан выгодных лотов упал»: не чаще раза в час
 _SCAN_FAIL_ALERTED_AT = 0.0
@@ -19,7 +19,7 @@ SILENCE_THRESHOLD_MIN = int(os.environ.get("SILENCE_THRESHOLD_MIN", "90"))
 NO_DATA_MAX_HOURS = int(os.environ.get("NO_DATA_MAX_HOURS", "24"))
 ALERT_SCAN_INTERVAL = int(os.environ.get("ALERT_SCAN_INTERVAL", "300"))  # 5 мин
 NEW_SCAN_INTERVAL = int(os.environ.get("NEW_SCAN_INTERVAL", "300"))  # 5 мин
-NEW_PER_HOUR = int(os.environ.get("NEW_LOTS_PER_HOUR", "20"))  # новых объявлений за раз
+OUTBOX_SEND_INTERVAL = int(os.environ.get("OUTBOX_SEND_INTERVAL", "15"))
 DISCOUNT_PCT = int(os.environ.get("ALERT_DISCOUNT_PCT", "20"))
 
 # состояние между тиками (в процессе enricher)
@@ -161,7 +161,9 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
                        m.source_url AS source_url,
                        coalesce(b.tags_universal, ARRAY[]::text[]) AS tags_universal,
                        m.first_seen,
-                       lm.image_keys
+                       lm.image_keys,
+                       b.alerted_at,
+                       b.alerted_price
                 FROM base b
                 JOIN med_cat ON med_cat.category = b.category
                 LEFT JOIN med_fam ON med_fam.family = b.family
@@ -221,14 +223,15 @@ def _scan_good_lots(db: dict) -> list[dict] | None:
             "search_name": search_names.get(lot_sources.get(r[0], ""), "") or "",
             "first_seen": r[14],
             "image_keys": r[15],
+            "alerted_at": r[16],
+            "alerted_price": float(r[17]) if r[17] is not None else None,
         }
         for r in rows
     ]
 
 
-def _scan_new_lots(db: dict, limit: int = 20) -> list[dict]:
-    """Новые объявления из выдачи (появились за последние 2 часа) —
-    приходят отдельными уведомлениями, независимо от выгоды цены."""
+def _scan_new_lots(db: dict, limit: int | None = None) -> list[dict]:
+    """Новые объявления попадают в outbox без ограничения размера прохода."""
     try:
         with _db_conn(db) as conn, conn.cursor() as cur:
             region_clause = _region_filter_clause(db, "f")
@@ -267,10 +270,11 @@ def _scan_new_lots(db: dict, limit: int = 20) -> list[dict]:
                   AND coalesce(NULLIF(d.model,''), NULLIF(f.title,'')) IS NOT NULL
                   AND __REGION__
                 ORDER BY f.seen_at DESC
-                LIMIT %s
                 """)
+            if limit is not None:
+                sql_text += "\nLIMIT %s"
             sql_text = sql_text.replace("__REGION__", region_clause)
-            cur.execute(sql_text, (limit,))
+            cur.execute(sql_text, () if limit is None else (limit,))
             rows = cur.fetchall()
     except Exception as exc:
         print(f"alerts: scan new failed: {exc}", flush=True)
@@ -435,32 +439,27 @@ def alert_tick(db: dict) -> None:
         _state["last_scan"] = now
         items = _scan_good_lots(db)
         if items:
-            sent = send_lots_batch(items)
-            if sent:
-                sent_ids = set(sent)
-                _mark_alerted(db, [it for it in items if it["avito_id"] in sent_ids])
-                print(f"alerts: отправлено {len(sent)} выгодных лотов "
-                      f"(отдельными сообщениями)", flush=True)
-            else:
-                print("alerts: лот-алерт не отправлен (мьют/бюджет/ошибка)", flush=True)
+            changed = enqueue_lots(db, items, "good")
+            print(f"alerts: outbox good: {changed} новых/обновлённых заданий", flush=True)
 
-    # --- новые объявления из выдачи (отдельный поток уведомлений) ---
+    # Сканирование только ставит задания; сетевых вызовов Telegram здесь нет.
     if now - _state.get("last_new_scan", 0) >= NEW_SCAN_INTERVAL:
         _state["last_new_scan"] = now
         try:
-            new_items = _scan_new_lots(db, limit=NEW_PER_HOUR)
-            sent_new = []
-            for ad in new_items:
-                if len(sent_new) >= NEW_PER_HOUR:
-                    break
-                try:
-                    if send_new_lot(ad):
-                        sent_new.append(ad["avito_id"])
-                        time.sleep(0.7)
-                except Exception as exc:
-                    print(f"alerts: new lot send failed: {exc}", flush=True)
-            if sent_new:
-                _mark_new_notified(db, sent_new)
-                print(f"alerts: отправлено {len(sent_new)} новых объявлений", flush=True)
+            new_items = _scan_new_lots(db)
+            changed = enqueue_lots(db, new_items, "new")
+            if changed:
+                print(f"alerts: outbox new: {changed} новых/обновлённых заданий", flush=True)
         except Exception as exc:
             print(f"alerts: new scan failed: {exc}", flush=True)
+
+    # Единственный штатный sender в enricher. Claim и лимиты атомарны в БД,
+    # поэтому аварийный второй экземпляр не сможет взять то же задание.
+    if now - _state.get("last_outbox_send", 0) >= OUTBOX_SEND_INTERVAL:
+        _state["last_outbox_send"] = now
+        try:
+            sent = send_pending(db)
+            if sent:
+                print(f"alerts: outbox отправлено {sent} сообщений", flush=True)
+        except Exception as exc:
+            print(f"alerts: outbox sender failed: {exc}", flush=True)
